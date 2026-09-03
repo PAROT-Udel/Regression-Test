@@ -13,6 +13,7 @@
 #include <sys/wait.h>            // For WIFEXITED, WEXITSTATUS, WIFSIGNALED, WTERMSIG (used by execute_command)
 #include <sys/stat.h>            // For stat (used by file_size)
 #include <errno.h>               // For errno
+#include <ctype.h>               // For tolower (suite name matching)
 
 
 // --- Global Log File Pointers (DEFINITIONS) ---
@@ -112,6 +113,7 @@ const char* transformation_type_to_string(TransformationType type) {
         case TRANSFORM_PRIVATIZATION: return "privatization";
         case TRANSFORM_REDUCTION: return "reduction";
         case TRANSFORM_TILING: return "tiling";
+        case TRANSFORM_SUBSUB_ANALYSIS: return "subsub_analysis";
         case TRANSFORM_NONE: return "no_transformation";
         case TRANSFORM_UNKNOWN:
         default: return "unknown";
@@ -128,6 +130,7 @@ TransformationType string_to_transformation_type(const char* str) {
     if (strcmp(str, "privatization") == 0) return TRANSFORM_PRIVATIZATION;
     if (strcmp(str, "reduction") == 0) return TRANSFORM_REDUCTION;
     if (strcmp(str, "tiling") == 0) return TRANSFORM_TILING;
+    if (strcmp(str, "subsub_analysis") == 0) return TRANSFORM_SUBSUB_ANALYSIS;
     if (strcmp(str, "no_transformation") == 0) return TRANSFORM_NONE;
     return TRANSFORM_UNKNOWN; // Default for any unmapped string
 }
@@ -157,6 +160,86 @@ ExpectedOutcome string_to_expected_outcome(const char* str) {
     if (strcmp(str, "success_no_change") == 0) return EXPECT_SUCCESS_NO_CHANGE;
     if (strcmp(str, "expect_failure") == 0) return EXPECT_FAILURE;
     return EXPECT_UNKNOWN;
+}
+
+/** Last path component of a relative input path (works with / and \\). */
+static const char* path_basename(const char* path) {
+    const char* slash = strrchr(path, '/');
+    const char* bslash = strrchr(path, '\\');
+    if (bslash && (!slash || bslash > slash)) {
+        slash = bslash;
+    }
+    return slash ? slash + 1 : path;
+}
+
+static int str_eq_ci(const char* a, const char* b) {
+    if (!a || !b) {
+        return 0;
+    }
+    while (*a && *b) {
+        if (tolower((unsigned char)*a) != tolower((unsigned char)*b)) {
+            return 0;
+        }
+        a++;
+        b++;
+    }
+    return *a == *b;
+}
+
+/** True if the test belongs to the named suite (aliases: paw, paw_tiling, subsub_analysis). */
+static int test_in_suite(const TestCase* t, const char* suite) {
+    if (!t || !t->suite || !suite) {
+        return 0;
+    }
+    if (str_eq_ci(t->suite, suite)) {
+        return 1;
+    }
+    if ((str_eq_ci(suite, "paw") || str_eq_ci(suite, "paw_tiling")) &&
+        str_eq_ci(t->suite, "tiling")) {
+        return 1;
+    }
+    if ((str_eq_ci(suite, "subsub_analysis") || str_eq_ci(suite, "subscripted-subscript")) &&
+        str_eq_ci(t->suite, "subsub")) {
+        return 1;
+    }
+    return 0;
+}
+
+static void print_usage(const char* argv0) {
+    fprintf(stderr, "\nUsage: %s [--generate] [-cetus-options \"<flags>\"] [--run-test <id>] [--run-suite <name>] [--list-suites]\n", argv0);
+    fprintf(stderr, "  --generate: Generate ground truth files instead of comparing.\n");
+    fprintf(stderr, "  -cetus-options \"<flags>\": Pass custom Cetus options for the current run.\n");
+    fprintf(stderr, "  --run-test <id>: Run one test (category, filename, or input path).\n");
+    fprintf(stderr, "  --run-suite <name>: Run all tests in a suite (tiling, subsub).\n");
+    fprintf(stderr, "  --list-suites: Print defined suites and their test counts.\n");
+    fprintf(stderr, "  --all (or no args): Run all tests defined in master_test_cases.h.\n");
+}
+
+static void list_suites(void) {
+    printf("Defined suites:\n");
+    for (int i = 0; i < NUM_MASTER_TEST_CASES; ++i) {
+        const char* name = master_test_cases[i].suite;
+        if (!name) {
+            continue;
+        }
+        int seen = 0;
+        for (int j = 0; j < i; ++j) {
+            if (master_test_cases[j].suite && str_eq_ci(master_test_cases[j].suite, name)) {
+                seen = 1;
+                break;
+            }
+        }
+        if (seen) {
+            continue;
+        }
+        int count = 0;
+        for (int k = 0; k < NUM_MASTER_TEST_CASES; ++k) {
+            if (test_in_suite(&master_test_cases[k], name)) {
+                count++;
+            }
+        }
+        printf("  %-12s  %d test(s)   --run-suite %s\n", name, count, name);
+    }
 }
 
 /**
@@ -276,15 +359,16 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "Path buffer overflow for input file.", NULL); return 0;
     }
 
-    char *dot = strrchr(input_file_base_name, '.');
+    const char* input_basename = path_basename(input_file_base_name);
+    char *dot = strrchr(input_basename, '.');
     if (dot != NULL) {
-        size_t base_len = dot - input_file_base_name;
+        size_t base_len = (size_t)(dot - input_basename);
         // Ensure derived names fit within MAX_PATH_LENGTH
         if (base_len + 2 >= MAX_PATH_LENGTH || base_len >= MAX_PATH_LENGTH) { // +2 for ".i" or to ensure base_len fits
             log_test_outcome(TEST_FAILED_NO_EXTENSION, category, input_file_base_name, "Input file base name too long after removing extension.", NULL); return 0;
         }
-        snprintf(input_file_base_name_i, sizeof(input_file_base_name_i), "%.*s.i", (int)base_len, input_file_base_name);
-        snprintf(input_file_base_name_no_ext, sizeof(input_file_base_name_no_ext), "%.*s", (int)base_len, input_file_base_name);
+        snprintf(input_file_base_name_i, sizeof(input_file_base_name_i), "%.*s.i", (int)base_len, input_basename);
+        snprintf(input_file_base_name_no_ext, sizeof(input_file_base_name_no_ext), "%.*s", (int)base_len, input_basename);
     } else {
         log_test_outcome(TEST_FAILED_NO_EXTENSION, category, input_file_base_name,
                          "Input file has no extension. Cannot derive .i/.c names.", NULL);
@@ -579,6 +663,8 @@ int main(int argc, char *argv[]) {
     TestMode current_mode = COMPARE_MODE; // Default mode for running tests
     char* custom_cetus_options = NULL;
     char* test_identifier = NULL; // To store the identifier for --run-test
+    char* suite_identifier = NULL;
+    int list_suites_only = 0;
 
     // 2. Parse command-line arguments
     for (int i = 1; i < argc; ++i) {
@@ -589,31 +675,60 @@ int main(int argc, char *argv[]) {
                 custom_cetus_options = argv[++i];
             } else {
                 fprintf(stderr, "[%s] ERROR: -cetus-options requires an argument (a quoted string of flags).\n", get_current_time());
-                goto usage_error;
+                print_usage(argv[0]);
+                overall_exit_status = 1;
+                goto cleanup_logs;
             }
         } else if (strcmp(argv[i], "--run-test") == 0) {
             if (i + 1 < argc) {
                 test_identifier = argv[++i];
             } else {
                 fprintf(stderr, "[%s] ERROR: --run-test requires a test identifier (category or input file name).\n", get_current_time());
-                goto usage_error;
+                print_usage(argv[0]);
+                overall_exit_status = 1;
+                goto cleanup_logs;
             }
+        } else if (strcmp(argv[i], "--run-suite") == 0) {
+            if (i + 1 < argc) {
+                suite_identifier = argv[++i];
+            } else {
+                fprintf(stderr, "[%s] ERROR: --run-suite requires a suite name (e.g. tiling, subsub).\n", get_current_time());
+                print_usage(argv[0]);
+                overall_exit_status = 1;
+                goto cleanup_logs;
+            }
+        } else if (strcmp(argv[i], "--list-suites") == 0) {
+            list_suites_only = 1;
         } else if (strcmp(argv[i], "--all") == 0) {
             // This flag is handled implicitly if test_identifier remains NULL.
-            // No action needed here, it just confirms the argument is recognized.
         } else {
             fprintf(stderr, "[%s] ERROR: Unrecognized argument: %s\n", get_current_time(), argv[i]);
-            goto usage_error;
+            print_usage(argv[0]);
+            overall_exit_status = 1;
+            goto cleanup_logs;
         }
     }
 
-    // 3. Execute Tests (Specific Test or All Tests)
-    if (test_identifier != NULL) { // User requested to run a specific test by identifier
+    if (list_suites_only) {
+        list_suites();
+        goto cleanup_logs;
+    }
+
+    if (test_identifier != NULL && suite_identifier != NULL) {
+        fprintf(stderr, "[%s] ERROR: Use either --run-test or --run-suite, not both.\n", get_current_time());
+        print_usage(argv[0]);
+        overall_exit_status = 1;
+        goto cleanup_logs;
+    }
+
+    // 3. Execute Tests (Specific Test, Suite, or All Tests)
+    if (test_identifier != NULL) {
         TestCase* found_test = NULL;
         for (int i = 0; i < NUM_MASTER_TEST_CASES; ++i) {
-            // Try to match by category or input_file_base_name
+            const char* basename = path_basename(master_test_cases[i].input_file_base_name);
             if (strcmp(master_test_cases[i].category, test_identifier) == 0 ||
-                strcmp(master_test_cases[i].input_file_base_name, test_identifier) == 0) {
+                strcmp(master_test_cases[i].input_file_base_name, test_identifier) == 0 ||
+                strcmp(basename, test_identifier) == 0) {
                 found_test = &master_test_cases[i];
                 break;
             }
@@ -621,7 +736,7 @@ int main(int argc, char *argv[]) {
 
         if (found_test == NULL) {
             fprintf(stderr, "[%s] ERROR: Test with identifier '%s' not found in master_test_cases.h.\n", get_current_time(), test_identifier);
-            overall_exit_status = 1; // Indicate failure to find test
+            overall_exit_status = 1;
         } else {
             printf("\n--- Running Specific Test: %s/%s ---\n", found_test->category, found_test->input_file_base_name);
             if (run_test_case(found_test->category, found_test->input_file_base_name, current_mode,
@@ -629,26 +744,43 @@ int main(int argc, char *argv[]) {
                               custom_cetus_options ? custom_cetus_options : found_test->cetus_flags)) {
                 passed_tests++;
             } else {
-                overall_exit_status = 1; // Mark overall failure if this specific test fails
+                overall_exit_status = 1;
             }
             total_tests++;
         }
-    } else { // No specific test requested, so run ALL tests in master_test_cases.h
-        printf("[%s] Running ALL master test cases...\n", get_current_time());
-        printf("--------------------------------------------------\n");
+    } else {
+        int selected[NUM_MASTER_TEST_CASES];
+        int selected_count = 0;
         for (int i = 0; i < NUM_MASTER_TEST_CASES; ++i) {
-            TestCase* current_test = &master_test_cases[i];
-            printf("\n--- Running Test [%d/%d]: %s/%s ---\n", i + 1, NUM_MASTER_TEST_CASES, current_test->category, current_test->input_file_base_name);
-            if (run_test_case(current_test->category, current_test->input_file_base_name, current_mode,
-                              current_test->transform_type, current_test->expected_outcome,
-                              custom_cetus_options ? custom_cetus_options : current_test->cetus_flags)) {
-                passed_tests++;
-            } else {
-                overall_exit_status = 1; // Mark overall failure if any test in the full run fails
+            if (suite_identifier == NULL || test_in_suite(&master_test_cases[i], suite_identifier)) {
+                selected[selected_count++] = i;
             }
-            total_tests++;
         }
-        printf("\n--------------------------------------------------\n");
+
+        if (suite_identifier != NULL && selected_count == 0) {
+            fprintf(stderr, "[%s] ERROR: Suite '%s' not found. Use --list-suites.\n", get_current_time(), suite_identifier);
+            overall_exit_status = 1;
+        } else {
+            if (suite_identifier != NULL) {
+                printf("[%s] Running suite '%s' (%d test(s))...\n", get_current_time(), suite_identifier, selected_count);
+            } else {
+                printf("[%s] Running ALL master test cases...\n", get_current_time());
+            }
+            printf("--------------------------------------------------\n");
+            for (int s = 0; s < selected_count; ++s) {
+                TestCase* current_test = &master_test_cases[selected[s]];
+                printf("\n--- Running Test [%d/%d]: %s/%s ---\n", s + 1, selected_count, current_test->category, current_test->input_file_base_name);
+                if (run_test_case(current_test->category, current_test->input_file_base_name, current_mode,
+                                  current_test->transform_type, current_test->expected_outcome,
+                                  custom_cetus_options ? custom_cetus_options : current_test->cetus_flags)) {
+                    passed_tests++;
+                } else {
+                    overall_exit_status = 1;
+                }
+                total_tests++;
+            }
+            printf("\n--------------------------------------------------\n");
+        }
     }
 
     // 4. Final summary and cleanup
@@ -657,19 +789,6 @@ int main(int argc, char *argv[]) {
         fprintf(log_all_fp, "[%s] Test Summary: %d/%d tests passed.\n", get_current_time(), passed_tests, total_tests);
     }
 
-    // Jump here to print usage and exit on argument parsing error
-usage_error:
-    fprintf(stderr, "\nUsage: %s [--generate] [-cetus-options \"<flags>\"] [--run-test <identifier>]\n", argv[0]);
-    fprintf(stderr, "  --generate: Generate ground truth files instead of comparing.\n");
-    fprintf(stderr, "  -cetus-options \"<flags>\": Pass custom Cetus options for the current run.\n");
-    fprintf(stderr, "  --run-test <identifier>: Run only a specific test (by category or input file name).\n");
-    fprintf(stderr, "  (No arguments): Run all tests defined in master_test_cases.h.\n");
-    
-    if (overall_exit_status == 0) { // If not already marked as failed by a test, set for usage error
-        overall_exit_status = 1;
-    }
-
-    // Jump here to ensure log files are closed even if an error occurs earlier
 cleanup_logs:
     if (log_all_fp) fclose(log_all_fp);
     if (log_passed_fp) fclose(log_passed_fp);

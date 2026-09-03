@@ -9,7 +9,7 @@
 
 // Paths to external tools
 // IMPORTANT: Update these paths to match your system's installation
-#define CETUS_PATH       "cetus"          // Or "/path/to/your/cetus_executable"
+#define CETUS_PATH       "/mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus"
 #define CLANG_PATH       "clang"          // Or "/usr/bin/clang"
 #define CLANG_FORMAT_PATH "clang-format" // Or "/usr/bin/clang-format"
 
@@ -29,6 +29,7 @@ typedef enum {
     TRANSFORM_PRIVATIZATION,   // Expects privatization
     TRANSFORM_REDUCTION,       // Expects reduction
     TRANSFORM_TILING,          // Expects loop tiling
+    TRANSFORM_SUBSUB_ANALYSIS, // Expects subscripted-subscript analysis
     TRANSFORM_UNKNOWN          // For cases where a specific type isn't relevant or known
 } TransformationType;
 
@@ -65,11 +66,12 @@ typedef enum {
 
 // Structure to define a single test case
 typedef struct {
-    const char* category;           // E.g., "parallelization", "reduction"
-    const char* input_file_base_name; // Filename in input_files/ (e.g., "my_test.c")
+    const char* suite;              // Suite name for --run-suite (e.g., "tiling", "subsub")
+    const char* category;           // Unique test id (e.g., "Tiling_PAW_GEMM_Fixed64")
+    const char* input_file_base_name; // Path under input_files/ (e.g., "tiling/tiling_gemm.c")
     TransformationType transform_type; // Expected transformation type
     ExpectedOutcome expected_outcome; // What is Cetus expected to do?
-    const char* cetus_flags;        // Specific Cetus flags for this test (e.g., "-parallelization")
+    const char* cetus_flags;        // Specific Cetus flags for this test
 } TestCase;
 
 
