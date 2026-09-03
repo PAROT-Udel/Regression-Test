@@ -2,24 +2,127 @@
 
 This project is **independent of the Cetus source tree**. It validates Cetus compiler output by diffing transformed code against checked-in ground truth files.
 
-## Cetus version requirement
+## Prerequisites (WSL/Linux)
 
-Build and test against **`parot/release/3.0`**:
+```bash
+sudo apt-get install -y gcc clang clang-format openjdk-21-jdk
+```
+
+- `gcc`, `clang`, `clang-format`, `diff`
+- Java 8+ **and** `javac` (to build Cetus)
+- Cetus built from **`parot/release/3.0`** (see below)
+
+Run the harness from **Linux or WSL**, not native Windows cmd.
+
+## How to build Cetus (`parot/release/3.0`)
+
+**Clone (if needed):**
+
+```bash
+git clone https://github.com/PAROT-Udel/The-Cetus-Project.git
+cd The-Cetus-Project
+```
+
+**Existing clone with `parot` remote:**
 
 ```bash
 cd /path/to/The-Cetus-Project
 git fetch parot
 git checkout release/3.0
-./build.sh bin
 ```
 
-Point the runner at that build in [`helper_tests.h`](helper_tests.h):
+**Existing clone missing the `parot` remote:**
+
+```bash
+git remote add parot https://github.com/PAROT-Udel/The-Cetus-Project.git
+git fetch parot
+git checkout -B release/3.0 parot/release/3.0
+```
+
+**Build the wrapper** (`bin/cetus` + `lib/cetus.jar`). Do not copy `bin/cetus` alone; the script hard-codes the jar path.
+
+```bash
+cd /path/to/The-Cetus-Project
+./build.sh bin
+/path/to/The-Cetus-Project/bin/cetus -version
+```
+
+## Where to point `CETUS_PATH`
+
+The runner executes the path in [`helper_tests.h`](helper_tests.h). Default (WSL path for `/path/to/bin/cetus...`):
 
 ```c
-#define CETUS_PATH "/mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus"
+#define CETUS_PATH "/path/to/bin/cetus"
+#define CLANG_PATH "clang"
+#define CLANG_FORMAT_PATH "clang-format"
 ```
 
-(Adjust the path for your machine; WSL paths use `/mnt/d/...`.)
+Change `CETUS_PATH` to your `The-Cetus-Project/bin/cetus`. After editing, recompile the harness (the path is a C `#define`).
+
+**Alternative** if `bin/` is on `PATH`:
+
+```bash
+export PATH="/path/to/The-Cetus-Project/bin:$PATH"
+```
+
+```c
+#define CETUS_PATH "cetus"
+```
+
+## Compile the harness
+
+```bash
+cd /path/to/cetus_regression_test_suite
+chmod +x check_syntax.sh
+gcc -o cetus_regression_test cetus_regression_test.c -I. -Wall
+```
+
+Recompile after any change to `cetus_regression_test.c`, `helper_tests.h`, or `master_test_cases.h`:
+
+```bash
+gcc -o cetus_regression_test cetus_regression_test.c -I. -Wall
+```
+
+## Running tests
+
+```bash
+cd /path/to/cetus_regression_test_suite
+
+# All tests
+./cetus_regression_test --all
+./cetus_regression_test
+
+# List / run a suite (folder)
+./cetus_regression_test --list-suites
+./cetus_regression_test --run-suite tiling
+./cetus_regression_test --run-suite subsub
+
+# Single test (category, filename, or path)
+./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64
+./cetus_regression_test --run-test SubSub_Amgmk
+./cetus_regression_test --run-test tiling_gemm.c
+./cetus_regression_test --run-test tiling/tiling_gemm.c
+
+# Override Cetus flags for one run
+./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64 -cetus-options "-paw_tiling=1 -tileSizes=32"
+
+# Quiet by default (no Cetus stdout). Show full Cetus/tool output:
+./cetus_regression_test --run-suite tiling --verbose
+./cetus_regression_test --run-suite tiling --verbose true
+
+# Regenerate ground truth (intentional Cetus output change only)
+./cetus_regression_test --generate
+./cetus_regression_test --run-suite tiling --generate
+./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64 --generate
+```
+
+Expected for `--all`: `Test Summary: 15/15 tests passed.`
+
+### Windows / WSL
+
+```powershell
+wsl bash -lc "cd /mnt/d/workspace/cetus/cetus_regression_test_suite && gcc -o cetus_regression_test cetus_regression_test.c -I. -Wall && ./cetus_regression_test --all"
+```
 
 ## Project layout
 
@@ -33,9 +136,11 @@ cetus_regression_test_suite/
 │   ├── tiling/                # PAW tiling suite (6 tests)
 │   └── subsub/                # Subscripted-subscript analysis (9 tests)
 │       └── include/header.h   # Required by subsub_test_ua.c
-├── ground_truth/              # Expected outputs (*_gt.c)
-├── cetus_intermediate_i_files/  # Generated preprocessed .i (gitignored)
-├── cetus_transformed_output/    # Generated Cetus output (gitignored)
+├── ground_truth/              # Expected outputs, mirrored suite folders
+│   ├── tiling/                # *_gt.c for tiling suite
+│   └── subsub/                # *_gt.c for subsub suite
+├── cetus_intermediate_i_files/<suite>/  # Generated preprocessed .i (gitignored)
+├── cetus_transformed_output/<suite>/    # Generated Cetus output (gitignored)
 └── logs/                        # Test logs (gitignored)
 ```
 
@@ -77,32 +182,23 @@ Flags:
    - **transform type**: `TRANSFORM_TILING` or `TRANSFORM_SUBSUB_ANALYSIS`
    - **expected outcome**: usually `EXPECT_SUCCESS_TRANSFORMED`
    - **cetus_flags**: exact flags for Cetus
-3. Recompile the runner: `gcc -o cetus_regression_test cetus_regression_test.c -I. -Wall`
-4. Generate ground truth: `./cetus_regression_test --run-test <category> --generate`
-5. Commit the new `input_files/*.c` and `ground_truth/*_gt.c`.
-6. Verify: `./cetus_regression_test --run-test <category>`
-
-## Running tests
+3. Recompile:
 
 ```bash
-# Compile runner (Linux/WSL)
 gcc -o cetus_regression_test cetus_regression_test.c -I. -Wall
+```
 
-# All tests
-./cetus_regression_test --all
+4. Generate ground truth:
 
-# One suite (folder)
-./cetus_regression_test --list-suites
-./cetus_regression_test --run-suite tiling
-./cetus_regression_test --run-suite subsub
+```bash
+./cetus_regression_test --run-test <category> --generate
+```
 
-# Single test by category
-./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64
-./cetus_regression_test --run-test SubSub_Amgmk
+5. Commit the new `input_files/` source and `ground_truth/*_gt.c`.
+6. Verify:
 
-# Regenerate ground truth after intentional Cetus output change
-./cetus_regression_test --generate
-./cetus_regression_test --run-suite tiling --generate
+```bash
+./cetus_regression_test --run-test <category>
 ```
 
 ## Debugging failures
@@ -112,12 +208,6 @@ Check `logs/failed_tests.log`, `logs/all_tests.log`, or run the pipeline manuall
 ```bash
 clang -E -P -x c -std=c11 input_files/tiling/tiling_gemm.c -o /tmp/gemm.i
 ./check_syntax.sh /tmp/gemm.i
-/mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus -outdir=cetus_transformed_output <flags> /tmp/gemm.i
-diff -wB cetus_transformed_output/gemm.i ground_truth/tiling_gemm_gt.c
+/mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus -outdir=cetus_transformed_output/tiling <flags> /tmp/gemm.i
+diff -wB cetus_transformed_output/tiling/tiling_gemm.i ground_truth/tiling/tiling_gemm_gt.c
 ```
-
-## Prerequisites (WSL/Linux)
-
-- `gcc`, `clang`, `clang-format`
-- Java 8+ (for Cetus)
-- Cetus built from `parot/release/3.0`

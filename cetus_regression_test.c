@@ -14,6 +14,7 @@
 #include <sys/stat.h>            // For stat (used by file_size)
 #include <errno.h>               // For errno
 #include <ctype.h>               // For tolower (suite name matching)
+#include <stdarg.h>              // For va_list (verbose_printf)
 
 
 // --- Global Log File Pointers (DEFINITIONS) ---
@@ -24,6 +25,20 @@ FILE *log_failed_fp = NULL;
 FILE *log_crashes_fp = NULL;
 FILE *log_missed_opportunities_fp = NULL;
 FILE *log_incorrect_transformation_fp = NULL;
+
+// Quiet by default: hide Cetus/tool stdout and runner DEBUG lines.
+// Enable with --verbose or --verbose true.
+static int g_verbose = 0;
+
+static void verbose_printf(const char* fmt, ...) {
+    if (!g_verbose) {
+        return;
+    }
+    va_list args;
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+}
 
 
 // --- Helper Function Implementations ---
@@ -62,12 +77,24 @@ long file_size(const char *filename) {
  * @return The exit status of the command, -1 if system() fails, or -999 if terminated by signal.
  */
 int execute_command(const char *command) {
-    printf("[%s] DEBUG: Executing command: %s\n", get_current_time(), command);
+    verbose_printf("[%s] DEBUG: Executing command: %s\n", get_current_time(), command);
     if (log_all_fp) fprintf(log_all_fp, "[%s] DEBUG: Executing command: %s\n", get_current_time(), command);
+
+    char quiet_command[MAX_PATH_LENGTH * 4];
+    const char* cmd_to_run = command;
+    if (!g_verbose) {
+        // Hide Cetus/tool stdout+stderr; exit status still returned by system().
+        if (snprintf(quiet_command, sizeof(quiet_command), "(%s) >/dev/null 2>&1", command)
+            >= (int)sizeof(quiet_command)) {
+            fprintf(stderr, "[%s] ERROR: Quiet command buffer overflow.\n", get_current_time());
+            return -1;
+        }
+        cmd_to_run = quiet_command;
+    }
 
     // system() returns the termination status of the command.
     // We need to use WIFEXITED and WEXITSTATUS macros to get the actual exit code.
-    int result = system(command);
+    int result = system(cmd_to_run);
 
     if (result == -1) {
         // system() itself failed to execute the command (e.g., memory allocation error)
@@ -81,7 +108,7 @@ int execute_command(const char *command) {
     if (WIFEXITED(result)) {
         // Command terminated normally
         int exit_status = WEXITSTATUS(result);
-        printf("[%s] Command exited with status: %d\n", get_current_time(), exit_status);
+        verbose_printf("[%s] Command exited with status: %d\n", get_current_time(), exit_status);
         if (log_all_fp) fprintf(log_all_fp, "[%s] Command exited with status: %d\n", get_current_time(), exit_status);
         return exit_status;
     } else {
@@ -206,13 +233,29 @@ static int test_in_suite(const TestCase* t, const char* suite) {
 }
 
 static void print_usage(const char* argv0) {
-    fprintf(stderr, "\nUsage: %s [--generate] [-cetus-options \"<flags>\"] [--run-test <id>] [--run-suite <name>] [--list-suites]\n", argv0);
+    fprintf(stderr, "\nUsage: %s [--generate] [-cetus-options \"<flags>\"] [--run-test <id>] [--run-suite <name>] [--list-suites] [--verbose [true|false]]\n", argv0);
     fprintf(stderr, "  --generate: Generate ground truth files instead of comparing.\n");
     fprintf(stderr, "  -cetus-options \"<flags>\": Pass custom Cetus options for the current run.\n");
     fprintf(stderr, "  --run-test <id>: Run one test (category, filename, or input path).\n");
     fprintf(stderr, "  --run-suite <name>: Run all tests in a suite (tiling, subsub).\n");
     fprintf(stderr, "  --list-suites: Print defined suites and their test counts.\n");
+    fprintf(stderr, "  --verbose [true|false]: Show Cetus/tool stdout and runner DEBUG lines (default: false).\n");
     fprintf(stderr, "  --all (or no args): Run all tests defined in master_test_cases.h.\n");
+}
+
+static int parse_bool_arg(const char* value, int* out) {
+    if (!value || !out) {
+        return 0;
+    }
+    if (str_eq_ci(value, "true") || str_eq_ci(value, "1") || str_eq_ci(value, "yes") || str_eq_ci(value, "on")) {
+        *out = 1;
+        return 1;
+    }
+    if (str_eq_ci(value, "false") || str_eq_ci(value, "0") || str_eq_ci(value, "no") || str_eq_ci(value, "off")) {
+        *out = 0;
+        return 1;
+    }
+    return 0;
 }
 
 static void list_suites(void) {
@@ -321,20 +364,58 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
     (void)transform_type; // Suppress unused parameter warning if transform_type isn't fully used inside
 
     char input_file_full_path[MAX_PATH_LENGTH];
-    char input_file_base_name_i[MAX_PATH_LENGTH];       // e.g., "my_test.i"
-    char input_file_base_name_no_ext[MAX_PATH_LENGTH]; // e.g., "my_test" (without .c)
+    char input_file_base_name_i[MAX_PATH_LENGTH];       // e.g., "tiling_gemm.i"
+    char input_file_base_name_no_ext[MAX_PATH_LENGTH]; // e.g., "tiling_gemm"
+    char suite_subdir[MAX_PATH_LENGTH];               // e.g., "tiling" or "" if flat
 
     const char* input_files_root_dir = "input_files";
     const char* intermediate_i_root_dir = "cetus_intermediate_i_files";
     const char* transformed_output_root_dir = "cetus_transformed_output";
     const char* ground_truth_root_dir = "ground_truth";
 
-    char mkdir_cmd[MAX_PATH_LENGTH * 2]; // Buffer for mkdir commands
-    int cmd_result; // Stores result of execute_command
+    char intermediate_dir[MAX_PATH_LENGTH];
+    char transformed_dir[MAX_PATH_LENGTH];
+    char ground_truth_dir[MAX_PATH_LENGTH];
 
-    // --- Directory Creation ---
-    // Ensure intermediate and output directories exist
-    if (snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p \"%s\"", intermediate_i_root_dir) >= (int)sizeof(mkdir_cmd)) {
+    char mkdir_cmd[MAX_PATH_LENGTH * 2];
+    int cmd_result;
+
+    // Suite folder from input path: "tiling/tiling_gemm.c" -> "tiling"
+    suite_subdir[0] = '\0';
+    {
+        const char* slash = strrchr(input_file_base_name, '/');
+        const char* bslash = strrchr(input_file_base_name, '\\');
+        if (bslash && (!slash || bslash > slash)) {
+            slash = bslash;
+        }
+        if (slash && slash > input_file_base_name) {
+            size_t suite_len = (size_t)(slash - input_file_base_name);
+            if (suite_len >= sizeof(suite_subdir)) {
+                log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
+                                 "Suite subdirectory path too long.", NULL);
+                return 0;
+            }
+            memcpy(suite_subdir, input_file_base_name, suite_len);
+            suite_subdir[suite_len] = '\0';
+        }
+    }
+
+    if (suite_subdir[0] != '\0') {
+        if (snprintf(intermediate_dir, sizeof(intermediate_dir), "%s/%s", intermediate_i_root_dir, suite_subdir) >= (int)sizeof(intermediate_dir) ||
+            snprintf(transformed_dir, sizeof(transformed_dir), "%s/%s", transformed_output_root_dir, suite_subdir) >= (int)sizeof(transformed_dir) ||
+            snprintf(ground_truth_dir, sizeof(ground_truth_dir), "%s/%s", ground_truth_root_dir, suite_subdir) >= (int)sizeof(ground_truth_dir)) {
+            log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
+                             "Path buffer overflow for suite directories.", NULL);
+            return 0;
+        }
+    } else {
+        snprintf(intermediate_dir, sizeof(intermediate_dir), "%s", intermediate_i_root_dir);
+        snprintf(transformed_dir, sizeof(transformed_dir), "%s", transformed_output_root_dir);
+        snprintf(ground_truth_dir, sizeof(ground_truth_dir), "%s", ground_truth_root_dir);
+    }
+
+    // --- Directory Creation (suite-scoped) ---
+    if (snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p \"%s\"", intermediate_dir) >= (int)sizeof(mkdir_cmd)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "mkdir command buffer overflow for intermediate directory.", NULL); return 0;
     }
     cmd_result = execute_command(mkdir_cmd);
@@ -344,7 +425,7 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
         return 0;
     }
 
-    if (snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p \"%s\"", transformed_output_root_dir) >= (int)sizeof(mkdir_cmd)) {
+    if (snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p \"%s\"", transformed_dir) >= (int)sizeof(mkdir_cmd)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "mkdir command buffer overflow for transformed output directory.", NULL); return 0;
     }
     cmd_result = execute_command(mkdir_cmd);
@@ -363,8 +444,7 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
     char *dot = strrchr(input_basename, '.');
     if (dot != NULL) {
         size_t base_len = (size_t)(dot - input_basename);
-        // Ensure derived names fit within MAX_PATH_LENGTH
-        if (base_len + 2 >= MAX_PATH_LENGTH || base_len >= MAX_PATH_LENGTH) { // +2 for ".i" or to ensure base_len fits
+        if (base_len + 2 >= MAX_PATH_LENGTH || base_len >= MAX_PATH_LENGTH) {
             log_test_outcome(TEST_FAILED_NO_EXTENSION, category, input_file_base_name, "Input file base name too long after removing extension.", NULL); return 0;
         }
         snprintf(input_file_base_name_i, sizeof(input_file_base_name_i), "%.*s.i", (int)base_len, input_basename);
@@ -382,14 +462,13 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
     char cetus_command[MAX_PATH_LENGTH * 2];
     char semantic_check_command[MAX_PATH_LENGTH * 2];
     char diff_command[MAX_PATH_LENGTH * 2];
-    char format_cmd[MAX_PATH_LENGTH * 2]; // For clang-format commands
-
+    char format_cmd[MAX_PATH_LENGTH * 2];
 
     // --- 1. Preprocessing Step (using Clang) ---
-    if (snprintf(preprocessed_input_file, sizeof(preprocessed_input_file), "%s/%s", intermediate_i_root_dir, input_file_base_name_i) >= (int)sizeof(preprocessed_input_file)) {
+    if (snprintf(preprocessed_input_file, sizeof(preprocessed_input_file), "%s/%s", intermediate_dir, input_file_base_name_i) >= (int)sizeof(preprocessed_input_file)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "Path buffer overflow for preprocessed input file.", NULL); return 0;
     }
-    printf("[%s] DEBUG: Preprocessing output will be in: %s\n", get_current_time(), preprocessed_input_file);
+    verbose_printf("[%s] DEBUG: Preprocessing output will be in: %s\n", get_current_time(), preprocessed_input_file);
     if (log_all_fp) fprintf(log_all_fp, "[%s] DEBUG: Preprocessing output will be in: %s\n", get_current_time(), preprocessed_input_file);
 
     // Command: clang -E -P -x c -std=c11 "input_files/my_test.c" -o "cetus_intermediate_i_files/my_test.i"
@@ -397,7 +476,7 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
          log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "Preprocessor command buffer overflow.", NULL); return 0;
     }
 
-    printf("[%s] Manually preprocessing %s to %s...\n", get_current_time(), input_file_full_path, preprocessed_input_file);
+    verbose_printf("[%s] Manually preprocessing %s to %s...\n", get_current_time(), input_file_full_path, preprocessed_input_file);
     if (log_all_fp) fprintf(log_all_fp, "[%s] Manually preprocessing %s to %s...\n", get_current_time(), input_file_full_path, preprocessed_input_file);
     cmd_result = execute_command(preprocessor_command);
     if (cmd_result != 0) {
@@ -406,7 +485,7 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
         else { snprintf(reason_buf, sizeof(reason_buf), "Preprocessing failed (exit code %d).", cmd_result); }
         log_test_outcome(outcome_type, category, input_file_base_name, reason_buf, preprocessor_command); return 0;
     }
-    printf("[%s] Preprocessing successful. Output file: %s (size %ld bytes).\n", get_current_time(), preprocessed_input_file, file_size(preprocessed_input_file));
+    verbose_printf("[%s] Preprocessing successful. Output file: %s (size %ld bytes).\n", get_current_time(), preprocessed_input_file, file_size(preprocessed_input_file));
     if (log_all_fp) fprintf(log_all_fp, "[%s] Preprocessing successful. Output file: %s (size %ld bytes).\n", get_current_time(), preprocessed_input_file, file_size(preprocessed_input_file));
 
 
@@ -415,7 +494,7 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
     if (snprintf(semantic_check_command, sizeof(semantic_check_command), "./check_syntax.sh \"%s\"", preprocessed_input_file) >= (int)sizeof(semantic_check_command)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "Semantic check command buffer overflow.", NULL); return 0;
     }
-    printf("[%s] Running semantic check command: %s\n", get_current_time(), semantic_check_command);
+    verbose_printf("[%s] Running semantic check command: %s\n", get_current_time(), semantic_check_command);
     if (log_all_fp) fprintf(log_all_fp, "[%s] Running semantic check command: %s\n", get_current_time(), semantic_check_command);
     cmd_result = execute_command(semantic_check_command);
     if (cmd_result != 0) {
@@ -424,21 +503,21 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
         else { snprintf(reason_buf, sizeof(reason_buf), "Semantic check failed (exit code %d).", cmd_result); }
         log_test_outcome(outcome_type, category, input_file_base_name, reason_buf, semantic_check_command); return 0;
     }
-    printf("[%s] Semantic check successful.\n", get_current_time());
+    verbose_printf("[%s] Semantic check successful.\n", get_current_time());
     if (log_all_fp) fprintf(log_all_fp, "[%s] Semantic check successful.\n", get_current_time());
 
 
-    printf("[%s] Applying Cetus transformation...\n", get_current_time());
+    verbose_printf("[%s] Applying Cetus transformation...\n", get_current_time());
     if (log_all_fp) fprintf(log_all_fp, "[%s] Applying Cetus transformation...\n", get_current_time());
 
     // --- 3. Cetus Execution Step ---
-    // Command: cetus -outdir="cetus_transformed_output" <cetus_flags> "cetus_intermediate_i_files/my_test.i"
+    // Command: cetus -outdir="cetus_transformed_output/<suite>" <cetus_flags> "cetus_intermediate_i_files/<suite>/my_test.i"
     if (snprintf(cetus_command, sizeof(cetus_command), "%s -outdir=\"%s\" %s \"%s\"",
-             CETUS_PATH, transformed_output_root_dir, custom_cetus_flags, preprocessed_input_file) >= (int)sizeof(cetus_command)) {
+             CETUS_PATH, transformed_dir, custom_cetus_flags, preprocessed_input_file) >= (int)sizeof(cetus_command)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "Cetus command buffer overflow.", NULL); return 0;
     }
 
-    printf("[%s] DEBUG: Cetus command: %s\n", get_current_time(), cetus_command);
+    verbose_printf("[%s] DEBUG: Cetus command: %s\n", get_current_time(), cetus_command);
     if (log_all_fp) fprintf(log_all_fp, "[%s] DEBUG: Cetus command: %s\n", get_current_time(), cetus_command);
 
     cmd_result = execute_command(cetus_command);
@@ -452,7 +531,7 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
             return 0;
         } else {
             // Cetus failed as expected
-            printf("[%s] Cetus failed as expected. Exit code: %d.\n", get_current_time(), cmd_result);
+            verbose_printf("[%s] Cetus failed as expected. Exit code: %d.\n", get_current_time(), cmd_result);
             if (log_all_fp) fprintf(log_all_fp, "[%s] Cetus failed as expected. Exit code: %d.\n", get_current_time(), cmd_result);
             log_test_outcome(TEST_PASSED, category, input_file_base_name, "Cetus failed as expected.", cetus_command);
             return 1; // Test considered passed because expected failure occurred
@@ -465,34 +544,33 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
             else { snprintf(reason_buf, sizeof(reason_buf), "Cetus execution failed (returned non-zero exit code %d).", cmd_result); }
             log_test_outcome(outcome_type, category, input_file_base_name, reason_buf, cetus_command); return 0;
         }
-        printf("[%s] Cetus execution successful.\n", get_current_time());
+        verbose_printf("[%s] Cetus execution successful.\n", get_current_time());
         if (log_all_fp) fprintf(log_all_fp, "[%s] Cetus execution successful.\n", get_current_time());
     }
 
     // --- DETERMINE ACTUAL CETUS OUTPUT FILE PATH ---
-    // Cetus typically outputs the transformed .i file into the specified -outdir
-    if (snprintf(cetus_actual_output_file, sizeof(cetus_actual_output_file), "%s/%s", transformed_output_root_dir, input_file_base_name_i) >= (int)sizeof(cetus_actual_output_file)) {
+    // Cetus writes the basename into -outdir (suite folder).
+    if (snprintf(cetus_actual_output_file, sizeof(cetus_actual_output_file), "%s/%s", transformed_dir, input_file_base_name_i) >= (int)sizeof(cetus_actual_output_file)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "Path buffer overflow for Cetus actual output file.", NULL); return 0;
     }
-    printf("[%s] DEBUG: Cetus output is expected at: %s\n", get_current_time(), cetus_actual_output_file);
+    verbose_printf("[%s] DEBUG: Cetus output is expected at: %s\n", get_current_time(), cetus_actual_output_file);
     if (log_all_fp) fprintf(log_all_fp, "[%s] DEBUG: Cetus output is expected at: %s\n", get_current_time(), cetus_actual_output_file);
 
 
-    // --- Determine Ground Truth File Path (flat, using GROUND_TRUTH_SUFFIX) ---
-    // Example: input_files/my_test.c -> ground_truth/my_test_gt.c
-    if (snprintf(ground_truth_file_path, sizeof(ground_truth_file_path), "%s/%s%s", ground_truth_root_dir, input_file_base_name_no_ext, GROUND_TRUTH_SUFFIX) >= (int)sizeof(ground_truth_file_path)) {
+    // --- Ground Truth Path (suite-scoped): tiling/tiling_gemm.c -> ground_truth/tiling/tiling_gemm_gt.c ---
+    if (snprintf(ground_truth_file_path, sizeof(ground_truth_file_path), "%s/%s%s", ground_truth_dir, input_file_base_name_no_ext, GROUND_TRUTH_SUFFIX) >= (int)sizeof(ground_truth_file_path)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "Path buffer overflow for ground truth file.", NULL); return 0;
     }
 
 
     // --- 4. Ground Truth Generation or Comparison ---
     if (mode == GENERATE_MODE) {
-        printf("[%s] Generating ground truth for %s...\n", get_current_time(), input_file_base_name);
+        verbose_printf("[%s] Generating ground truth for %s...\n", get_current_time(), input_file_base_name);
         if (log_all_fp) fprintf(log_all_fp, "[%s] Generating ground truth for %s...\n", get_current_time(), input_file_base_name);
 
-        // Ensure ground_truth directory exists
+        // Ensure suite ground_truth directory exists
         char ground_truth_dir_create_cmd[MAX_PATH_LENGTH * 2];
-        if (snprintf(ground_truth_dir_create_cmd, sizeof(ground_truth_dir_create_cmd), "mkdir -p \"%s\"", ground_truth_root_dir) >= (int)sizeof(ground_truth_dir_create_cmd)) {
+        if (snprintf(ground_truth_dir_create_cmd, sizeof(ground_truth_dir_create_cmd), "mkdir -p \"%s\"", ground_truth_dir) >= (int)sizeof(ground_truth_dir_create_cmd)) {
             log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "mkdir command buffer overflow for ground truth directory.", NULL); return 0;
         }
         cmd_result = execute_command(ground_truth_dir_create_cmd);
@@ -522,12 +600,12 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
             log_test_outcome(TEST_FAILED_COPY_GROUND_TRUTH, category, input_file_base_name, reason_buf, cp_cmd);
             return 0;
         }
-        printf("[%s] Ground truth generated successfully for %s at %s.\n", get_current_time(), input_file_base_name, ground_truth_file_path);
+        printf("[%s] PASS (generate): %s -> %s\n", get_current_time(), input_file_base_name, ground_truth_file_path);
         if (log_all_fp) fprintf(log_all_fp, "[%s] Ground truth generated successfully for %s at %s.\n", get_current_time(), input_file_base_name, ground_truth_file_path);
         log_test_outcome(TEST_PASSED, category, input_file_base_name, "Ground truth generated successfully.", NULL);
         return 1; // Test considered passed as ground truth was generated
     } else { // COMPARE_MODE
-        printf("[%s] Comparing Cetus output with ground truth for %s...\n", get_current_time(), input_file_base_name);
+        verbose_printf("[%s] Comparing Cetus output with ground truth for %s...\n", get_current_time(), input_file_base_name);
         if (log_all_fp) fprintf(log_all_fp, "[%s] Comparing Cetus output with ground truth for %s...\n", get_current_time(), input_file_base_name);
 
         char reason_buf[MAX_PATH_LENGTH * 2];
@@ -547,7 +625,7 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
 
         // --- NEW: Format Cetus output and Ground Truth before comparison ---
         // This is crucial for reliable diffs, as Cetus and Clang may format differently.
-        printf("[%s] DEBUG: Formatting Cetus output file: %s with clang-format...\n", get_current_time(), cetus_actual_output_file);
+        verbose_printf("[%s] DEBUG: Formatting Cetus output file: %s with clang-format...\n", get_current_time(), cetus_actual_output_file);
         if (snprintf(format_cmd, sizeof(format_cmd), "%s -i -style=Google \"%s\"", CLANG_FORMAT_PATH, cetus_actual_output_file) >= (int)sizeof(format_cmd)) {
             log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "clang-format command buffer overflow for Cetus output.", NULL); return 0;
         }
@@ -558,7 +636,7 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
              return 0;
         }
 
-        printf("[%s] DEBUG: Formatting Ground Truth file: %s with clang-format...\n", get_current_time(), ground_truth_file_path);
+        verbose_printf("[%s] DEBUG: Formatting Ground Truth file: %s with clang-format...\n", get_current_time(), ground_truth_file_path);
         if (snprintf(format_cmd, sizeof(format_cmd), "%s -i -style=Google \"%s\"", CLANG_FORMAT_PATH, ground_truth_file_path) >= (int)sizeof(format_cmd)) {
             log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "clang-format command buffer overflow for ground truth.", NULL); return 0;
         }
@@ -585,7 +663,7 @@ int run_test_case(const char* category, const char* input_file_base_name, TestMo
         if (snprintf(diff_command, sizeof(diff_command), "diff -wB \"%s\" \"%s\"", cetus_actual_output_file, ground_truth_file_path) >= (int)sizeof(diff_command)) {
             log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name, "Diff command buffer overflow.", NULL); return 0;
         }
-        printf("[%s] DEBUG: Diff command: %s\n", get_current_time(), diff_command);
+        verbose_printf("[%s] DEBUG: Diff command: %s\n", get_current_time(), diff_command);
         if (log_all_fp) fprintf(log_all_fp, "[%s] DEBUG: Diff command: %s\n", get_current_time(), diff_command);
 
         int diff_result = execute_command(diff_command);
@@ -699,6 +777,20 @@ int main(int argc, char *argv[]) {
             }
         } else if (strcmp(argv[i], "--list-suites") == 0) {
             list_suites_only = 1;
+        } else if (strcmp(argv[i], "--verbose") == 0) {
+            g_verbose = 1;
+            if (i + 1 < argc && argv[i + 1][0] != '-') {
+                int parsed = 0;
+                if (!parse_bool_arg(argv[i + 1], &parsed)) {
+                    fprintf(stderr, "[%s] ERROR: --verbose expects true/false (got '%s').\n",
+                            get_current_time(), argv[i + 1]);
+                    print_usage(argv[0]);
+                    overall_exit_status = 1;
+                    goto cleanup_logs;
+                }
+                g_verbose = parsed;
+                ++i;
+            }
         } else if (strcmp(argv[i], "--all") == 0) {
             // This flag is handled implicitly if test_identifier remains NULL.
         } else {

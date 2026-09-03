@@ -66,24 +66,29 @@ sudo apt-get install -y gcc clang clang-format openjdk-21-jdk
 ├── input_files/
 │   ├── tiling/                 # PAW tiling suite
 │   └── subsub/                 # Subscripted-subscript analysis suite
-├── ground_truth/               # Expected output files (*_gt.c)
-├── cetus_intermediate_i_files/ # Created by the runner (preprocessed .i)
-├── cetus_transformed_output/   # Created by the runner (Cetus output)
+├── ground_truth/
+│   ├── tiling/                 # tiling *_gt.c
+│   └── subsub/                 # subsub *_gt.c
+├── cetus_intermediate_i_files/<suite>/  # Created by the runner (preprocessed .i)
+├── cetus_transformed_output/<suite>/    # Created by the runner (Cetus output)
 └── logs/                       # Test logs
 
 
 # Initial Compilation
-Navigate to your project's root directory in the terminal and compile the test runner:
+
+```bash
+cd /path/to/cetus_regression_test_suite
+chmod +x check_syntax.sh
 gcc -o cetus_regression_test cetus_regression_test.c -I. -Wall
+```
 
+- `gcc`: The C compiler.
+- `-o cetus_regression_test`: Output executable name.
+- `cetus_regression_test.c`: Main source file.
+- `-I.`: Find `helper_tests.h` and `master_test_cases.h` in the current directory.
+- `-Wall`: Enable common warnings.
 
-- gcc: The C compiler.
-- -o cetus_regression_test: Specifies the output executable name.
-- cetus_regression_test.c: The main source file.
-- -I.: Tells the compiler to look for header files (like helper_tests.h and master_test_cases.h) in the current directory.
-- -Wall: Enables all common warning messages (recommended for development).
-
-# Note: If you modify cetus_regression_test.c, helper_tests.h, or master_test_cases.h, you must recompile the cetus_regression_test executable.
+If you modify `cetus_regression_test.c`, `helper_tests.h`, or `master_test_cases.h`, recompile with the same `gcc` command.
 
 ## 2. Core Files Overview
 helper_tests.h
@@ -191,6 +196,8 @@ The regression runner does **not** search `PATH` unless you configure it that wa
 
 ```c
 #define CETUS_PATH "/mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus"
+#define CLANG_PATH "clang"
+#define CLANG_FORMAT_PATH "clang-format"
 ```
 
 That is the current default in this repo. Change it if your Cetus clone lives somewhere else.
@@ -286,6 +293,19 @@ Temporarily replace the flags in `master_test_cases.h` (quote the flag string):
 
 ```bash
 ./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64 -cetus-options "-paw_tiling=1 -tileSizes=32"
+```
+
+### Verbose output
+
+By default the runner **suppresses Cetus and tool stdout/stderr** and only prints per-test headers, PASS/FAIL lines, and the final summary. Logs under `logs/` still capture full detail.
+
+```bash
+# Show Cetus/tool output and runner DEBUG lines
+./cetus_regression_test --run-suite tiling --verbose
+./cetus_regression_test --run-suite tiling --verbose true
+
+# Explicitly quiet (default)
+./cetus_regression_test --run-suite tiling --verbose false
 ```
 
 
