@@ -14,8 +14,14 @@ This document provides a comprehensive guide to setting up, running, and extendi
 - check_syntax.sh
 
 3 - Running Regression Tests
-- Running All Tests
-- Running a Specific Test
+- How to build Cetus
+- Where to place / point the Cetus executable
+- Compile the harness
+- Run all tests
+- Run a suite (folder)
+- Run a specific test
+- Generate ground truth
+- Windows / WSL
 - Overriding Cetus Options for a Single Run
 
 4 - Adding New Test Cases
@@ -36,24 +42,34 @@ This document provides a comprehensive guide to setting up, running, and extendi
 
 ## 1. System Requirements & Setup
 # Required Tools
-Ensure the following tools are installed and accessible in your system's PATH, or update their paths in helper_tests.h:
-- **Cetus Compiler**: The cetus executable. This is the tool whose behavior you are testing.
-- **Clang Compile**r: Used for preprocessing C source files.
-- **Clang-Format**: Used for consistent code formatting before comparison, which is crucial for reliable diff results.
-- **diff utility**: Standard command-line tool for comparing files.
+The regression runner invokes these tools by path (see `helper_tests.h`). They must be available on **Linux or WSL**:
+
+- **Cetus** (`parot/release/3.0`): built with `./build.sh bin` (needs **Java 8+** and `javac`). See section 3.
+- **gcc**: compiles this test harness.
+- **clang**: preprocesses input `.c` files to `.i`.
+- **clang-format**: formats Cetus output and ground truth before `diff`.
+- **diff**: compares formatted files.
+
+On Ubuntu/WSL:
+
+```bash
+sudo apt-get install -y gcc clang clang-format openjdk-21-jdk
+```
+
 
 # Directory Structure
-Organize your project with the following directory structure:
 .
-├── cetus_regression_test.c   # Main test runner source
-├── helper_tests.h            # Common definitions and prototypes
-├── master_test_cases.h       # Centralized test case definitions
-├── check_syntax.sh           # Script for semantic checking
-├── input_files/              # Directory for original C source files (e.g., simple_loop.c)
-├── ground_truth/             # Directory for expected output files (e.g., simple_loop_gt.c)
-├── cetus_intermediate_i_files/ # Created by test runner for preprocessed .i files
-├── cetus_transformed_output/   # Created by test runner for Cetus's output
-└── logs/                       # Created by test runner for test logs
+├── cetus_regression_test.c     # Main test runner source
+├── helper_tests.h              # Tool paths, enums, TestCase struct
+├── master_test_cases.h         # Centralized test case definitions
+├── check_syntax.sh             # Script for semantic checking
+├── input_files/
+│   ├── tiling/                 # PAW tiling suite
+│   └── subsub/                 # Subscripted-subscript analysis suite
+├── ground_truth/               # Expected output files (*_gt.c)
+├── cetus_intermediate_i_files/ # Created by the runner (preprocessed .i)
+├── cetus_transformed_output/   # Created by the runner (Cetus output)
+└── logs/                       # Test logs
 
 
 # Initial Compilation
@@ -106,39 +122,171 @@ This is the main executable that orchestrates the entire testing process.
 This is a simple shell script used to perform a basic semantic check on the preprocessed C code before passing it to Cetus. It typically uses clang to compile the .i file without linking, ensuring the C syntax is valid.
 Make sure this script is executable: chmod +x check_syntax.sh
 
-## 3. Running Regression Tests
-After compiling cetus_regression_test, you can run tests from your project's root directory.
-# Running All Tests
-To execute all test cases defined in master_test_cases.h:
+## 3. How to Run Regression Tests
 
-    ./cetus_regression_test
+The runner lives in this project (`cetus_regression_test_suite`). It is **independent of the Cetus source tree**: you build Cetus separately, then tell the runner where that executable is.
 
-or explicitly:
+Run the harness from **Linux or WSL** (POSIX `mkdir -p`, `diff`, and `check_syntax.sh`).
 
-    ./cetus_regression_test --all
+### How to build Cetus
 
+Ground truth in this repo was generated with Cetus from the **`parot` remote, branch `release/3.0`**.
 
-**Note**: When running all tests, any -cetus-options or --generate flags on the command line will be ignored. Each test uses its own cetus_flags defined in master_test_cases.h.
+**1. Get the source** (if you do not already have it):
 
-# Running a Specific Test
-To run a single test case, identify it by its category string or its input_file_base_name string as defined in master_test_cases.h:
+```bash
+git clone https://github.com/PAROT-Udel/The-Cetus-Project.git
+cd The-Cetus-Project
+```
 
-    ./cetus_regression_test --run-test <test_identifier>
+If the clone already exists and has the `parot` remote:
 
-**Examples**:
+```bash
+cd /path/to/The-Cetus-Project
+git fetch parot
+git checkout release/3.0
+```
 
-    ./cetus_regression_test --run-test Privatization_Aggressive
-    ./cetus_regression_test --run-test simple_loop.c
-    ./cetus_regression_test --run-test LoopFusion_Basic
+If `parot` is missing:
 
-# Overriding Cetus Options for a Single Run
-You can temporarily override the cetus_flags defined in master_test_cases.h for a specific test run using the -cetus-options flag. This is useful for quick debugging or experimenting without modifying the master_test_cases.h file. Remember to enclose the flags in double quotes.
+```bash
+git remote add parot https://github.com/PAROT-Udel/The-Cetus-Project.git
+git fetch parot
+git checkout -B release/3.0 parot/release/3.0
+```
 
-    ./cetus_regression_test --run-test <test_identifier> -cetus-options "YOUR_CUSTOM_CETUS_FLAGS"
+**2. Prerequisites inside the Cetus tree**
 
-**Example**:
+- `java` and `javac` (JDK 8 or newer) on `PATH`
+- `lib/antlr.jar` (already in the Cetus repo)
 
-    ./cetus_regression_test --run-test Parallelization_Default -cetus-options "-parallelize-loops=3 -ompGen=2"
+**3. Build the compiler wrapper**
+
+```bash
+cd /path/to/The-Cetus-Project
+./build.sh bin
+```
+
+This compiles Java sources, writes `lib/cetus.jar`, and generates a shell wrapper:
+
+```
+The-Cetus-Project/
+├── bin/cetus          # <-- this is what the regression runner executes
+└── lib/cetus.jar      # <-- required; the wrapper hard-codes this path
+```
+
+`bin/cetus` is a small `java -cp .../lib/cetus.jar ... cetus.exec.Driver` script. **Do not copy `bin/cetus` by itself** to another folder: the generated script contains **absolute** classpath paths to `lib/cetus.jar`. Leave the wrapper next to that build, or rebuild after moving the tree.
+
+**4. Sanity check**
+
+```bash
+/path/to/The-Cetus-Project/bin/cetus -version
+```
+
+### Where to place / point the Cetus executable
+
+The regression runner does **not** search `PATH` unless you configure it that way. It runs whatever `CETUS_PATH` is in [`helper_tests.h`](helper_tests.h).
+
+**Recommended:** keep Cetus in `The-Cetus-Project/bin/cetus` and set the **absolute path** (WSL uses `/mnt/d/...` for `D:\`):
+
+```c
+#define CETUS_PATH "/mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus"
+```
+
+That is the current default in this repo. Change it if your Cetus clone lives somewhere else.
+
+**Alternative:** if `bin/cetus` is on your `PATH` after you `export PATH="/path/to/The-Cetus-Project/bin:$PATH"`, you can use:
+
+```c
+#define CETUS_PATH "cetus"
+```
+
+Still keep `lib/cetus.jar` where the wrapper expects it (the path baked into `bin/cetus` at build time).
+
+After changing `CETUS_PATH`, **recompile** the harness (the path is a C `#define`):
+
+```bash
+gcc -o cetus_regression_test cetus_regression_test.c -I. -Wall
+```
+
+### Compile the harness
+
+```bash
+cd /path/to/cetus_regression_test_suite
+chmod +x check_syntax.sh
+gcc -o cetus_regression_test cetus_regression_test.c -I. -Wall
+```
+
+Recompile whenever you change `cetus_regression_test.c`, `helper_tests.h`, or `master_test_cases.h`.
+
+### Run all tests
+
+```bash
+./cetus_regression_test --all
+# same as:
+./cetus_regression_test
+```
+
+Expected: `Test Summary: 15/15 tests passed.`
+
+Each test uses the `cetus_flags` from `master_test_cases.h` unless you pass `-cetus-options`.
+
+### Run a suite (folder)
+
+Inputs are grouped by suite under `input_files/`:
+
+| `--run-suite` | Folder | Tests |
+|---------------|--------|-------|
+| `tiling` | `input_files/tiling/` | PAW tiling (`-paw_tiling`) |
+| `subsub` | `input_files/subsub/` | Subscripted-subscript analysis |
+
+```bash
+./cetus_regression_test --list-suites
+
+./cetus_regression_test --run-suite tiling
+./cetus_regression_test --run-suite subsub
+```
+
+Aliases: `paw` / `paw_tiling` for tiling; `subsub_analysis` for subsub.
+
+### Run a specific test
+
+Identify a case by **category**, **filename**, or **path** from `master_test_cases.h`:
+
+```bash
+./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64
+./cetus_regression_test --run-test SubSub_Amgmk
+./cetus_regression_test --run-test tiling_gemm.c
+./cetus_regression_test --run-test tiling/tiling_gemm.c
+```
+
+### Generate ground truth
+
+Only after an **intentional** Cetus output change. This copies Cetus output into `ground_truth/*_gt.c`.
+
+```bash
+./cetus_regression_test --generate
+./cetus_regression_test --run-suite tiling --generate
+./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64 --generate
+```
+
+Then re-run without `--generate` and commit the updated ground-truth files.
+
+### Windows / WSL
+
+```powershell
+wsl bash -lc "cd /mnt/d/workspace/cetus/cetus_regression_test_suite && ./cetus_regression_test --all"
+```
+
+WSL packages: `gcc`, `clang`, `clang-format`, Java 8+ (for Cetus).
+
+### Overriding Cetus options for a single run
+
+Temporarily replace the flags in `master_test_cases.h` (quote the flag string):
+
+```bash
+./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64 -cetus-options "-paw_tiling=1 -tileSizes=32"
+```
 
 
 ## 4. Adding New Test Cases
