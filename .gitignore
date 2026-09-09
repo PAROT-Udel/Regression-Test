@@ -20,3 +20,8 @@ work/
 
 # OS / editor
 .DS_Store
+*.code-workspace
+cetus
+cetus.jar
+cetus_regression_test.sh
+.vscode/
