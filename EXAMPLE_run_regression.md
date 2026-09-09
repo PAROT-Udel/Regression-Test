@@ -25,12 +25,12 @@ Edit `helper_tests.h` so `CETUS_PATH` points at your `bin/cetus` wrapper:
 #define CETUS_PATH "/mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus"
 ```
 
-## 3. Compile the regression harness
+## 3. Build the regression harness
 
 ```bash
 cd /mnt/d/workspace/cetus/cetus_regression_test_suite
-chmod +x check_syntax.sh
-gcc -o cetus_regression_test cetus_regression_test.c -I. -Wall
+chmod +x check_syntax.sh run_all.sh
+make
 ```
 
 ## 4. Run all tests (compare mode)
