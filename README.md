@@ -57,14 +57,14 @@ Native C tests under `tests/` validate the runner infrastructure (process execut
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    cetus_regression_test                        │
-│  (single native C executable — no Python at runtime)            │
+│                 (single native C executable)                    │
 ├────────────────────────────┬────────────────────────────────────┤
 │  Kernel mode               │  Benchmark mode                    │
 │  master_test_cases.h       │  benchmarks/config/*.json          │
 │  helper_tests.h (paths)    │  paths.env (tool + root paths)     │
 ├────────────────────────────┼────────────────────────────────────┤
-│  clang → .i → Cetus →     │  adapter (polybench/npb/generic)   │
-│  clang-format → diff        │  → Cetus → GT diff → build → verify│
+│  clang → .i → Cetus →      │  adapter (polybench/npb/generic)   │
+│  clang-format → diff       │  → Cetus → GT diff → build → verify│
 └────────────────────────────┴────────────────────────────────────┘
 ```
 
@@ -124,7 +124,7 @@ git checkout release/3.0   # or: git checkout -B release/3.0 parot/release/3.0
 **Kernel tests** — edit `CETUS_PATH` in [`helper_tests.h`](helper_tests.h):
 
 ```c
-#define CETUS_PATH "/mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus"
+#define CETUS_PATH "/path/to/cetus/The-Cetus-Project/bin/cetus"
 ```
 
 Recompile after changing this (`make`).
@@ -138,15 +138,15 @@ cp benchmarks/config/paths.example.env benchmarks/config/paths.env
 Example `paths.env`:
 
 ```bash
-CETUS=/mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus
+CETUS=/path/to/cetus/bin/cetus
 CLANG_FORMAT=clang-format
 GCC=gcc
 DIFF=diff
 CPP=cpp
 
-POLYBENCH_ROOT=/mnt/d/workspace/ud-masters/benchmarks/polybench-c-4.2
-NPB_SER_ROOT=/mnt/d/workspace/ud-masters/benchmarks/NPB3.3-SER-C
-NPB_OMP_ROOT=/mnt/d/workspace/ud-masters/benchmarks/NPB3.3-OMP-C
+POLYBENCH_ROOT=/path/to/benchmarks/polybench-c-4.2
+NPB_SER_ROOT=/path/to/benchmarks/NPB3.3-SER-C
+NPB_OMP_ROOT=/path/to/benchmarks/NPB3.3-OMP-C
 ```
 
 Environment variables override `paths.env`. You can point at tiling forks; adapters still use canonical kernel sources from the tree root.
@@ -410,7 +410,7 @@ diff -wB cetus_transformed_output/tiling/tiling_gemm.i ground_truth/tiling/tilin
 From PowerShell:
 
 ```powershell
-wsl bash -lc "cd /mnt/d/workspace/cetus/cetus_regression_test_suite && make && ./cetus_regression_test --all"
+wsl bash -lc "cd /path/to/The-Cetus-Project/cetus_regression_test_suite && make && ./cetus_regression_test --all"
 ```
 
 ---
