@@ -1,0 +1,49 @@
+{
+  "id": "polybench",
+  "adapter": "polybench",
+  "description": "PolyBench/C 4.2 kernels (vanilla tree via POLYBENCH_ROOT)",
+  "default": true,
+  "root_env": "POLYBENCH_ROOT",
+  "dataset": "MINI_DATASET",
+  "profiles": ["parallel", "paw_tiling"],
+  "kernels": [
+    {"name": "correlation", "rel_path": "datamining/correlation"},
+    {"name": "covariance", "rel_path": "datamining/covariance"},
+    {"name": "2mm", "rel_path": "linear-algebra/kernels/2mm"},
+    {"name": "3mm", "rel_path": "linear-algebra/kernels/3mm"},
+    {
+      "name": "atax",
+      "rel_path": "linear-algebra/kernels/atax",
+      "xfail": "cetus-transformed binary SIGSEGV at MINI (release/3.0)"
+    },
+    {
+      "name": "bicg",
+      "rel_path": "linear-algebra/kernels/bicg",
+      "xfail": "cetus-transformed binary SIGSEGV at MINI (release/3.0)"
+    },
+    {"name": "doitgen", "rel_path": "linear-algebra/kernels/doitgen"},
+    {"name": "mvt", "rel_path": "linear-algebra/kernels/mvt"},
+    {"name": "gemm", "rel_path": "linear-algebra/blas/gemm"},
+    {"name": "gemver", "rel_path": "linear-algebra/blas/gemver"},
+    {"name": "gesummv", "rel_path": "linear-algebra/blas/gesummv"},
+    {"name": "symm", "rel_path": "linear-algebra/blas/symm"},
+    {"name": "syr2k", "rel_path": "linear-algebra/blas/syr2k"},
+    {"name": "syrk", "rel_path": "linear-algebra/blas/syrk"},
+    {"name": "trmm", "rel_path": "linear-algebra/blas/trmm"},
+    {"name": "cholesky", "rel_path": "linear-algebra/solvers/cholesky"},
+    {"name": "durbin", "rel_path": "linear-algebra/solvers/durbin"},
+    {"name": "gramschmidt", "rel_path": "linear-algebra/solvers/gramschmidt"},
+    {"name": "lu", "rel_path": "linear-algebra/solvers/lu"},
+    {"name": "ludcmp", "rel_path": "linear-algebra/solvers/ludcmp"},
+    {"name": "trisolv", "rel_path": "linear-algebra/solvers/trisolv"},
+    {"name": "deriche", "rel_path": "medley/deriche"},
+    {"name": "floyd-warshall", "rel_path": "medley/floyd-warshall"},
+    {"name": "nussinov", "rel_path": "medley/nussinov"},
+    {"name": "adi", "rel_path": "stencils/adi"},
+    {"name": "fdtd-2d", "rel_path": "stencils/fdtd-2d"},
+    {"name": "heat-3d", "rel_path": "stencils/heat-3d"},
+    {"name": "jacobi-1d", "rel_path": "stencils/jacobi-1d"},
+    {"name": "jacobi-2d", "rel_path": "stencils/jacobi-2d"},
+    {"name": "seidel-2d", "rel_path": "stencils/seidel-2d"}
+  ]
+}

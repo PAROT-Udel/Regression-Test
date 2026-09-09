@@ -1,0 +1,46 @@
+{
+  "id": "generic-example",
+  "adapter": "generic",
+  "description": "Example bring-your-own suite. Copy and edit; not in default run.",
+  "default": false,
+  "root_env": "POLYBENCH_ROOT",
+  "dataset": "MINI_DATASET",
+  "profiles": ["parallel"],
+  "generic": {
+    "preprocessor": "{cpp} -C -I. -I\"{sandbox}/linear-algebra/blas/gemm\" -I\"{sandbox}/utilities\" -D{dataset}",
+    "compile": [
+      "{gcc}",
+      "-O2",
+      "-fopenmp",
+      "-std=c11",
+      "-D{dataset}",
+      "-Iutilities",
+      "-Ilinear-algebra/blas/gemm",
+      "linear-algebra/blas/gemm/gemm.c",
+      "utilities/polybench.c",
+      "-lm",
+      "-o",
+      "gemm.exe"
+    ],
+    "verify": {
+      "type": "exit_code",
+      "expect": 0,
+      "run": ["./gemm.exe"]
+    }
+  },
+  "kernels": [
+    {
+      "name": "gemm-generic",
+      "copy": [
+        "utilities/polybench.c",
+        "utilities/polybench.h",
+        "linear-algebra/blas/gemm/gemm.c",
+        "linear-algebra/blas/gemm/gemm.h"
+      ],
+      "cetus_inputs": ["linear-algebra/blas/gemm/gemm.c"],
+      "inject_map": {
+        "gemm.c": "linear-algebra/blas/gemm/gemm.c"
+      }
+    }
+  ]
+}

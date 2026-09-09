@@ -1,0 +1,35 @@
+{
+  "parallel": {
+    "description": "Standard Cetus OpenMP parallelization (NPB default)",
+    "flags": [
+      "-alias=3",
+      "-verbosity=0",
+      "-profitable-omp=0",
+      "-ddt=2",
+      "-privatize=2",
+      "-reduction=2",
+      "-parallelize-loops=1",
+      "-ompGen=1"
+    ]
+  },
+  "paw_tiling": {
+    "description": "Parallel-aware tiling (PolyBench default alongside parallel)",
+    "flags": [
+      "-alias=3",
+      "-verbosity=0",
+      "-profitable-omp=0",
+      "-tile-profitability=1",
+      "-cores=4",
+      "-cacheSize=25600",
+      "-cacheLine=64",
+      "-selection=NT",
+      "-tilingLevel=0",
+      "-ddt=2",
+      "-privatize=2",
+      "-reduction=2",
+      "-parallelize-loops=1",
+      "-ompGen=1",
+      "-paw_tiling=1"
+    ]
+  }
+}

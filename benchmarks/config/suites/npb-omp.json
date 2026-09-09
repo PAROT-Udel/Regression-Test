@@ -1,0 +1,132 @@
+{
+  "id": "npb-omp",
+  "adapter": "npb",
+  "description": "NPB 3.3 OpenMP C (via NPB_OMP_ROOT). Not in default run; OpenMP sources + ompGen can be noisy.",
+  "default": false,
+  "root_env": "NPB_OMP_ROOT",
+  "class": "S",
+  "profiles": ["parallel"],
+  "kernels": [
+    {
+      "name": "bt",
+      "bench": "BT",
+      "binary": "bt",
+      "headers": ["header.h", "work_lhs.h"],
+      "sources": [
+        "bt.c",
+        "initialize.c",
+        "exact_solution.c",
+        "exact_rhs.c",
+        "set_constants.c",
+        "adi.c",
+        "rhs.c",
+        "x_solve.c",
+        "y_solve.c",
+        "solve_subs.c",
+        "z_solve.c",
+        "add.c",
+        "error.c",
+        "verify.c"
+      ]
+    },
+    {
+      "name": "sp",
+      "bench": "SP",
+      "binary": "sp",
+      "headers": ["header.h"],
+      "sources": [
+        "sp.c",
+        "initialize.c",
+        "exact_solution.c",
+        "exact_rhs.c",
+        "set_constants.c",
+        "adi.c",
+        "rhs.c",
+        "x_solve.c",
+        "ninvr.c",
+        "y_solve.c",
+        "pinvr.c",
+        "z_solve.c",
+        "tzetar.c",
+        "add.c",
+        "txinvr.c",
+        "error.c",
+        "verify.c"
+      ]
+    },
+    {
+      "name": "lu",
+      "bench": "LU",
+      "binary": "lu",
+      "headers": ["applu.incl"],
+      "sources": [
+        "lu.c",
+        "read_input.c",
+        "domain.c",
+        "setcoeff.c",
+        "setbv.c",
+        "exact.c",
+        "setiv.c",
+        "erhs.c",
+        "ssor.c",
+        "rhs.c",
+        "l2norm.c",
+        "jacld.c",
+        "blts.c",
+        "jacu.c",
+        "buts.c",
+        "error.c",
+        "pintgr.c",
+        "verify.c",
+        "syncs.c"
+      ]
+    },
+    {
+      "name": "mg",
+      "bench": "MG",
+      "binary": "mg",
+      "headers": ["globals.h"],
+      "sources": ["mg.c"]
+    },
+    {
+      "name": "cg",
+      "bench": "CG",
+      "binary": "cg",
+      "headers": ["globals.h"],
+      "sources": ["cg.c"]
+    },
+    {
+      "name": "ep",
+      "bench": "EP",
+      "binary": "ep",
+      "headers": [],
+      "sources": ["ep.c"]
+    },
+    {
+      "name": "is",
+      "bench": "IS",
+      "binary": "is",
+      "headers": [],
+      "sources": ["is.c"]
+    },
+    {
+      "name": "ua",
+      "bench": "UA",
+      "binary": "ua",
+      "headers": ["header.h"],
+      "sources": [
+        "ua.c",
+        "convect.c",
+        "diffuse.c",
+        "adapt.c",
+        "move.c",
+        "mason.c",
+        "precond.c",
+        "utils.c",
+        "transfer.c",
+        "verify.c",
+        "setup.c"
+      ]
+    }
+  ]
+}

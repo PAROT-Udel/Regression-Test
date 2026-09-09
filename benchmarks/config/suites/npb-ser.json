@@ -1,0 +1,149 @@
+{
+  "id": "npb-ser",
+  "adapter": "npb",
+  "description": "NPB 3.3 serial C (vanilla via NPB_SER_ROOT); CLASS=S; parallel profile only",
+  "default": true,
+  "root_env": "NPB_SER_ROOT",
+  "class": "S",
+  "profiles": ["parallel"],
+  "kernels": [
+    {
+      "name": "bt",
+      "bench": "BT",
+      "binary": "bt",
+      "headers": ["header.h", "work_lhs.h"],
+      "xfail": "Cetus-transformed BT produces incorrect numerical results at CLASS=S (release/3.0)",
+      "sources": [
+        "bt.c",
+        "initialize.c",
+        "exact_solution.c",
+        "exact_rhs.c",
+        "set_constants.c",
+        "adi.c",
+        "rhs.c",
+        "x_solve.c",
+        "y_solve.c",
+        "solve_subs.c",
+        "z_solve.c",
+        "add.c",
+        "error.c",
+        "verify.c"
+      ]
+    },
+    {
+      "name": "sp",
+      "bench": "SP",
+      "binary": "sp",
+      "headers": ["header.h"],
+      "xfail": "Cetus-transformed SP produces incorrect numerical results at CLASS=S (release/3.0)",
+      "sources": [
+        "sp.c",
+        "initialize.c",
+        "exact_solution.c",
+        "exact_rhs.c",
+        "set_constants.c",
+        "adi.c",
+        "rhs.c",
+        "x_solve.c",
+        "ninvr.c",
+        "y_solve.c",
+        "pinvr.c",
+        "z_solve.c",
+        "tzetar.c",
+        "add.c",
+        "txinvr.c",
+        "error.c",
+        "verify.c"
+      ]
+    },
+    {
+      "name": "lu",
+      "bench": "LU",
+      "binary": "lu",
+      "headers": ["applu.incl"],
+      "xfail": "Cetus-transformed LU produces NaN results at CLASS=S (release/3.0)",
+      "sources": [
+        "lu.c",
+        "read_input.c",
+        "domain.c",
+        "setcoeff.c",
+        "setbv.c",
+        "exact.c",
+        "setiv.c",
+        "erhs.c",
+        "ssor.c",
+        "rhs.c",
+        "l2norm.c",
+        "jacld.c",
+        "blts.c",
+        "jacu.c",
+        "buts.c",
+        "error.c",
+        "pintgr.c",
+        "verify.c"
+      ]
+    },
+    {
+      "name": "mg",
+      "bench": "MG",
+      "binary": "mg",
+      "headers": ["globals.h"],
+      "sources": ["mg.c"]
+    },
+    {
+      "name": "cg",
+      "bench": "CG",
+      "binary": "cg",
+      "headers": ["globals.h"],
+      "sources": ["cg.c"]
+    },
+    {
+      "name": "ft",
+      "bench": "FT",
+      "binary": "ft",
+      "headers": ["global.h"],
+      "sources": [
+        "appft.c",
+        "auxfnct.c",
+        "fft3d.c",
+        "mainft.c",
+        "verify.c"
+      ],
+      "xfail": "Cetus InternalError in ArrayPrivatization on fft3d compound literals (release/3.0)"
+    },
+    {
+      "name": "ep",
+      "bench": "EP",
+      "binary": "ep",
+      "headers": [],
+      "sources": ["ep.c"]
+    },
+    {
+      "name": "is",
+      "bench": "IS",
+      "binary": "is",
+      "headers": [],
+      "sources": ["is.c"]
+    },
+    {
+      "name": "ua",
+      "bench": "UA",
+      "binary": "ua",
+      "headers": ["header.h"],
+      "sources": [
+        "ua.c",
+        "convect.c",
+        "diffuse.c",
+        "adapt.c",
+        "move.c",
+        "mason.c",
+        "precond.c",
+        "utils.c",
+        "transfer.c",
+        "verify.c",
+        "setup.c"
+      ],
+      "xfail": "Cetus parse failure on ua.c with default parallel profile (release/3.0)"
+    }
+  ]
+}
