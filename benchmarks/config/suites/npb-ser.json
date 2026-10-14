@@ -1,11 +1,11 @@
 {
   "id": "npb-ser",
   "adapter": "npb",
-  "description": "NPB 3.3 serial C (vanilla via NPB_SER_ROOT); CLASS=S; parallel, paw_tiling, and reuse_analysis",
+  "description": "NPB 3.3 serial C (vanilla via NPB_SER_ROOT); CLASS=S; parallel, three PAW tile-size profiles, and reuse_analysis",
   "default": true,
   "root_env": "NPB_SER_ROOT",
   "class": "S",
-  "profiles": ["parallel", "paw_tiling", "reuse_analysis"],
+  "profiles": ["parallel", "paw_tiling_nt", "paw_tiling_lrw", "paw_tiling_fixed32", "reuse_analysis"],
   "kernels": [
     {
       "name": "bt",

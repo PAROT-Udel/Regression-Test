@@ -5,7 +5,7 @@
   "default": true,
   "root_env": "POLYBENCH_ROOT",
   "dataset": "MINI_DATASET",
-  "profiles": ["parallel", "paw_tiling"],
+  "profiles": ["parallel", "paw_tiling_nt", "paw_tiling_lrw", "paw_tiling_fixed32"],
   "kernels": [
     {"name": "correlation", "rel_path": "datamining/correlation"},
     {"name": "covariance", "rel_path": "datamining/covariance"},

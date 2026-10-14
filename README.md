@@ -31,8 +31,8 @@ Full application kernels from external benchmark trees, driven by JSON configura
 
 | Suite | Source tree | Profiles | Kernels |
 |-------|-------------|----------|---------|
-| **polybench** | PolyBench/C 4.2 (`POLYBENCH_ROOT`) | `parallel`, `paw_tiling` | 30 kernels (GEMM, 2MM, heat-3d, …) |
-| **npb-ser** | NPB 3.3 serial C (`NPB_SER_ROOT`) | `parallel`, `paw_tiling`, `reuse_analysis` | 9 kernels (CG, EP, MG, BT, …) at CLASS=S |
+| **polybench** | PolyBench/C 4.2 (`POLYBENCH_ROOT`) | `parallel`, `paw_tiling_nt`, `paw_tiling_lrw`, `paw_tiling_fixed32` | 30 kernels (GEMM, 2MM, heat-3d, …) |
+| **npb-ser** | NPB 3.3 serial C (`NPB_SER_ROOT`) | `parallel`, the three `paw_tiling_*` profiles, `reuse_analysis` | 9 kernels (CG, EP, MG, BT, …) at CLASS=S |
 
 Each benchmark case runs a multi-stage pipeline:
 
@@ -206,16 +206,16 @@ All commands assume you are in the suite root and have run `make`.
 ### Benchmark suites and individual tests
 
 ```bash
-# Default: polybench (parallel + paw_tiling) + npb-ser
-# (parallel + paw_tiling + reuse_analysis) — every kernel, every enabled profile
+# Default: polybench (parallel + three PAW tile-size profiles) + npb-ser
+# (those, plus reuse_analysis) — every kernel, every enabled profile
 ./cetus_regression_test --benchmarks
 
 # All kernels, one profile. Suites that do not enable the profile are skipped.
-./cetus_regression_test --benchmarks --profile paw_tiling
+./cetus_regression_test --benchmarks --profile paw_tiling_nt
 ./cetus_regression_test --benchmarks --profile reuse_analysis
 
 # All kernels, several profiles
-./cetus_regression_test --benchmarks --profile parallel --profile paw_tiling
+./cetus_regression_test --benchmarks --profile parallel --profile paw_tiling_lrw
 
 # One suite, all of its kernels and profiles
 ./cetus_regression_test --benchmarks --benchmark-suite polybench
@@ -233,11 +233,11 @@ All commands assume you are in the suite root and have run `make`.
 ./cetus_regression_test --benchmarks --benchmark-suite polybench \
   --benchmark-kernel gemm --profile parallel
 ./cetus_regression_test --benchmarks --benchmark-suite polybench \
-  --benchmark-kernel gemm --profile paw_tiling
+  --benchmark-kernel gemm --profile paw_tiling_fixed32
 
 # Several kernels, one profile (kernel names are substring matches)
 ./cetus_regression_test --benchmarks \
-  --benchmark-kernel gemm --benchmark-kernel atax --profile paw_tiling
+  --benchmark-kernel gemm --benchmark-kernel atax --profile paw_tiling_nt
 
 # Repeatable suite filter
 ./cetus_regression_test --benchmarks --benchmark-suite polybench --benchmark-suite npb-ser
@@ -310,7 +310,7 @@ The process exits **nonzero** if any case is **FAIL** or **XPASS**.
 
 ## Expected results
 
-Default `--benchmarks` is 87 cases: NPB serial class S (9 kernels × `parallel`, `paw_tiling`, `reuse_analysis`) and PolyBench MINI (30 kernels × `parallel`, `paw_tiling`). Kernel mode is 15 source diffs. None of these cases is marked `xfail`.
+Default `--benchmarks` is 165 cases: NPB serial class S (9 kernels × `parallel`, `paw_tiling_nt`, `paw_tiling_lrw`, `paw_tiling_fixed32`, `reuse_analysis`) and PolyBench MINI (30 kernels × `parallel` and the three `paw_tiling_*` profiles). Kernel mode is 15 source diffs. None of these cases is marked `xfail`.
 
 NPB binaries run with four OpenMP threads and a passive wait policy. PolyBench binaries run with one thread and compare dumped arrays. The `xfail` / `xpass` statuses remain in the runner for a future suite that needs them; they are not used by the checked-in suites.
 
@@ -353,11 +353,13 @@ cetus_regression_test_suite/
 
 | Profile | Used by | Purpose |
 |---------|---------|---------|
-| `parallel` | PolyBench + NPB | Standard OpenMP parallelization |
-| `paw_tiling` | PolyBench + NPB serial | Parallel-aware tiling (`-paw_tiling=1`) |
+| `parallel` | PolyBench + NPB | OpenMP parallelization. Not stock Cetus (`-alias=3`, `-profitable-omp=0`) |
+| `paw_tiling_nt` | PolyBench + NPB serial | PAW tiling, NT tile sizes |
+| `paw_tiling_lrw` | PolyBench + NPB serial | PAW tiling, LRW tile sizes |
+| `paw_tiling_fixed32` | PolyBench + NPB serial | PAW tiling, fixed tile size 32 |
 | `reuse_analysis` | NPB serial | OpenMP parallelization plus `-reuse-vector-analysis=1` |
 
-Select them with repeatable `--profile`. Examples: every default benchmark under one profile (`--benchmarks --profile paw_tiling`), one kernel under one profile (`--benchmarks --benchmark-kernel gemm --profile parallel`), or every benchmark under every enabled profile (`--benchmarks`). See [Benchmark suites and individual tests](#benchmark-suites-and-individual-tests).
+Select them with repeatable `--profile`. Examples: every default benchmark under one profile (`--benchmarks --profile paw_tiling_nt`), one kernel under one profile (`--benchmarks --benchmark-kernel gemm --profile parallel`), or every benchmark under every enabled profile (`--benchmarks`). See [Benchmark suites and individual tests](#benchmark-suites-and-individual-tests).
 
 ### Bring-your-own benchmarks (generic adapter)
 
@@ -376,7 +378,7 @@ Template placeholders: `{sandbox}`, `{dataset}`, `{class}`, `{cpp}`, `{gcc}`, et
 
 Shell command strings in JSON are **rejected** at load time; use argv arrays only.
 
-Mark known Cetus bugs with `"xfail": "reason"` or per-profile `"xfail_profiles": {"paw_tiling": "reason"}`.
+Mark known Cetus bugs with `"xfail": "reason"` or per-profile `"xfail_profiles": {"paw_tiling_nt": "reason"}`.
 
 ---
 

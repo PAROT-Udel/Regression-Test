@@ -121,12 +121,13 @@ Expected for `--all`: `Test Summary: 15/15 tests passed.`
 # Repeat --benchmark-suite, --benchmark-kernel, or --profile to select several.
 
 # All default benchmarks, every profile each suite enables
-# (polybench: parallel + paw_tiling; npb-ser: parallel, paw_tiling, reuse_analysis)
+# (polybench: parallel + paw_tiling_nt/lrw/fixed32;
+#  npb-ser: those three, plus parallel and reuse_analysis)
 ./cetus_regression_test --benchmarks
 
 # All kernels, one profile (only suites that enable that profile)
-./cetus_regression_test --benchmarks --profile paw_tiling
-./cetus_regression_test --benchmarks --profile parallel --profile paw_tiling
+./cetus_regression_test --benchmarks --profile paw_tiling_nt
+./cetus_regression_test --benchmarks --profile parallel --profile paw_tiling_lrw
 
 # One suite, all of its kernels and profiles
 ./cetus_regression_test --benchmarks --benchmark-suite polybench
@@ -139,7 +140,7 @@ Expected for `--all`: `Test Summary: 15/15 tests passed.`
 ./cetus_regression_test --benchmarks --benchmark-suite npb-ser --benchmark-kernel cg
 
 # One kernel and one profile
-./cetus_regression_test --benchmarks --benchmark-suite polybench --benchmark-kernel gemm --profile paw_tiling
+./cetus_regression_test --benchmarks --benchmark-suite polybench --benchmark-kernel gemm --profile paw_tiling_fixed32
 
 # Several kernels and one profile
 ./cetus_regression_test --benchmarks --benchmark-kernel gemm --benchmark-kernel atax --profile parallel
@@ -159,6 +160,10 @@ Expected for `--all`: `Test Summary: 15/15 tests passed.`
 ./run_all.sh    # make && --full
 ./cetus_regression_test --full
 ```
+
+### Caviness
+
+`./queue_caviness.sh` syncs this tree to `/work/parot/mgltorsa/cetus_regression_test_suite` and submits `cetus_regression.slurm`. The job generates ground truth for `paw_tiling_lrw` and `paw_tiling_fixed32`, then runs `--full`. The script prints the Slurm job id and returns. It does not wait. Log: `logs/slurm-<jobid>.out` on Caviness. `run_profiles.sh` sets the cluster Cetus and vanilla benchmark paths.
 
 ### Windows / WSL
 
@@ -246,8 +251,10 @@ Nine cases. Flags:
 
 From `benchmarks/config/profiles.json`. A suite lists which of these it runs. `--profile` selects by exact name and is repeatable; omit it to run every profile that suite enables.
 
-- **`parallel`** — standard OpenMP parallelization (PolyBench and NPB)
-- **`paw_tiling`** — parallel-aware tiling (PolyBench and NPB serial)
+- **`parallel`** — OpenMP parallelization (PolyBench and NPB). Not stock Cetus: `-alias=3` (default 1) and `-profitable-omp=0` (default 1).
+- **`paw_tiling_nt`** — parallel-aware tiling, NT tile sizes (PolyBench and NPB serial)
+- **`paw_tiling_lrw`** — parallel-aware tiling, LRW tile sizes (PolyBench and NPB serial)
+- **`paw_tiling_fixed32`** — parallel-aware tiling, fixed tile size 32 (PolyBench and NPB serial)
 - **`reuse_analysis`** — OpenMP parallelization plus `-reuse-vector-analysis=1` (NPB serial)
 
 ### Selecting benchmarks and profiles
@@ -257,12 +264,12 @@ From `benchmarks/config/profiles.json`. A suite lists which of these it runs. `-
 | Goal | Command |
 |------|---------|
 | All benchmarks, all profiles | `--benchmarks` |
-| All benchmarks, one profile | `--benchmarks --profile paw_tiling` |
-| All benchmarks, several profiles | `--benchmarks --profile parallel --profile paw_tiling` |
+| All benchmarks, one profile | `--benchmarks --profile paw_tiling_nt` |
+| All benchmarks, several profiles | `--benchmarks --profile parallel --profile paw_tiling_lrw` |
 | One suite, all kernels and profiles | `--benchmarks --benchmark-suite polybench` |
 | One suite, one profile | `--benchmarks --benchmark-suite npb-ser --profile reuse_analysis` |
 | One kernel, all its profiles | `--benchmarks --benchmark-kernel gemm` |
-| One kernel, one profile | `--benchmarks --benchmark-kernel gemm --profile paw_tiling` |
+| One kernel, one profile | `--benchmarks --benchmark-kernel gemm --profile paw_tiling_fixed32` |
 | Several kernels, one profile | `--benchmarks --benchmark-kernel gemm --benchmark-kernel 2mm --profile parallel` |
 
 ## XFAIL semantics
