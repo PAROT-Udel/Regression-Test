@@ -223,20 +223,18 @@ double randlc(double *X, double *A) {
     R46 = 1.0;
     T23 = 1.0;
     T46 = 1.0;
-#pragma cetus private(i)
 #pragma loop name randlc #0
 #pragma cetus reduction(* : R23, T23)
 #pragma cetus parallel
-#pragma omp parallel for private(i) reduction(* : R23, T23)
+#pragma omp parallel for reduction(* : R23, T23)
     for (i = 1; i <= 23; i++) {
       R23 = (0.5 * R23);
       T23 = (2.0 * T23);
     }
-#pragma cetus private(i)
 #pragma loop name randlc #1
 #pragma cetus reduction(* : R46, T46)
 #pragma cetus parallel
-#pragma omp parallel for private(i) reduction(* : R46, T46)
+#pragma omp parallel for reduction(* : R46, T46)
     for (i = 1; i <= 46; i++) {
       R46 = (0.5 * R46);
       T46 = (2.0 * T46);
@@ -345,7 +343,7 @@ void rank(int iteration) {
   }
 /*  Determine the number of keys in each bucket */
 #pragma loop name rank #2
-  /* #pragma cetus reduction(+: )  */
+  /* #pragma cetus reduction(+: bucket_size[(key_array[i]>>shift)])  */
   for (i = 0; i < (1 << 16); i++) {
     bucket_size[key_array[i] >> shift]++;
   }
@@ -377,7 +375,7 @@ void rank(int iteration) {
     individual population
 */
 #pragma loop name rank #6
-  /* #pragma cetus reduction(+: )  */
+  /* #pragma cetus reduction(+: key_buff_ptr[key_buff_ptr2[i]])  */
   for (i = 0; i < (1 << 16); i++) {
     key_buff_ptr[key_buff_ptr2[i]]++;
   }

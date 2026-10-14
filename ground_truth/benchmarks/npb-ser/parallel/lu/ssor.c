@@ -95,10 +95,10 @@ void ssor(int niter) {
 /* initialize a,b,c,d to zero (guarantees that page tables have been */
 /* formed, if applicable on given architecture, before timestepping). */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, m, n)
+#pragma cetus private(i, m, n)
 #pragma loop name ssor #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, m, n)
+#pragma omp parallel for private(i, m, n)
   for (j = 0; j < 12; j++) {
 #pragma cetus private(i, m, n)
 #pragma loop name ssor #0 #0
@@ -161,7 +161,6 @@ void ssor(int niter) {
 /* --------------------------------------------------------------------- */
 #pragma cetus private(i, j, k, m)
 #pragma loop name ssor #3
-  /* #pragma cetus reduction(+: u[k][j][i][m])  */
   for (istep = 1; istep <= niter; istep++) {
     /* if ( ( (istep % inorm) == 0 ) && ipr == 1 ) { */
     /*  printf(" \n     pseudo-time SSOR iteration no.=%4d\n\n", istep); */
@@ -177,10 +176,10 @@ void ssor(int niter) {
     if (timeron) {
       timer_start(5);
     }
-#pragma cetus private(i, j, k, m)
+#pragma cetus private(i, j, m)
 #pragma loop name ssor #3 #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k, m)
+#pragma omp parallel for private(i, j, m)
     for (k = 1; k < (nz - 1); k++) {
 #pragma cetus private(i, j, m)
 #pragma loop name ssor #3 #0 #0
@@ -263,10 +262,10 @@ void ssor(int niter) {
     if (timeron) {
       timer_start(10);
     }
-#pragma cetus private(i, j, k, m)
+#pragma cetus private(i, j, m)
 #pragma loop name ssor #3 #3
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k, m)
+#pragma omp parallel for private(i, j, m)
     for (k = 1; k < (nz - 1); k++) {
 #pragma cetus private(i, j, m)
 #pragma loop name ssor #3 #3 #0

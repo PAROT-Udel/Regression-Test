@@ -117,13 +117,33 @@ Expected for `--all`: `Test Summary: 15/15 tests passed.`
 # List suites
 ./cetus_regression_test --list-benchmark-suites
 
-# Default: polybench (parallel + paw_tiling) + npb-ser (parallel, CLASS=S)
+# Suites, kernels, and profiles combine. Omit an axis to run all of it.
+# Repeat --benchmark-suite, --benchmark-kernel, or --profile to select several.
+
+# All default benchmarks, every profile each suite enables
+# (polybench: parallel + paw_tiling; npb-ser: parallel, paw_tiling, reuse_analysis)
 ./cetus_regression_test --benchmarks
 
-# One suite / kernel / profile
+# All kernels, one profile (only suites that enable that profile)
+./cetus_regression_test --benchmarks --profile paw_tiling
+./cetus_regression_test --benchmarks --profile parallel --profile paw_tiling
+
+# One suite, all of its kernels and profiles
+./cetus_regression_test --benchmarks --benchmark-suite polybench
+
+# One suite, all kernels, one profile
+./cetus_regression_test --benchmarks --benchmark-suite polybench --profile parallel
+
+# One kernel, every profile that suite enables
 ./cetus_regression_test --benchmarks --benchmark-suite polybench --benchmark-kernel gemm
 ./cetus_regression_test --benchmarks --benchmark-suite npb-ser --benchmark-kernel cg
+
+# One kernel and one profile
 ./cetus_regression_test --benchmarks --benchmark-suite polybench --benchmark-kernel gemm --profile paw_tiling
+
+# Several kernels and one profile
+./cetus_regression_test --benchmarks --benchmark-kernel gemm --benchmark-kernel atax --profile parallel
+
 ./cetus_regression_test --benchmarks --benchmark-suite npb-omp   # opt-in
 
 # GT only / verify only / regenerate GT
@@ -224,10 +244,26 @@ Nine cases. Flags:
 
 ### Benchmark profiles
 
-From `benchmarks/config/profiles.json`:
+From `benchmarks/config/profiles.json`. A suite lists which of these it runs. `--profile` selects by exact name and is repeatable; omit it to run every profile that suite enables.
 
-- **`parallel`** — standard OpenMP parallelization (NPB default)
-- **`paw_tiling`** — parallel-aware tiling (PolyBench default alongside parallel)
+- **`parallel`** — standard OpenMP parallelization (PolyBench and NPB)
+- **`paw_tiling`** — parallel-aware tiling (PolyBench and NPB serial)
+- **`reuse_analysis`** — OpenMP parallelization plus `-reuse-vector-analysis=1` (NPB serial)
+
+### Selecting benchmarks and profiles
+
+`--benchmark-suite`, `--benchmark-kernel`, and `--profile` are independent and repeatable. Each listed value is included. An omitted filter means every value on that axis (default suites, every kernel, every profile the suite enables). Kernel names match as substrings. Profile names must match `profiles.json` exactly; an unknown profile is an error. A known profile that the selected suites do not enable matches no cases.
+
+| Goal | Command |
+|------|---------|
+| All benchmarks, all profiles | `--benchmarks` |
+| All benchmarks, one profile | `--benchmarks --profile paw_tiling` |
+| All benchmarks, several profiles | `--benchmarks --profile parallel --profile paw_tiling` |
+| One suite, all kernels and profiles | `--benchmarks --benchmark-suite polybench` |
+| One suite, one profile | `--benchmarks --benchmark-suite npb-ser --profile reuse_analysis` |
+| One kernel, all its profiles | `--benchmarks --benchmark-kernel gemm` |
+| One kernel, one profile | `--benchmarks --benchmark-kernel gemm --profile paw_tiling` |
+| Several kernels, one profile | `--benchmarks --benchmark-kernel gemm --benchmark-kernel 2mm --profile parallel` |
 
 ## XFAIL semantics
 
@@ -235,7 +271,7 @@ From `benchmarks/config/profiles.json`:
 - **Missing ground truth** — **FAIL** when no xfail is configured. When an xfail is set, the runner skips the GT pre-check, runs Cetus, and lets the xfail catch any Cetus-stage failure. Generate GT with `--generate`.
 - **XPASS** — xfail case passed unexpectedly; fails the run (investigate fix).
 
-Known xfails (release/3.0): PolyBench `atax`/`bicg` (SIGSEGV); NPB `bt`/`sp`/`lu` (bad numerics); NPB `ft` (InternalError); NPB `ua` (parse error).
+The checked-in PolyBench and NPB suites do not use `xfail`. NPB verify sets `OMP_NUM_THREADS=4`, `OMP_WAIT_POLICY=PASSIVE`, and `OMP_DYNAMIC=false`. PolyBench verify uses one thread.
 
 ## Adding a new kernel test
 
@@ -249,7 +285,7 @@ Known xfails (release/3.0): PolyBench `atax`/`bicg` (SIGSEGV); NPB `bt`/`sp`/`lu
 ## Adding a new benchmark case
 
 1. Edit `benchmarks/config/suites/<suite>.json` — no recompile.
-2. `./cetus_regression_test --benchmarks --run-test …` is **not** valid; use `--benchmark-suite` + `--benchmark-kernel`.
+2. `./cetus_regression_test --benchmarks --run-test …` is **not** valid. Select cases with `--benchmark-suite`, `--benchmark-kernel`, and `--profile` (each repeatable; omit one to keep all of that axis).
 3. Generate GT: `--generate --skip-run` then full run without `--generate`.
 4. Commit JSON + `ground_truth/benchmarks/`.
 

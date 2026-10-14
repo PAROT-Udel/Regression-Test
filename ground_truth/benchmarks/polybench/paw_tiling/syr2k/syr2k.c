@@ -69,35 +69,35 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "syr2k.h"
 /* Array initialization. */
-static void init_array(int n, int m, double* alpha, double* beta,
+static void init_array(int n, int m, double *alpha, double *beta,
                        double C[(30 + 0)][(30 + 0)],
                        double A[(30 + 0)][(20 + 0)],
                        double B[(30 + 0)][(20 + 0)]) {
   int i, j;
   (*alpha) = 1.5;
   (*beta) = 1.2;
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma loop name init_array #0 #0
 #pragma cetus private(j)
+#pragma loop name init_array #0 #0
 #pragma cetus private(j)
     for (j = 0; j < m; j++) {
       A[i][j] = (((double)(((i * j) + 1) % n)) / n);
       B[i][j] = (((double)(((i * j) + 2) % m)) / m);
     }
   }
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma loop name init_array #1 #0
 #pragma cetus private(j)
+#pragma loop name init_array #1 #0
 #pragma cetus private(j)
     for (j = 0; j < n; j++) {
       C[i][j] = (((double)(((i * j) + 3) % n)) / m);
@@ -113,12 +113,12 @@ static void print_array(int n, double C[(30 + 0)][(30 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "C");
+#pragma cetus private(i, j)
 #pragma loop name print_array #0
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
   for (i = 0; i < n; i++) {
-#pragma loop name print_array #0 #0
 #pragma cetus private(j)
+#pragma loop name print_array #0 #0
 #pragma cetus private(j)
     for (j = 0; j < n; j++) {
       if ((((i * n) + j) % 20) == 0) {
@@ -147,26 +147,24 @@ static void kernel_syr2k(int n, int m, double alpha, double beta,
 /* B is NxM */
 /* C is NxN */
 #pragma scop
+#pragma cetus private(j, k)
 #pragma loop name kernel_syr2k #0
 #pragma cetus parallel
 #pragma cetus private(i, j, k)
-#pragma cetus private(i, j, k)
 #pragma omp parallel for private(i, j, k)
   for (i = 0; i < n; i++) {
-#pragma loop name kernel_syr2k #0 #0
 #pragma cetus private(j)
+#pragma loop name kernel_syr2k #0 #0
 #pragma cetus private(j)
     for (j = 0; j <= i; j++) {
       C[i][j] *= beta;
     }
+#pragma cetus private(j, k)
 #pragma loop name kernel_syr2k #0 #1
-/* #pragma cetus reduction(+: C[i][j])  */
 #pragma cetus private(j, k)
-#pragma cetus private(j, k)
-#pragma cetus reduction(+ : C[i][j])
     for (k = 0; k < m; k++) {
-#pragma loop name kernel_syr2k #0 #1 #0
 #pragma cetus private(j)
+#pragma loop name kernel_syr2k #0 #1 #0
 #pragma cetus private(j)
       for (j = 0; j <= i; j++) {
         C[i][j] +=
@@ -177,7 +175,7 @@ static void kernel_syr2k(int n, int m, double alpha, double beta,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 30;
   int m = 20;
@@ -211,11 +209,11 @@ int main(int argc, char** argv) {
   */
   print_array(n, *C);
   /* Be clean. */
-  free((void*)C);
+  free((void *)C);
   ;
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)B);
+  free((void *)B);
   ;
   return 0;
 }

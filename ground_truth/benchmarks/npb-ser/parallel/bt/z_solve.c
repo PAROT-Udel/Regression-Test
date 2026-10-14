@@ -107,11 +107,10 @@ void z_solve() {
 #pragma cetus private(i, k, m, n)
 #pragma loop name z_solve #0 #0
     for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(k)
 #pragma cetus lastprivate(tmp1, tmp2, tmp3)
 #pragma loop name z_solve #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(k) lastprivate(tmp1, tmp2, tmp3)
+#pragma omp parallel for lastprivate(tmp1, tmp2, tmp3)
       for (k = 0; k <= ksize; k++) {
         tmp1 = (1.0 / u[k][j][i][0]);
         tmp2 = (tmp1 * tmp1);
@@ -184,11 +183,10 @@ void z_solve() {
       /* ---------------------------------------------------------------------
        */
       lhsinit(lhs, ksize);
-#pragma cetus private(k)
 #pragma cetus lastprivate(tmp1, tmp2)
 #pragma loop name z_solve #0 #0 #1
 #pragma cetus parallel
-#pragma omp parallel for private(k) lastprivate(tmp1, tmp2)
+#pragma omp parallel for lastprivate(tmp1, tmp2)
       for (k = 1; k <= (ksize - 1); k++) {
         tmp1 = (dt * tz1);
         tmp2 = (dt * tz2);
@@ -426,10 +424,10 @@ void z_solve() {
 #pragma cetus private(k, m, n)
 #pragma loop name z_solve #0 #0 #3
       for (k = (ksize - 1); k >= 0; k--) {
-#pragma cetus private(m, n)
+#pragma cetus private(n)
 #pragma loop name z_solve #0 #0 #3 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m, n)
+#pragma omp parallel for private(n)
         for (m = 0; m < 5; m++) {
 #pragma cetus private(n)
 #pragma loop name z_solve #0 #0 #3 #0 #0

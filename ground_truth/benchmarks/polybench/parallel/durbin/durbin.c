@@ -64,10 +64,9 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Array initialization. */
 static void init_array(int n, double r[(40 + 0)]) {
   int i, j;
-#pragma cetus private(i)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < n; i++) {
     r[i] = ((n + 1) - i);
   }
@@ -112,26 +111,23 @@ static void kernel_durbin(int n, double r[(40 + 0)], double y[(40 + 0)]) {
   for (k = 1; k < n; k++) {
     beta = ((1 - (alpha * alpha)) * beta);
     sum = 0.0;
-#pragma cetus private(i)
 #pragma loop name kernel_durbin #0 #0
 #pragma cetus reduction(+ : sum)
 #pragma cetus parallel
-#pragma omp parallel for private(i) reduction(+ : sum)
+#pragma omp parallel for reduction(+ : sum)
     for (i = 0; i < k; i++) {
       sum += (r[(k - i) - 1] * y[i]);
     }
     alpha = ((-(r[k] + sum)) / beta);
-#pragma cetus private(i)
 #pragma loop name kernel_durbin #0 #1
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
     for (i = 0; i < k; i++) {
       z[i] = (y[i] + (alpha * y[(k - i) - 1]));
     }
-#pragma cetus private(i)
 #pragma loop name kernel_durbin #0 #2
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
     for (i = 0; i < k; i++) {
       y[i] = z[i];
     }
@@ -140,7 +136,7 @@ static void kernel_durbin(int n, double r[(40 + 0)], double y[(40 + 0)]) {
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 40;
   /* Variable declarationallocation. */
@@ -165,9 +161,9 @@ int main(int argc, char** argv) {
   */
   print_array(n, *y);
   /* Be clean. */
-  free((void*)r);
+  free((void *)r);
   ;
-  free((void*)y);
+  free((void *)y);
   ;
   return 0;
 }

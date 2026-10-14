@@ -106,6 +106,7 @@ typedef struct {
     char last_gcc_argv[4096];
     char last_make_argv[4096];
     char last_binary_argv[4096];
+    char last_binary_env[1024];
 } AdapterFakeProcess;
 
 static void adapter_fake_init(AdapterFakeProcess *f)
@@ -213,7 +214,27 @@ static int adapter_fake_run(const ProcessSpec *spec,
                     if (benchdir) {
                         char *params = runner_path_join(benchdir, "npbparams.h");
                         if (params) {
+                            char folder[64];
+                            char *upper_dir;
+                            char *upper_params;
+                            size_t k;
+                            snprintf(folder, sizeof(folder), "%s", a);
+                            for (k = 0; folder[k] != '\0'; ++k)
+                                folder[k] =
+                                    (char)toupper((unsigned char)folder[k]);
+                            upper_dir = runner_path_join(spec->cwd, folder);
+                            upper_params = upper_dir == NULL
+                                               ? NULL
+                                               : runner_path_join(upper_dir,
+                                                                  "npbparams.h");
                             write_text(params, "/* generated npbparams.h */\n");
+                            if (upper_params != NULL) {
+                                write_text(upper_params,
+                                           "#define COMPILETIME \"08 Oct 2026\"\n"
+                                           "#define NPBVERSION \"3.3.1\"\n");
+                            }
+                            free(upper_params);
+                            free(upper_dir);
                             free(params);
                         }
                         free(benchdir);
@@ -229,6 +250,17 @@ static int adapter_fake_run(const ProcessSpec *spec,
         ++f->binary_calls;
         join_argv(spec->argv, f->last_binary_argv,
                   sizeof(f->last_binary_argv));
+        f->last_binary_env[0] = '\0';
+        for (size_t ei = 0; ei < spec->environment_count; ++ei) {
+            char piece[128];
+            snprintf(piece, sizeof(piece), "%s=%s;",
+                     spec->environment[ei].name,
+                     spec->environment[ei].value != NULL
+                         ? spec->environment[ei].value
+                         : "");
+            strncat(f->last_binary_env, piece,
+                    sizeof(f->last_binary_env) - strlen(f->last_binary_env) - 1);
+        }
         if (f->binary_fail_on_call > 0 &&
             f->binary_calls == f->binary_fail_on_call)
             result->exit_code = 1;
@@ -797,6 +829,17 @@ static int test_npb_prepare(void)
     /* bench dir with source and header */
     CHECK(file_exists_at(work, "sandbox/CG/cg.c"));
     CHECK(file_exists_at(work, "sandbox/CG/globals.h"));
+    {
+        char *params = runner_path_join(work, "sandbox/CG/npbparams.h");
+        char *text = NULL;
+        CHECK(params != NULL);
+        CHECK(runner_read_file(params, &text, NULL) == 0);
+        CHECK(strstr(text, "#define COMPILETIME \"09 Sep 2026\"") != NULL);
+        CHECK(strstr(text, "08 Oct 2026") == NULL);
+        CHECK(strstr(text, "NPBVERSION") != NULL);
+        free(text);
+        free(params);
+    }
     CHECK(file_exists_at(work, "sandbox/CG/Makefile"));
     /* experiment junk filtered out */
     CHECK(!file_exists_at(work, "sandbox/CG/rose_junk.c"));
@@ -964,6 +1007,8 @@ static int test_npb_verify(void)
                                  sizeof(error));
     CHECK(out == BENCHMARK_ADAPTER_OK);
     CHECK(strstr(error, "Verification Successful") != NULL);
+    CHECK(strstr(proc.last_binary_env, "OMP_NUM_THREADS=4") != NULL);
+    CHECK(strstr(proc.last_binary_env, "OMP_WAIT_POLICY=PASSIVE") != NULL);
 
     /* "verification = successful" form */
     proc.binary_stdout = " Verification = SUCCESSFUL\n";

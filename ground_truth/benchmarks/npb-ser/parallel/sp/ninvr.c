@@ -82,10 +82,10 @@ void ninvr() {
   if (timeron) {
     timer_start(13);
   }
-#pragma cetus private(i, j, k, r1, r2, r3, r4, r5, t1, t2)
+#pragma cetus private(i, j, r1, r2, r3, r4, r5, t1, t2)
 #pragma loop name ninvr #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k, r1, r2, r3, r4, r5, t1, t2)
+#pragma omp parallel for private(i, j, r1, r2, r3, r4, r5, t1, t2)
   for (k = 1; k <= nz2; k++) {
 #pragma cetus private(i, j, r1, r2, r3, r4, r5, t1, t2)
 #pragma loop name ninvr #0 #0

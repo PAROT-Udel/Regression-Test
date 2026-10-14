@@ -100,11 +100,15 @@ void cli_options_init(CliOptions *options)
     options->timeout_seconds = 600;
     options->config_dir = "benchmarks/config";
     runner_string_vector_init(&options->benchmark_suite_ids);
+    runner_string_vector_init(&options->benchmark_kernels);
+    runner_string_vector_init(&options->profiles);
 }
 
 void cli_options_free(CliOptions *options)
 {
     runner_string_vector_free(&options->benchmark_suite_ids);
+    runner_string_vector_free(&options->benchmark_kernels);
+    runner_string_vector_free(&options->profiles);
 }
 
 int cli_parse(int argc, char **argv, CliOptions *options,
@@ -166,10 +170,13 @@ int cli_parse(int argc, char **argv, CliOptions *options,
                 return fail(error, error_size, "out of memory");
         } else if (strcmp(argv[i], "--benchmark-kernel") == 0) {
             NEED_VALUE("--benchmark-kernel");
-            options->benchmark_kernel = argv[++i];
+            if (runner_string_vector_push(&options->benchmark_kernels,
+                                          argv[++i]) != 0)
+                return fail(error, error_size, "out of memory");
         } else if (strcmp(argv[i], "--profile") == 0) {
             NEED_VALUE("--profile");
-            options->profile = argv[++i];
+            if (runner_string_vector_push(&options->profiles, argv[++i]) != 0)
+                return fail(error, error_size, "out of memory");
         } else if (strcmp(argv[i], "--dataset") == 0) {
             NEED_VALUE("--dataset");
             options->dataset = argv[++i];
@@ -253,8 +260,8 @@ int cli_parse(int argc, char **argv, CliOptions *options,
     /* --- benchmark filters require benchmark mode --- */
     has_benchmark_filter = (int)(
         options->benchmark_suite_ids.length > 0 ||
-        options->benchmark_kernel != NULL ||
-        options->profile != NULL ||
+        options->benchmark_kernels.length > 0 ||
+        options->profiles.length > 0 ||
         options->dataset != NULL ||
         options->npb_class != NULL ||
         options->skip_gt || options->skip_run);
@@ -289,9 +296,15 @@ void cli_print_usage(const char *program_name)
         "  -cetus-options \"<flags>\" Override Cetus options for kernel tests\n"
         "  --help, -h               Show this help\n"
         "\nBenchmark options (require --benchmarks or --full):\n"
-        "  --benchmark-suite <id>   Select benchmark suite (repeatable)\n"
-        "  --benchmark-kernel <name> Filter to matching kernel name\n"
-        "  --profile <name>         Filter to matching profile\n"
+        "  --benchmark-suite <id>   Select benchmark suite (repeatable).\n"
+        "                           Omit to run default suites.\n"
+        "  --benchmark-kernel <name> Select kernel (repeatable, substring).\n"
+        "                           Omit to run every kernel.\n"
+        "  --profile <name>         Select Cetus profile (repeatable, exact).\n"
+        "                           Omit to run every profile the suite enables.\n"
+        "                           Suite, kernel, and profile filters combine:\n"
+        "                           each listed value is included, and an\n"
+        "                           omitted filter means all of that axis.\n"
         "  --dataset <value>        Override dataset for PolyBench suites\n"
         "  --class <value>          Override class for NPB suites\n"
         "  --skip-gt                Skip ground-truth comparison\n"

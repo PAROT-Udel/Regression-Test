@@ -102,10 +102,10 @@ void blts(int ldmx, int ldmy, int ldmz, int nx, int ny, int nz, int k,
   /* we use casted pointers. */
   double(*vk)[(((ldmx / 2) * 2) + 1)][5] = v[k];
   double(*vkm1)[(((ldmx / 2) * 2) + 1)][5] = v[k - 1];
-#pragma cetus private(i, j, m)
+#pragma cetus private(i, m)
 #pragma loop name blts #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, m)
+#pragma omp parallel for private(i, m)
   for (j = jst; j < jend; j++) {
 #pragma cetus private(i, m)
 #pragma loop name blts #0 #0
@@ -129,12 +129,10 @@ void blts(int ldmx, int ldmy, int ldmz, int nx, int ny, int nz, int k,
 #pragma cetus private(i, m, tmp, tmp1)
 #pragma cetus lastprivate(tmat, tv)
 #pragma loop name blts #1 #0
-#pragma cetus parallel
-#pragma omp parallel for private(i, m, tmp, tmp1) firstprivate(tmat, tv)       \
-    lastprivate(tmat, tv)
     for (i = ist; i < iend; i++) {
-#pragma cetus private(m)
 #pragma loop name blts #1 #0 #0
+#pragma cetus parallel
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         tv[m] = (vk[j][i][m] -
                  (omega * ((((((((((ldy[j][i][0][m] * vk[j - 1][i][0]) +
@@ -153,8 +151,9 @@ void blts(int ldmx, int ldmy, int ldmz, int nx, int ny, int nz, int k,
 /*  */
 /* forward elimination */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(m)
 #pragma loop name blts #1 #0 #1
+#pragma cetus parallel
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         tmat[m][0] = d[j][i][0][m];
         tmat[m][1] = d[j][i][1][m];

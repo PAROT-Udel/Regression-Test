@@ -69,54 +69,54 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "2mm.h"
 /* Array initialization. */
-static void init_array(int ni, int nj, int nk, int nl, double* alpha,
-                       double* beta, double A[(16 + 0)][(22 + 0)],
+static void init_array(int ni, int nj, int nk, int nl, double *alpha,
+                       double *beta, double A[(16 + 0)][(22 + 0)],
                        double B[(22 + 0)][(18 + 0)],
                        double C[(18 + 0)][(24 + 0)],
                        double D[(16 + 0)][(24 + 0)]) {
   int i, j;
   (*alpha) = 1.5;
   (*beta) = 1.2;
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < ni; i++) {
-#pragma loop name init_array #0 #0
 #pragma cetus private(j)
+#pragma loop name init_array #0 #0
     for (j = 0; j < nk; j++) {
       A[i][j] = (((double)(((i * j) + 1) % ni)) / ni);
     }
   }
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < nk; i++) {
-#pragma loop name init_array #1 #0
 #pragma cetus private(j)
+#pragma loop name init_array #1 #0
     for (j = 0; j < nj; j++) {
       B[i][j] = (((double)((i * (j + 1)) % nj)) / nj);
     }
   }
+#pragma cetus private(j)
 #pragma loop name init_array #2
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < nj; i++) {
-#pragma loop name init_array #2 #0
 #pragma cetus private(j)
+#pragma loop name init_array #2 #0
     for (j = 0; j < nl; j++) {
       C[i][j] = (((double)(((i * (j + 3)) + 1) % nl)) / nl);
     }
   }
+#pragma cetus private(j)
 #pragma loop name init_array #3
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < ni; i++) {
-#pragma loop name init_array #3 #0
 #pragma cetus private(j)
+#pragma loop name init_array #3 #0
     for (j = 0; j < nl; j++) {
       D[i][j] = (((double)((i * (j + 2)) % nk)) / nk);
     }
@@ -131,11 +131,11 @@ static void print_array(int ni, int nl, double D[(16 + 0)][(24 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "D");
-#pragma loop name print_array #0
 #pragma cetus private(i, j)
+#pragma loop name print_array #0
   for (i = 0; i < ni; i++) {
-#pragma loop name print_array #0 #0
 #pragma cetus private(j)
+#pragma loop name print_array #0 #0
     for (j = 0; j < nl; j++) {
       if ((((i * ni) + j) % 20) == 0) {
         fprintf(stderr, "\n");
@@ -161,43 +161,35 @@ static void kernel_2mm(int ni, int nj, int nk, int nl, double alpha,
 #pragma scop
 #pragma experimental section start
 /* D := alphaA*B*C + beta*D */
-#pragma cetus firstprivate(tmp)
-#pragma cetus lastprivate(tmp)
+#pragma cetus private(j, k)
 #pragma loop name kernel_2mm #0
 #pragma cetus parallel
-#pragma cetus firstprivate(tmp)
-#pragma cetus private(i, j, k)
-#pragma cetus lastprivate(tmp)
-#pragma omp parallel for private(i, j, k) firstprivate(tmp) lastprivate(tmp)
+#pragma omp parallel for private(j, k)
   for (i = 0; i < ni; i++) {
-#pragma cetus firstprivate(tmp)
-#pragma cetus lastprivate(tmp)
-#pragma loop name kernel_2mm #0 #0
 #pragma cetus firstprivate(tmp)
 #pragma cetus private(j, k)
 #pragma cetus lastprivate(tmp)
+#pragma loop name kernel_2mm #0 #0
     for (j = 0; j < nj; j++) {
       tmp[i][j] = 0.0;
-#pragma loop name kernel_2mm #0 #0 #0
-/* #pragma cetus reduction(+: tmp[i][j])  */
 #pragma cetus private(k)
+#pragma loop name kernel_2mm #0 #0 #0
       for (k = 0; k < nk; ++k) {
         tmp[i][j] += ((alpha * A[i][k]) * B[k][j]);
       }
     }
   }
+#pragma cetus private(j, k)
 #pragma loop name kernel_2mm #1
 #pragma cetus parallel
-#pragma cetus private(i, j, k)
-#pragma omp parallel for private(i, j, k)
+#pragma omp parallel for private(j, k)
   for (i = 0; i < ni; i++) {
-#pragma loop name kernel_2mm #1 #0
 #pragma cetus private(j, k)
+#pragma loop name kernel_2mm #1 #0
     for (j = 0; j < nl; j++) {
       D[i][j] *= beta;
-#pragma loop name kernel_2mm #1 #0 #0
-/* #pragma cetus reduction(+: D[i][j])  */
 #pragma cetus private(k)
+#pragma loop name kernel_2mm #1 #0 #0
       for (k = 0; k < nj; ++k) {
         D[i][j] += (tmp[i][k] * C[k][j]);
       }
@@ -207,7 +199,7 @@ static void kernel_2mm(int ni, int nj, int nk, int nl, double alpha,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int ni = 16;
   int nj = 18;
@@ -251,15 +243,15 @@ int main(int argc, char** argv) {
   */
   print_array(ni, nl, *D);
   /* Be clean. */
-  free((void*)tmp);
+  free((void *)tmp);
   ;
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)B);
+  free((void *)B);
   ;
-  free((void*)C);
+  free((void *)C);
   ;
-  free((void*)D);
+  free((void *)D);
   ;
   return 0;
 }

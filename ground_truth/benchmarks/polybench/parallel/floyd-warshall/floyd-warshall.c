@@ -64,10 +64,10 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Array initialization. */
 static void init_array(int n, int path[(60 + 0)][(60 + 0)]) {
   int i, j;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #0 #0
@@ -113,9 +113,9 @@ static void kernel_floyd_warshall(int n, int path[(60 + 0)][(60 + 0)]) {
   int i, j, k;
 #pragma scop
 #pragma experimental section start
-#pragma cetus private(i, j, k)
+#pragma cetus private(i, j)
 #pragma loop name kernel_floyd_warshall #0
-  /* #pragma cetus reduction(min: )  */
+  /* #pragma cetus reduction(min: path[i][j])  */
   for (k = 0; k < n; k++) {
 #pragma cetus private(i, j)
 #pragma loop name kernel_floyd_warshall #0 #0
@@ -133,7 +133,7 @@ static void kernel_floyd_warshall(int n, int path[(60 + 0)][(60 + 0)]) {
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 60;
   /* Variable declarationallocation. */
@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
   */
   print_array(n, *path);
   /* Be clean. */
-  free((void*)path);
+  free((void *)path);
   ;
   return 0;
 }

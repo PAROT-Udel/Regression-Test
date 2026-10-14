@@ -1,3 +1,4 @@
+#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -785,24 +786,9 @@ int main() {
   int y;
   int z;
   int _ret_val_0;
-  int i_0;
-  int i_1;
-  int col_0;
-  int i_2;
-  int i_3;
-  int col_1;
-  int i_4;
-  int i_5;
-  int i_6;
-  int i_7;
-  int i_8;
-  int i_9;
-  int i_10;
-  int i_11;
-  int i_12;
   v_end[0] = 0;
   v_end[1] = (5 - 1);
-#pragma cetus private(i, j, k, ntemp)
+#pragma cetus private(i, j, ntemp)
 #pragma loop name main #0
 #pragma cetus parallel
   for (k = 0; k < 8800; k++) {
@@ -824,18 +810,13 @@ int main() {
       }
     }
   }
-#pragma cetus private(col, col_0, col_1, i, i_0, i_1, i_10, i_11, i_12, i_2, \
-                      i_3, i_4, i_5, i_6, i_7, i_8, i_9, ie, iface, ig, ig1, \
-                      ig2, ig3, ig4, ije1, ije2, il, il1, il2, il3, il4, j,  \
-                      nnje, tmp, x, y, z)
+#pragma cetus private(col, col_0, i, i_0, i_1, ie, iface, ig, ig1, ig2, ig3,  \
+                      ig4, ije1, ije2, il, il1, il2, il3, il4, j, nnje, x, y, \
+                      z)
 #pragma loop name main #1
-#pragma cetus parallel
   for (ie = 0; ie < nelt; ie++) {
-#pragma cetus private(col, col_0, col_1, i, i_0, i_1, i_10, i_11, i_12, i_2,  \
-                      i_3, i_4, i_5, i_6, i_7, i_8, i_9, iface, ig, ig1, ig2, \
-                      ig3, ig4, ije1, ije2, il, il1, il2, il3, il4, j, nnje,  \
-                      x, y, z)
-#pragma cetus lastprivate(tmp)
+#pragma cetus private(col, col_0, i, i_0, i_1, iface, ig, ig1, ig2, ig3, ig4, \
+                      ije1, ije2, il, il1, il2, il3, il4, j, nnje, x, y, z)
 #pragma loop name main #1 #0
     for (iface = 0; iface < 6; iface++) {
       il1 = idel[ie][iface][0][0];
@@ -856,8 +837,9 @@ int main() {
         nnje = 1;
       }
       if (nnje == 2) {
-#pragma cetus private(x, y, z)
+#pragma cetus private(y, z)
 #pragma loop name main #1 #0 #0
+#pragma cetus parallel
         for (x = 0; x < nnje; x++) {
 #pragma cetus private(y, z)
 #pragma loop name main #1 #0 #0 #0
@@ -869,19 +851,17 @@ int main() {
             }
           }
         }
-#pragma cetus firstprivate(tmp)
-#pragma cetus private(col, i, i_0, ig, ije1, ije2, il, j)
-#pragma cetus lastprivate(tmp)
-#pragma loop name main #1 #0 #1
-        for (ije1 = 0; ije1 < nnje; ije1++) {
-#pragma cetus firstprivate(tmp)
 #pragma cetus private(col, i, i_0, ig, ije2, il, j)
-#pragma cetus lastprivate(tmp)
+#pragma loop name main #1 #0 #1
+#pragma cetus parallel
+        for (ije1 = 0; ije1 < nnje; ije1++) {
+#pragma cetus private(col, i, i_0, ig, ije2, il, j)
 #pragma loop name main #1 #0 #1 #0
           for (ije2 = 0; ije2 < nnje; ije2++) {
 #pragma cetus private(col, i, i_0, ig, il, j)
 #pragma loop name main #1 #0 #1 #0 #0
             for (col = 0; col < 5; col++) {
+              int i_0;
               i = v_end[ije2];
               ig = idmo[ie][iface][ije2][ije1][col][i];
               tmp[ije1][col][i] = tmor[ig];
@@ -889,12 +869,10 @@ int main() {
 #pragma cetus private(ig, il, j)
 #pragma cetus lastprivate(i_0)
 #pragma loop name main #1 #0 #1 #0 #0 #0
-              /* #pragma cetus reduction(+: tmp[ije1][col][(1+i_0)])  */
               for (i_0 = 0; i_0 <= 2; i_0++) {
                 il = idel[ie][iface][col][1 + i_0];
 #pragma cetus private(ig, j)
 #pragma loop name main #1 #0 #1 #0 #0 #0 #0
-                /* #pragma cetus reduction(+: tmp[ije1][col][(1+i_0)])  */
                 for (j = 0; j < 5; j++) {
                   ig = idmo[ie][iface][ije2][ije1][col][j];
                   tmp[ije1][col][1 + i_0] =
@@ -906,231 +884,317 @@ int main() {
             }
           }
         }
-#pragma cetus private(col, col_0, i, i_1, i_2, i_3, ije1, il, j)
+#pragma cetus parallel
+#pragma cetus private(col, col_0, i, i_0, i_1, il, j)
+        {
+          double *reduce = (double *)malloc(8800 * sizeof(double));
+          int reduce_span_0;
+          for (reduce_span_0 = 0; reduce_span_0 < 8800; reduce_span_0++) {
+            reduce[reduce_span_0] = 0;
+          }
 #pragma loop name main #1 #0 #2
-        /* #pragma cetus reduction(+: tx[il])  */
-        for (ije1 = 0; ije1 < nnje; ije1++) {
-          col = 0;
+#pragma cetus for
+          for (ije1 = 0; ije1 < nnje; ije1++) {
+            int i_0;
+            int col_0;
+            int i_1;
+            col = 0;
+/* Normalized Loop */
+#pragma cetus private(il, j)
+#pragma cetus lastprivate(i_0)
+#pragma loop name main #1 #0 #2 #0
+            /* #pragma cetus reduction(+: tx[il])  */
+            for (i_0 = 0; i_0 <= 2; i_0++) {
+              il = idel[ie][iface][1 + i_0][col];
+#pragma cetus private(j)
+#pragma loop name main #1 #0 #2 #0 #0
+              /* #pragma cetus reduction(+: tx[il])  */
+              for (j = 0; j < 5; j++) {
+                reduce[il] =
+                    (reduce[il] +
+                     ((qbnew[ije1][j][(1 + i_0) - 1] * tmp[ije1][j][col]) *
+                      0.5));
+              }
+            }
+            i = (1 + i_0);
+/* Normalized Loop */
+#pragma cetus private(i, i_1, il, j)
+#pragma cetus lastprivate(col_0)
+#pragma loop name main #1 #0 #2 #1
+            /* #pragma cetus reduction(+: tx[il])  */
+            for (col_0 = 0; col_0 <= 2; col_0++) {
+              int i_1;
+              i = v_end[ije1];
+              il = idel[ie][iface][i][1 + col_0];
+              reduce[il] = (reduce[il] + (tmp[ije1][i][1 + col_0] * 0.5));
 /* Normalized Loop */
 #pragma cetus private(il, j)
 #pragma cetus lastprivate(i_1)
-#pragma loop name main #1 #0 #2 #0
-          /* #pragma cetus reduction(+: tx[il])  */
-          for (i_1 = 0; i_1 <= 2; i_1++) {
-            il = idel[ie][iface][1 + i_1][col];
-#pragma cetus private(j)
-#pragma loop name main #1 #0 #2 #0 #0
-            /* #pragma cetus reduction(+: tx[il])  */
-            for (j = 0; j < 5; j++) {
-              tx[il] =
-                  (tx[il] +
-                   ((qbnew[ije1][j][(1 + i_1) - 1] * tmp[ije1][j][col]) * 0.5));
-            }
-          }
-          i = (1 + i_1);
-/* Normalized Loop */
-#pragma cetus private(i, i_2, il, j)
-#pragma cetus lastprivate(col_0)
-#pragma loop name main #1 #0 #2 #1
-          /* #pragma cetus reduction(+: tx[il])  */
-          for (col_0 = 0; col_0 <= 2; col_0++) {
-            i = v_end[ije1];
-            il = idel[ie][iface][i][1 + col_0];
-            tx[il] = (tx[il] + (tmp[ije1][i][1 + col_0] * 0.5));
-/* Normalized Loop */
-#pragma cetus private(il, j)
-#pragma cetus lastprivate(i_2)
 #pragma loop name main #1 #0 #2 #1 #0
-            /* #pragma cetus reduction(+: tx[il])  */
-            for (i_2 = 0; i_2 <= 2; i_2++) {
-              il = idel[ie][iface][1 + i_2][1 + col_0];
+              /* #pragma cetus reduction(+: tx[il])  */
+              for (i_1 = 0; i_1 <= 2; i_1++) {
+                il = idel[ie][iface][1 + i_1][1 + col_0];
 #pragma cetus private(j)
 #pragma loop name main #1 #0 #2 #1 #0 #0
-              /* #pragma cetus reduction(+: tx[il])  */
-              for (j = 0; j < 5; j++) {
-                tx[il] = (tx[il] + (qbnew[ije1][j][(1 + i_2) - 1] *
-                                    tmp[ije1][j][1 + col_0]));
+                /* #pragma cetus reduction(+: tx[il])  */
+                for (j = 0; j < 5; j++) {
+                  reduce[il] = (reduce[il] + (qbnew[ije1][j][(1 + i_1) - 1] *
+                                              tmp[ije1][j][1 + col_0]));
+                }
               }
+              i = (1 + i_1);
             }
-            i = (1 + i_2);
-          }
-          col = (1 + col_0);
-          col = (5 - 1);
+            col = (1 + col_0);
+            col = (5 - 1);
 /* Normalized Loop */
 #pragma cetus private(il, j)
-#pragma cetus lastprivate(i_3)
+#pragma cetus lastprivate(i_1)
 #pragma loop name main #1 #0 #2 #2
-          /* #pragma cetus reduction(+: tx[il])  */
-          for (i_3 = 0; i_3 <= 2; i_3++) {
-            il = idel[ie][iface][1 + i_3][col];
+            /* #pragma cetus reduction(+: tx[il])  */
+            for (i_1 = 0; i_1 <= 2; i_1++) {
+              il = idel[ie][iface][1 + i_1][col];
 #pragma cetus private(j)
 #pragma loop name main #1 #0 #2 #2 #0
-            /* #pragma cetus reduction(+: tx[il])  */
-            for (j = 0; j < 5; j++) {
-              tx[il] =
-                  (tx[il] +
-                   ((qbnew[ije1][j][(1 + i_3) - 1] * tmp[ije1][j][col]) * 0.5));
+              /* #pragma cetus reduction(+: tx[il])  */
+              for (j = 0; j < 5; j++) {
+                reduce[il] =
+                    (reduce[il] +
+                     ((qbnew[ije1][j][(1 + i_1) - 1] * tmp[ije1][j][col]) *
+                      0.5));
+              }
+            }
+            i = (1 + i_1);
+          }
+#pragma cetus critical
+          {
+            for (reduce_span_0 = 0; reduce_span_0 < 8800; reduce_span_0++) {
+              tx[reduce_span_0] += reduce[reduce_span_0];
             }
           }
-          i = (1 + i_3);
         }
       } else {
+        int col_0;
 /* Normalized Loop */
-#pragma cetus private(i, i_4, ig, il)
-#pragma cetus lastprivate(col_1)
+#pragma cetus private(i, i_0, ig, il)
+#pragma cetus lastprivate(col_0)
 #pragma loop name main #1 #0 #3
-        for (col_1 = 0; col_1 <= 2; col_1++) {
+        for (col_0 = 0; col_0 <= 2; col_0++) {
+          int i_0;
 /* Normalized Loop */
 #pragma cetus private(ig, il)
-#pragma cetus lastprivate(i_4)
+#pragma cetus lastprivate(i_0)
 #pragma loop name main #1 #0 #3 #0
-          for (i_4 = 0; i_4 <= 2; i_4++) {
-            il = idel[ie][iface][1 + col_1][1 + i_4];
-            ig = idmo[ie][iface][0][0][1 + col_1][1 + i_4];
+          for (i_0 = 0; i_0 <= 2; i_0++) {
+            il = idel[ie][iface][1 + col_0][1 + i_0];
+            ig = idmo[ie][iface][0][0][1 + col_0][1 + i_0];
             tx[il] = tmor[ig];
           }
-          i = (1 + i_4);
+          i = (1 + i_0);
         }
-        col = (1 + col_1);
+        col = (1 + col_0);
         if (idmo[ie][iface][0][0][0][5 - 1] != (-1)) {
-/* Normalized Loop */
+          int i_0;
+#pragma cetus parallel
 #pragma cetus private(ig, ije1, il, j)
-#pragma cetus lastprivate(i_5)
+          {
+            double *reduce = (double *)malloc(8800 * sizeof(double));
+            int reduce_span_0;
+            for (reduce_span_0 = 0; reduce_span_0 < 8800; reduce_span_0++) {
+              reduce[reduce_span_0] = 0;
+            }
+/* Normalized Loop */
 #pragma loop name main #1 #0 #4
-          /* #pragma cetus reduction(+: tx[il])  */
-          for (i_5 = 0; i_5 <= 2; i_5++) {
-            il = idel[ie][iface][0][1 + i_5];
+#pragma cetus for
+            for (i_0 = 0; i_0 <= 2; i_0++) {
+              il = idel[ie][iface][0][1 + i_0];
 #pragma cetus private(ig, ije1, j)
 #pragma loop name main #1 #0 #4 #0
-            /* #pragma cetus reduction(+: tx[il])  */
-            for (ije1 = 0; ije1 < 2; ije1++) {
+              /* #pragma cetus reduction(+: tx[il])  */
+              for (ije1 = 0; ije1 < 2; ije1++) {
 #pragma cetus private(ig, j)
 #pragma loop name main #1 #0 #4 #0 #0
-              /* #pragma cetus reduction(+: tx[il])  */
-              for (j = 0; j < 5; j++) {
-                ig = idmo[ie][iface][ije1][0][0][j];
-                tx[il] = (tx[il] +
-                          ((qbnew[ije1][j][(1 + i_5) - 1] * tmor[ig]) * 0.5));
+                /* #pragma cetus reduction(+: tx[il])  */
+                for (j = 0; j < 5; j++) {
+                  ig = idmo[ie][iface][ije1][0][0][j];
+                  reduce[il] =
+                      (reduce[il] +
+                       ((qbnew[ije1][j][(1 + i_0) - 1] * tmor[ig]) * 0.5));
+                }
+              }
+            }
+#pragma cetus critical
+            {
+              for (reduce_span_0 = 0; reduce_span_0 < 8800; reduce_span_0++) {
+                tx[reduce_span_0] += reduce[reduce_span_0];
               }
             }
           }
-          i = (1 + i_5);
+          i = (1 + i_0);
         } else {
+          int i_0;
 /* Normalized Loop */
 #pragma cetus private(ig, il)
-#pragma cetus lastprivate(i_6)
+#pragma cetus lastprivate(i_0)
 #pragma loop name main #1 #0 #5
-          for (i_6 = 0; i_6 <= 2; i_6++) {
-            il = idel[ie][iface][0][1 + i_6];
-            ig = idmo[ie][iface][0][0][0][1 + i_6];
+          for (i_0 = 0; i_0 <= 2; i_0++) {
+            il = idel[ie][iface][0][1 + i_0];
+            ig = idmo[ie][iface][0][0][0][1 + i_0];
             tx[il] = tmor[ig];
           }
-          i = (1 + i_6);
+          i = (1 + i_0);
         }
         if (idmo[ie][iface][1][0][1][5 - 1] != (-1)) {
-/* Normalized Loop */
+          int i_0;
+#pragma cetus parallel
 #pragma cetus private(ig, ije1, il, j)
-#pragma cetus lastprivate(i_7)
+          {
+            double *reduce = (double *)malloc(8800 * sizeof(double));
+            int reduce_span_0;
+            for (reduce_span_0 = 0; reduce_span_0 < 8800; reduce_span_0++) {
+              reduce[reduce_span_0] = 0;
+            }
+/* Normalized Loop */
 #pragma loop name main #1 #0 #6
-          /* #pragma cetus reduction(+: tx[il])  */
-          for (i_7 = 0; i_7 <= 2; i_7++) {
-            il = idel[ie][iface][1 + i_7][5 - 1];
+#pragma cetus for
+            for (i_0 = 0; i_0 <= 2; i_0++) {
+              il = idel[ie][iface][1 + i_0][5 - 1];
 #pragma cetus private(ig, ije1, j)
 #pragma loop name main #1 #0 #6 #0
-            /* #pragma cetus reduction(+: tx[il])  */
-            for (ije1 = 0; ije1 < 2; ije1++) {
+              /* #pragma cetus reduction(+: tx[il])  */
+              for (ije1 = 0; ije1 < 2; ije1++) {
 #pragma cetus private(ig, j)
 #pragma loop name main #1 #0 #6 #0 #0
-              /* #pragma cetus reduction(+: tx[il])  */
-              for (j = 0; j < 5; j++) {
-                ig = idmo[ie][iface][1][ije1][j][5 - 1];
-                tx[il] = (tx[il] +
-                          ((qbnew[ije1][j][(1 + i_7) - 1] * tmor[ig]) * 0.5));
+                /* #pragma cetus reduction(+: tx[il])  */
+                for (j = 0; j < 5; j++) {
+                  ig = idmo[ie][iface][1][ije1][j][5 - 1];
+                  reduce[il] =
+                      (reduce[il] +
+                       ((qbnew[ije1][j][(1 + i_0) - 1] * tmor[ig]) * 0.5));
+                }
+              }
+            }
+#pragma cetus critical
+            {
+              for (reduce_span_0 = 0; reduce_span_0 < 8800; reduce_span_0++) {
+                tx[reduce_span_0] += reduce[reduce_span_0];
               }
             }
           }
-          i = (1 + i_7);
+          i = (1 + i_0);
         } else {
+          int i_0;
 /* Normalized Loop */
 #pragma cetus private(ig, il)
-#pragma cetus lastprivate(i_8)
+#pragma cetus lastprivate(i_0)
 #pragma loop name main #1 #0 #7
-          for (i_8 = 0; i_8 <= 2; i_8++) {
-            il = idel[ie][iface][1 + i_8][5 - 1];
-            ig = idmo[ie][iface][0][0][1 + i_8][5 - 1];
+          for (i_0 = 0; i_0 <= 2; i_0++) {
+            il = idel[ie][iface][1 + i_0][5 - 1];
+            ig = idmo[ie][iface][0][0][1 + i_0][5 - 1];
             tx[il] = tmor[ig];
           }
-          i = (1 + i_8);
+          i = (1 + i_0);
         }
         if (idmo[ie][iface][0][1][5 - 1][1] != (-1)) {
-/* Normalized Loop */
+          int i_0;
+#pragma cetus parallel
 #pragma cetus private(ig, ije1, il, j)
-#pragma cetus lastprivate(i_9)
+          {
+            double *reduce = (double *)malloc(8800 * sizeof(double));
+            int reduce_span_0;
+            for (reduce_span_0 = 0; reduce_span_0 < 8800; reduce_span_0++) {
+              reduce[reduce_span_0] = 0;
+            }
+/* Normalized Loop */
 #pragma loop name main #1 #0 #8
-          /* #pragma cetus reduction(+: tx[il])  */
-          for (i_9 = 0; i_9 <= 2; i_9++) {
-            il = idel[ie][iface][5 - 1][1 + i_9];
+#pragma cetus for
+            for (i_0 = 0; i_0 <= 2; i_0++) {
+              il = idel[ie][iface][5 - 1][1 + i_0];
 #pragma cetus private(ig, ije1, j)
 #pragma loop name main #1 #0 #8 #0
-            /* #pragma cetus reduction(+: tx[il])  */
-            for (ije1 = 0; ije1 < 2; ije1++) {
+              /* #pragma cetus reduction(+: tx[il])  */
+              for (ije1 = 0; ije1 < 2; ije1++) {
 #pragma cetus private(ig, j)
 #pragma loop name main #1 #0 #8 #0 #0
-              /* #pragma cetus reduction(+: tx[il])  */
-              for (j = 0; j < 5; j++) {
-                ig = idmo[ie][iface][ije1][1][5 - 1][j];
-                tx[il] = (tx[il] +
-                          ((qbnew[ije1][j][(1 + i_9) - 1] * tmor[ig]) * 0.5));
+                /* #pragma cetus reduction(+: tx[il])  */
+                for (j = 0; j < 5; j++) {
+                  ig = idmo[ie][iface][ije1][1][5 - 1][j];
+                  reduce[il] =
+                      (reduce[il] +
+                       ((qbnew[ije1][j][(1 + i_0) - 1] * tmor[ig]) * 0.5));
+                }
+              }
+            }
+#pragma cetus critical
+            {
+              for (reduce_span_0 = 0; reduce_span_0 < 8800; reduce_span_0++) {
+                tx[reduce_span_0] += reduce[reduce_span_0];
               }
             }
           }
-          i = (1 + i_9);
+          i = (1 + i_0);
         } else {
+          int i_0;
 /* Normalized Loop */
 #pragma cetus private(ig, il)
-#pragma cetus lastprivate(i_10)
+#pragma cetus lastprivate(i_0)
 #pragma loop name main #1 #0 #9
-          for (i_10 = 0; i_10 <= 2; i_10++) {
-            il = idel[ie][iface][5 - 1][1 + i_10];
-            ig = idmo[ie][iface][0][0][5 - 1][1 + i_10];
+          for (i_0 = 0; i_0 <= 2; i_0++) {
+            il = idel[ie][iface][5 - 1][1 + i_0];
+            ig = idmo[ie][iface][0][0][5 - 1][1 + i_0];
             tx[il] = tmor[ig];
           }
-          i = (1 + i_10);
+          i = (1 + i_0);
         }
         if (idmo[ie][iface][0][0][5 - 1][0] != (-1)) {
-/* Normalized Loop */
+          int i_0;
+#pragma cetus parallel
 #pragma cetus private(ig, ije1, il, j)
-#pragma cetus lastprivate(i_11)
+          {
+            double *reduce = (double *)malloc(8800 * sizeof(double));
+            int reduce_span_0;
+            for (reduce_span_0 = 0; reduce_span_0 < 8800; reduce_span_0++) {
+              reduce[reduce_span_0] = 0;
+            }
+/* Normalized Loop */
 #pragma loop name main #1 #0 #10
-          /* #pragma cetus reduction(+: tx[il])  */
-          for (i_11 = 0; i_11 <= 2; i_11++) {
-            il = idel[ie][iface][1 + i_11][0];
+#pragma cetus for
+            for (i_0 = 0; i_0 <= 2; i_0++) {
+              il = idel[ie][iface][1 + i_0][0];
 #pragma cetus private(ig, ije1, j)
 #pragma loop name main #1 #0 #10 #0
-            /* #pragma cetus reduction(+: tx[il])  */
-            for (ije1 = 0; ije1 < 2; ije1++) {
+              /* #pragma cetus reduction(+: tx[il])  */
+              for (ije1 = 0; ije1 < 2; ije1++) {
 #pragma cetus private(ig, j)
 #pragma loop name main #1 #0 #10 #0 #0
-              /* #pragma cetus reduction(+: tx[il])  */
-              for (j = 0; j < 5; j++) {
-                ig = idmo[ie][iface][0][ije1][j][0];
-                tx[il] = (tx[il] +
-                          ((qbnew[ije1][j][(1 + i_11) - 1] * tmor[ig]) * 0.5));
+                /* #pragma cetus reduction(+: tx[il])  */
+                for (j = 0; j < 5; j++) {
+                  ig = idmo[ie][iface][0][ije1][j][0];
+                  reduce[il] =
+                      (reduce[il] +
+                       ((qbnew[ije1][j][(1 + i_0) - 1] * tmor[ig]) * 0.5));
+                }
+              }
+            }
+#pragma cetus critical
+            {
+              for (reduce_span_0 = 0; reduce_span_0 < 8800; reduce_span_0++) {
+                tx[reduce_span_0] += reduce[reduce_span_0];
               }
             }
           }
-          i = (1 + i_11);
+          i = (1 + i_0);
         } else {
+          int i_0;
 /* Normalized Loop */
 #pragma cetus private(ig, il)
-#pragma cetus lastprivate(i_12)
+#pragma cetus lastprivate(i_0)
 #pragma loop name main #1 #0 #11
-          for (i_12 = 0; i_12 <= 2; i_12++) {
-            il = idel[ie][iface][1 + i_12][0];
-            ig = idmo[ie][iface][0][0][1 + i_12][0];
+          for (i_0 = 0; i_0 <= 2; i_0++) {
+            il = idel[ie][iface][1 + i_0][0];
+            ig = idmo[ie][iface][0][0][1 + i_0][0];
             tx[il] = tmor[ig];
           }
-          i = (1 + i_12);
+          i = (1 + i_0);
         }
       }
     }
@@ -1144,13 +1208,12 @@ static void calc() {
   int g1m1_s[6][5][5][5];
   int g4m1_s[6][5][5][5];
   int isize;
-#pragma cetus private(i)
 #pragma loop name calc #0
 #pragma cetus parallel
   for (i = 0; i < 5; i++) {
     xfrac[i] = ((zgm1[i] * 0.5) + 0.5);
   }
-#pragma cetus private(dtemp, i, isize, j, k, temp, temp1, temp2)
+#pragma cetus private(dtemp, i, j, k, temp, temp1, temp2)
 #pragma loop name calc #1
 #pragma cetus parallel
   for (isize = 0; isize < 6; isize++) {
@@ -1179,7 +1242,6 @@ static void calc() {
 static int r_init(double a[], int n, double _const) {
   int i;
   int _ret_val_0;
-#pragma cetus private(i)
 #pragma loop name r_init #0
 #pragma cetus parallel
   for (i = 0; i < n; i++) {

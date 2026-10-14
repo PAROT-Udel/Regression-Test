@@ -625,7 +625,6 @@ int main() {
   int r, ind, t;
   double sm;
   int _ret_val_0;
-  int ind_0;
   row[0] = 0;
   holder = 0;
   r = row_val[idx];
@@ -639,8 +638,8 @@ int main() {
   }
 #pragma cetus private(ind, ind_0, r, sm, t)
 #pragma loop name main #1
-#pragma cetus parallel
   for (r = 0; r < n_rows; ++r) {
+    int ind_0;
 /* Normalized Loop */
 #pragma cetus private(sm, t)
 #pragma cetus lastprivate(ind_0)
@@ -648,9 +647,9 @@ int main() {
     for (ind_0 = 0; ind_0 <= ((-1 + row_ptr[1 + r]) + (-1 * row_ptr[r]));
          ind_0++) {
       sm = 0;
-#pragma cetus private(t)
 #pragma loop name main #1 #0 #0
-      /* #pragma cetus reduction(+: sm)  */
+#pragma cetus reduction(+ : sm)
+#pragma cetus parallel
       for (t = 0; t < k; ++t) {
         sm += (W[(r * k) + t] * H[(col_ind[ind_0 + row_ptr[r]] * k) + t]);
       }

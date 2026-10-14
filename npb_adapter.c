@@ -21,6 +21,81 @@ static const char *npb_common_always[] = {
     "timers.h",        "type.h",            "randdp.c",
     "randdp.h",        "randi8.c",          "print_results.h"};
 
+/* Ground truth stores the preprocessed COMPILETIME literal. setparams
+ * stamps the current day, so pin this before Cetus expands the macro. */
+static const char npb_fixed_compile_time[] = "09 Sep 2026";
+
+static const char cetus_omp_stub[] =
+    "#ifndef CETUS_OMP_STUB_H\n"
+    "#define CETUS_OMP_STUB_H\n"
+    "/* Cetus cannot parse GCC's omp.h (__attribute__). This stub is only\n"
+    " * on the Cetus preprocessor path; the rebuilt binary uses libgomp. */\n"
+    "typedef struct { int lock; } omp_lock_t;\n"
+    "typedef struct { int lock; } omp_nest_lock_t;\n"
+    "void omp_set_num_threads(int num_threads);\n"
+    "int omp_get_num_threads(void);\n"
+    "int omp_get_max_threads(void);\n"
+    "int omp_get_thread_num(void);\n"
+    "int omp_get_num_procs(void);\n"
+    "int omp_in_parallel(void);\n"
+    "double omp_get_wtime(void);\n"
+    "double omp_get_wtick(void);\n"
+    "#endif\n";
+
+static int pin_npb_compile_time(const char *path)
+{
+    char *contents = NULL;
+    const char *key = "#define COMPILETIME \"";
+    char *marker;
+    char *end;
+    RunnerString rewritten;
+    char *text;
+    int rc;
+
+    if (runner_read_file(path, &contents, NULL) != 0)
+        return -1;
+    marker = strstr(contents, key);
+    if (marker == NULL) {
+        free(contents);
+        return 0;
+    }
+    end = strchr(marker + strlen(key), '"');
+    if (end == NULL) {
+        free(contents);
+        return -1;
+    }
+    runner_string_init(&rewritten);
+    if (runner_string_append_n(&rewritten, contents,
+                               (size_t)(marker + strlen(key) - contents)) != 0 ||
+        runner_string_append(&rewritten, npb_fixed_compile_time) != 0 ||
+        runner_string_append(&rewritten, end) != 0) {
+        runner_string_free(&rewritten);
+        free(contents);
+        return -1;
+    }
+    free(contents);
+    text = runner_string_take(&rewritten);
+    if (text == NULL)
+        return -1;
+    rc = runner_write_file(path, text, strlen(text));
+    free(text);
+    return rc;
+}
+
+static int write_cetus_omp_stub(const char *directory)
+{
+    char *path = runner_path_join(directory, "omp.h");
+    int rc;
+
+    if (path == NULL || runner_mkdir_recursive(directory, 0755) != 0) {
+        free(path);
+        return -1;
+    }
+    rc = runner_write_file(path, cetus_omp_stub, strlen(cetus_omp_stub));
+    free(path);
+    return rc;
+}
+
 static const char *resolve_root(const BenchmarkCaseContext *ctx)
 {
     const BenchmarkCase *tc = ctx->test_case;
@@ -39,6 +114,8 @@ static int run_tool(const BenchmarkCaseContext *ctx,
                     const char *label,
                     const char *const *argv,
                     const char *cwd,
+                    const RunnerEnvOverride *env,
+                    size_t env_count,
                     ProcessResult *result)
 {
     ProcessSpec spec;
@@ -47,6 +124,8 @@ static int run_tool(const BenchmarkCaseContext *ctx,
     memset(result, 0, sizeof(*result));
     spec.argv = argv;
     spec.cwd = cwd;
+    spec.environment = env;
+    spec.environment_count = env_count;
     spec.timeout_seconds = (unsigned int)ctx->timeout_seconds;
     rc = ctx->process_run(&spec, result, ctx->process_context);
     benchmark_log_process(ctx->log_path, label, argv, rc == 0 ? result : NULL);
@@ -486,7 +565,7 @@ static BenchmarkAdapterOutcome npb_prepare(
             argv[2] = class_arg;
             argv[3] = NULL;
             memset(&result, 0, sizeof(result));
-            run_tool(ctx, "make-params", argv, sandbox, &result);
+            run_tool(ctx, "make-params", argv, sandbox, NULL, 0, &result);
             process_result_free(&result);
         }
     }
@@ -502,7 +581,7 @@ static BenchmarkAdapterOutcome npb_prepare(
                 const char *make_argv[2] = {"make", NULL};
                 ProcessResult make_result;
                 memset(&make_result, 0, sizeof(make_result));
-                run_tool(ctx, "make-setparams", make_argv, sys_dir, &make_result);
+                run_tool(ctx, "make-setparams", make_argv, sys_dir, NULL, 0, &make_result);
                 process_result_free(&make_result);
 
                 {
@@ -515,13 +594,19 @@ static BenchmarkAdapterOutcome npb_prepare(
                         sp_argv[2] = npb_class;
                         sp_argv[3] = NULL;
                         memset(&sp_result, 0, sizeof(sp_result));
-                        run_tool(ctx, "setparams", sp_argv, sandbox_bench, &sp_result);
+                        run_tool(ctx, "setparams", sp_argv, sandbox_bench, NULL, 0, &sp_result);
                         process_result_free(&sp_result);
                     }
                     free(setparams);
                 }
                 free(sys_dir);
             }
+        }
+        if (runner_file_exists(params) && pin_npb_compile_time(params) != 0) {
+            snprintf(error, error_size, "cannot pin COMPILETIME in %s", params);
+            free(params);
+            outcome = BENCHMARK_ADAPTER_INFRA_FAILURE;
+            goto done;
         }
         free(params);
     }
@@ -573,6 +658,7 @@ static BenchmarkAdapterOutcome npb_cetus_transform(
     char *sandbox_common = NULL;
     char *work_original = runner_path_join(ctx->work_dir, "original");
     char *work_cetus = runner_path_join(ctx->work_dir, "cetus_output");
+    char *cetus_include = runner_path_join(ctx->work_dir, "cetus_include");
     RunnerString prep;
     const char *cpp;
     BenchmarkAdapterOutcome outcome = BENCHMARK_ADAPTER_INFRA_FAILURE;
@@ -581,8 +667,11 @@ static BenchmarkAdapterOutcome npb_cetus_transform(
     (void)context;
     runner_string_init(&prep);
 
-    if (sandbox == NULL || work_original == NULL || work_cetus == NULL)
+    if (sandbox == NULL || work_original == NULL || work_cetus == NULL ||
+        cetus_include == NULL)
         goto oom;
+    if (write_cetus_omp_stub(cetus_include) != 0)
+        goto infra;
 
     sandbox_bench = runner_path_join(sandbox, kernel->bench);
     sandbox_common = runner_path_join(sandbox, "common");
@@ -593,7 +682,9 @@ static BenchmarkAdapterOutcome npb_cetus_transform(
     if (cpp == NULL || cpp[0] == '\0')
         cpp = "cpp";
     if (runner_string_append(&prep, cpp) != 0 ||
-        runner_string_append(&prep, " -C -I. -I") != 0 ||
+        runner_string_append(&prep, " -C -I") != 0 ||
+        runner_string_append(&prep, cetus_include) != 0 ||
+        runner_string_append(&prep, " -I. -I") != 0 ||
         runner_string_append(&prep, sandbox_bench) != 0 ||
         runner_string_append(&prep, " -I") != 0 ||
         runner_string_append(&prep, sandbox_common) != 0)
@@ -697,7 +788,7 @@ static BenchmarkAdapterOutcome npb_cetus_transform(
         }
 
         memset(&result, 0, sizeof(result));
-        if (run_tool(ctx, "cetus", argv, outdir, &result) != 0) {
+        if (run_tool(ctx, "cetus", argv, outdir, NULL, 0, &result) != 0) {
             snprintf(error, error_size, "cannot execute Cetus for %s",
                      src_name);
             free((char *)argv[1]);
@@ -786,6 +877,7 @@ infra:
     outcome = BENCHMARK_ADAPTER_INFRA_FAILURE;
 done:
     runner_string_free(&prep);
+    free(cetus_include);
     free(sandbox_common);
     free(sandbox_bench);
     free(work_cetus);
@@ -902,7 +994,7 @@ static BenchmarkAdapterOutcome npb_build(
     argv[6] = NULL;
 
     memset(&result, 0, sizeof(result));
-    if (run_tool(ctx, "make", argv, sandbox, &result) != 0) {
+    if (run_tool(ctx, "make", argv, sandbox, NULL, 0, &result) != 0) {
         snprintf(error, error_size, "cannot execute make");
         free(bindir);
         free(sandbox);
@@ -991,10 +1083,19 @@ static BenchmarkAdapterOutcome npb_verify(
     argv[0] = bin_path;
     argv[1] = NULL;
     memset(&result, 0, sizeof(result));
-    if (run_tool(ctx, "npb-run", argv, sandbox, &result) != 0) {
-        snprintf(error, error_size, "cannot execute NPB binary");
-        outcome = BENCHMARK_ADAPTER_INFRA_FAILURE;
-        goto cleanup;
+    /* Class S is tiny. Four threads still exposes races that one thread
+     * hides, and a passive wait keeps a busy machine from spinning until
+     * the 600s timeout. */
+    {
+        static const RunnerEnvOverride env[] = {
+            {"OMP_NUM_THREADS", "4"},
+            {"OMP_WAIT_POLICY", "PASSIVE"},
+            {"OMP_DYNAMIC", "false"}};
+        if (run_tool(ctx, "npb-run", argv, sandbox, env, 3, &result) != 0) {
+            snprintf(error, error_size, "cannot execute NPB binary");
+            outcome = BENCHMARK_ADAPTER_INFRA_FAILURE;
+            goto cleanup;
+        }
     }
     if (result.timed_out || !result.exited || result.exit_code != 0) {
         snprintf(error, error_size, "NPB binary failed (rc=%d)",

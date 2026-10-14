@@ -69,18 +69,18 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "covariance.h"
 /* Array initialization. */
-static void init_array(int m, int n, double* float_n,
+static void init_array(int m, int n, double *float_n,
                        double data[(32 + 0)][(28 + 0)]) {
   int i, j;
   (*float_n) = ((double)n);
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < 32; i++) {
-#pragma loop name init_array #0 #0
 #pragma cetus private(j)
+#pragma loop name init_array #0 #0
 #pragma cetus private(j)
     for (j = 0; j < 28; j++) {
       data[i][j] = ((((double)i) * j) / 28);
@@ -96,12 +96,12 @@ static void print_array(int m, double cov[(28 + 0)][(28 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "cov");
+#pragma cetus private(i, j)
 #pragma loop name print_array #0
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
   for (i = 0; i < m; i++) {
-#pragma loop name print_array #0 #0
 #pragma cetus private(j)
+#pragma loop name print_array #0 #0
 #pragma cetus private(j)
     for (j = 0; j < m; j++) {
       if ((((i * m) + j) % 20) == 0) {
@@ -124,22 +124,16 @@ static void kernel_covariance(int m, int n, double float_n,
                               double mean[(28 + 0)]) {
   int i, j, k;
 #pragma scop
-#pragma cetus firstprivate(mean)
-#pragma cetus lastprivate(mean)
+#pragma cetus private(i)
 #pragma loop name kernel_covariance #0
 #pragma cetus parallel
-#pragma cetus firstprivate(mean)
 #pragma cetus private(i, j)
-#pragma cetus lastprivate(mean)
-#pragma cetus firstprivate(mean)
-#pragma cetus private(i, j)
-#pragma cetus lastprivate(mean)
-#pragma omp parallel for private(i, j) firstprivate(mean) lastprivate(mean)
+#pragma omp parallel for private(i, j)
   for (j = 0; j < m; j++) {
     mean[j] = 0.0;
+#pragma cetus private(i)
 #pragma loop name kernel_covariance #0 #0
 /* #pragma cetus reduction(+: mean[j])  */
-#pragma cetus private(i)
 #pragma cetus private(i)
 #pragma cetus reduction(+ : mean[j])
     for (i = 0; i < n; i++) {
@@ -147,47 +141,37 @@ static void kernel_covariance(int m, int n, double float_n,
     }
     mean[j] /= float_n;
   }
+#pragma cetus private(j)
 #pragma loop name kernel_covariance #1
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma loop name kernel_covariance #1 #0
 #pragma cetus private(j)
+#pragma loop name kernel_covariance #1 #0
 #pragma cetus private(j)
     for (j = 0; j < m; j++) {
       data[i][j] -= mean[j];
     }
   }
 #pragma cetus firstprivate(cov)
+#pragma cetus private(i, j, k)
 #pragma cetus lastprivate(cov)
 #pragma loop name kernel_covariance #2
-#pragma cetus parallel
 #pragma cetus firstprivate(cov)
 #pragma cetus private(i, j, k)
 #pragma cetus lastprivate(cov)
-#pragma cetus firstprivate(cov)
-#pragma cetus private(i, j, k)
-#pragma cetus lastprivate(cov)
-#pragma omp parallel for private(i, j, k) firstprivate(cov) lastprivate(cov)
   for (i = 0; i < m; i++) {
-#pragma cetus firstprivate(cov)
-#pragma cetus lastprivate(cov)
+#pragma cetus private(k)
 #pragma loop name kernel_covariance #2 #0
-#pragma cetus firstprivate(cov)
+#pragma cetus parallel
 #pragma cetus private(j, k)
-#pragma cetus lastprivate(cov)
-#pragma cetus firstprivate(cov)
-#pragma cetus private(j, k)
-#pragma cetus lastprivate(cov)
+#pragma omp parallel for private(j, k)
     for (j = i; j < m; j++) {
       cov[i][j] = 0.0;
+#pragma cetus private(k)
 #pragma loop name kernel_covariance #2 #0 #0
-/* #pragma cetus reduction(+: cov[i][j])  */
 #pragma cetus private(k)
-#pragma cetus private(k)
-#pragma cetus reduction(+ : cov[i][j])
       for (k = 0; k < n; k++) {
         cov[i][j] += (data[k][i] * data[k][j]);
       }
@@ -198,7 +182,7 @@ static void kernel_covariance(int m, int n, double float_n,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 32;
   int m = 28;
@@ -230,11 +214,11 @@ int main(int argc, char** argv) {
   */
   print_array(m, *cov);
   /* Be clean. */
-  free((void*)data);
+  free((void *)data);
   ;
-  free((void*)cov);
+  free((void *)cov);
   ;
-  free((void*)mean);
+  free((void *)mean);
   ;
   return 0;
 }

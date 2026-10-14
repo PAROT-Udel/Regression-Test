@@ -11,16 +11,8 @@
     {"name": "covariance", "rel_path": "datamining/covariance"},
     {"name": "2mm", "rel_path": "linear-algebra/kernels/2mm"},
     {"name": "3mm", "rel_path": "linear-algebra/kernels/3mm"},
-    {
-      "name": "atax",
-      "rel_path": "linear-algebra/kernels/atax",
-      "xfail": "cetus-transformed binary SIGSEGV at MINI (release/3.0)"
-    },
-    {
-      "name": "bicg",
-      "rel_path": "linear-algebra/kernels/bicg",
-      "xfail": "cetus-transformed binary SIGSEGV at MINI (release/3.0)"
-    },
+    {"name": "atax", "rel_path": "linear-algebra/kernels/atax"},
+    {"name": "bicg", "rel_path": "linear-algebra/kernels/bicg"},
     {"name": "doitgen", "rel_path": "linear-algebra/kernels/doitgen"},
     {"name": "mvt", "rel_path": "linear-algebra/kernels/mvt"},
     {"name": "gemm", "rel_path": "linear-algebra/blas/gemm"},

@@ -87,10 +87,10 @@ void initialize() {
 /* values are nonzero by initializing the whole thing here. */
 /* --------------------------------------------------------------------- */
 #pragma experimental section start
-#pragma cetus private(i, j, k, m)
+#pragma cetus private(i, j, m)
 #pragma loop name initialize #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k, m)
+#pragma omp parallel for private(i, j, m)
   for (k = 0; k <= (grid_points[2] - 1); k++) {
 #pragma cetus private(i, j, m)
 #pragma loop name initialize #0 #0
@@ -136,10 +136,10 @@ void initialize() {
         for (iz = 0; iz < 2; iz++) {
           exact_solution(xi, eta, (double)iz, &Pface[iz][2][0]);
         }
-#pragma cetus private(Peta, Pxi, Pzeta, m)
+#pragma cetus private(Peta, Pxi, Pzeta)
 #pragma loop name initialize #1 #0 #0 #3
 #pragma cetus parallel
-#pragma omp parallel for private(Peta, Pxi, Pzeta, m)
+#pragma omp parallel for private(Peta, Pxi, Pzeta)
         for (m = 0; m < 5; m++) {
           Pxi = ((xi * Pface[1][0][m]) + ((1.0 - xi) * Pface[0][0][m]));
           Peta = ((eta * Pface[1][1][m]) + ((1.0 - eta) * Pface[0][1][m]));
@@ -169,10 +169,9 @@ void initialize() {
     for (j = 0; j <= (grid_points[1] - 1); j++) {
       eta = (((double)j) * dnym1);
       exact_solution(xi, eta, zeta, temp);
-#pragma cetus private(m)
 #pragma loop name initialize #2 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -192,10 +191,9 @@ void initialize() {
     for (j = 0; j <= (grid_points[1] - 1); j++) {
       eta = (((double)j) * dnym1);
       exact_solution(xi, eta, zeta, temp);
-#pragma cetus private(m)
 #pragma loop name initialize #3 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -215,10 +213,9 @@ void initialize() {
     for (i = 0; i <= (grid_points[0] - 1); i++) {
       xi = (((double)i) * dnxm1);
       exact_solution(xi, eta, zeta, temp);
-#pragma cetus private(m)
 #pragma loop name initialize #4 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -238,10 +235,9 @@ void initialize() {
     for (i = 0; i <= (grid_points[0] - 1); i++) {
       xi = (((double)i) * dnxm1);
       exact_solution(xi, eta, zeta, temp);
-#pragma cetus private(m)
 #pragma loop name initialize #5 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -261,10 +257,9 @@ void initialize() {
     for (i = 0; i <= (grid_points[0] - 1); i++) {
       xi = (((double)i) * dnxm1);
       exact_solution(xi, eta, zeta, temp);
-#pragma cetus private(m)
 #pragma loop name initialize #6 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -284,10 +279,9 @@ void initialize() {
     for (i = 0; i <= (grid_points[0] - 1); i++) {
       xi = (((double)i) * dnxm1);
       exact_solution(xi, eta, zeta, temp);
-#pragma cetus private(m)
 #pragma loop name initialize #7 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -303,10 +297,10 @@ void lhsinit(double lhs[][3][5][5], int size) {
 /* --------------------------------------------------------------------- */
 /* zero the whole left hand side for starters */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(m, n)
+#pragma cetus private(m)
 #pragma loop name lhsinit #0
 #pragma cetus parallel
-#pragma omp parallel for private(m, n)
+#pragma omp parallel for private(m)
   for (n = 0; n < 5; n++) {
 #pragma cetus private(m)
 #pragma loop name lhsinit #0 #0
@@ -322,10 +316,9 @@ void lhsinit(double lhs[][3][5][5], int size) {
 /* --------------------------------------------------------------------- */
 /* next, set all diagonal values to 1. This is overkill, but convenient */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(m)
 #pragma loop name lhsinit #1
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     lhs[0][1][m][m] = 1.0;
     lhs[i][1][m][m] = 1.0;

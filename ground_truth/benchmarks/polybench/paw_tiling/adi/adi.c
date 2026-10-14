@@ -71,13 +71,13 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Array initialization. */
 static void init_array(int n, double u[(20 + 0)][(20 + 0)]) {
   int i, j;
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
-#pragma loop name init_array #0 #0
 #pragma cetus private(j)
+#pragma loop name init_array #0 #0
     for (j = 0; j < n; j++) {
       u[i][j] = (((double)((i + n) - j)) / n);
     }
@@ -92,11 +92,11 @@ static void print_array(int n, double u[(20 + 0)][(20 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "u");
-#pragma loop name print_array #0
 #pragma cetus private(i, j)
+#pragma loop name print_array #0
   for (i = 0; i < n; i++) {
-#pragma loop name print_array #0 #0
 #pragma cetus private(j)
+#pragma loop name print_array #0 #0
     for (j = 0; j < n; j++) {
       if ((((i * n) + j) % 20) == 0) {
         fprintf(stderr, "\n");
@@ -143,20 +143,20 @@ static void kernel_adi(int tsteps, int n, double u[(20 + 0)][(20 + 0)],
   d = ((-mul2) / 2.0);
   e = (1.0 + mul2);
   f = d;
-#pragma loop name kernel_adi #0
 #pragma cetus private(i, j, t)
+#pragma loop name kernel_adi #0
   for (t = 1; t <= tsteps; t++) {
 /* Column Sweep */
+#pragma cetus private(j)
 #pragma loop name kernel_adi #0 #0
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
     for (i = 1; i < (n - 1); i++) {
       v[0][i] = 1.0;
       p[i][0] = 0.0;
       q[i][0] = v[0][i];
-#pragma loop name kernel_adi #0 #0 #0
 #pragma cetus private(j)
+#pragma loop name kernel_adi #0 #0 #0
       for (j = 1; j < (n - 1); j++) {
         p[i][j] = ((-c) / ((a * p[i][j - 1]) + b));
         q[i][j] = ((((((-d) * u[j][i - 1]) + ((1.0 + (2.0 * d)) * u[j][i])) -
@@ -165,24 +165,23 @@ static void kernel_adi(int tsteps, int n, double u[(20 + 0)][(20 + 0)],
                    ((a * p[i][j - 1]) + b));
       }
       v[n - 1][i] = 1.0;
-#pragma loop name kernel_adi #0 #0 #1
 #pragma cetus private(j)
+#pragma loop name kernel_adi #0 #0 #1
       for (j = (n - 2); j >= 1; j--) {
         v[j][i] = ((p[i][j] * v[j + 1][i]) + q[i][j]);
       }
     }
 /* Row Sweep */
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_adi #0 #1
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
     for (i = 1; i < (n - 1); i++) {
       u[i][0] = 1.0;
       p[i][0] = 0.0;
       q[i][0] = u[i][0];
-#pragma loop name kernel_adi #0 #1 #0
 #pragma cetus private(j)
+#pragma loop name kernel_adi #0 #1 #0
       for (j = 1; j < (n - 1); j++) {
         p[i][j] = ((-f) / ((d * p[i][j - 1]) + e));
         q[i][j] = ((((((-a) * v[i - 1][j]) + ((1.0 + (2.0 * a)) * v[i][j])) -
@@ -191,8 +190,8 @@ static void kernel_adi(int tsteps, int n, double u[(20 + 0)][(20 + 0)],
                    ((d * p[i][j - 1]) + e));
       }
       u[i][n - 1] = 1.0;
-#pragma loop name kernel_adi #0 #1 #1
 #pragma cetus private(j)
+#pragma loop name kernel_adi #0 #1 #1
       for (j = (n - 2); j >= 1; j--) {
         u[i][j] = ((p[i][j] * u[i][j + 1]) + q[i][j]);
       }
@@ -202,7 +201,7 @@ static void kernel_adi(int tsteps, int n, double u[(20 + 0)][(20 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 20;
   int tsteps = 20;
@@ -238,13 +237,13 @@ int main(int argc, char** argv) {
   */
   print_array(n, *u);
   /* Be clean. */
-  free((void*)u);
+  free((void *)u);
   ;
-  free((void*)v);
+  free((void *)v);
   ;
-  free((void*)p);
+  free((void *)p);
   ;
-  free((void*)q);
+  free((void *)q);
   ;
   return 0;
 }

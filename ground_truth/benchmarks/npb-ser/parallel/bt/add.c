@@ -82,10 +82,10 @@ void add() {
   if (timeron) {
     timer_start(11);
   }
-#pragma cetus private(i, j, k, m)
+#pragma cetus private(i, j, m)
 #pragma loop name add #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k, m)
+#pragma omp parallel for private(i, j, m)
   for (k = 1; k <= (grid_points[2] - 2); k++) {
 #pragma cetus private(i, j, m)
 #pragma loop name add #0 #0

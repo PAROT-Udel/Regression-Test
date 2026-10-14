@@ -73,8 +73,7 @@ static void init_array(int n, double r[(40 + 0)]) {
   int i, j;
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma cetus private(i)
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < n; i++) {
     r[i] = ((n + 1) - i);
   }
@@ -88,8 +87,8 @@ static void print_array(int n, double y[(40 + 0)]) {
   int i;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "y");
-#pragma loop name print_array #0
 #pragma cetus private(i)
+#pragma loop name print_array #0
   for (i = 0; i < n; i++) {
     if ((i % 20) == 0) {
       fprintf(stderr, "\n");
@@ -114,31 +113,28 @@ static void kernel_durbin(int n, double r[(40 + 0)], double y[(40 + 0)]) {
   y[0] = (-r[0]);
   beta = 1.0;
   alpha = (-r[0]);
-#pragma loop name kernel_durbin #0
 #pragma cetus private(i, k, sum)
+#pragma loop name kernel_durbin #0
   for (k = 1; k < n; k++) {
     beta = ((1 - (alpha * alpha)) * beta);
     sum = 0.0;
 #pragma loop name kernel_durbin #0 #0
 #pragma cetus reduction(+ : sum)
 #pragma cetus parallel
-#pragma cetus private(i)
-#pragma omp parallel for private(i) reduction(+ : sum)
+#pragma omp parallel for reduction(+ : sum)
     for (i = 0; i < k; i++) {
       sum += (r[(k - i) - 1] * y[i]);
     }
     alpha = ((-(r[k] + sum)) / beta);
 #pragma loop name kernel_durbin #0 #1
 #pragma cetus parallel
-#pragma cetus private(i)
-#pragma omp parallel for private(i)
+#pragma omp parallel for
     for (i = 0; i < k; i++) {
       z[i] = (y[i] + (alpha * y[(k - i) - 1]));
     }
 #pragma loop name kernel_durbin #0 #2
 #pragma cetus parallel
-#pragma cetus private(i)
-#pragma omp parallel for private(i)
+#pragma omp parallel for
     for (i = 0; i < k; i++) {
       y[i] = z[i];
     }
@@ -147,7 +143,7 @@ static void kernel_durbin(int n, double r[(40 + 0)], double y[(40 + 0)]) {
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 40;
   /* Variable declarationallocation. */
@@ -172,9 +168,9 @@ int main(int argc, char** argv) {
   */
   print_array(n, *y);
   /* Be clean. */
-  free((void*)r);
+  free((void *)r);
   ;
-  free((void*)y);
+  free((void *)y);
   ;
   return 0;
 }

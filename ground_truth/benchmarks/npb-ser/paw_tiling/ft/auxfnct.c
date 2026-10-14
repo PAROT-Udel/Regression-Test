@@ -1,0 +1,323 @@
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define ABS(x) ((x) < 0 ? -(x) : (x))
+#define CEIL(x) ((int)((x) + 0.5))
+#define FLOOR(x) ((int)((x) - 0.5))
+#define ROUND(x) ((int)((x) + 0.5))
+
+/*
+Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
+
+   The GNU C Library is free software; you can redistribute it andor
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <https:www.gnu.org/licenses/>.
+*/
+/*
+This header is separate from features.h so that the compiler can
+   include it implicitly at the start of every compilation.  It must
+   not itself include <features.h> or any other header that includes
+   <features.h> because the implicit include comes before any feature
+   test macros that may be defined in a source file before it first
+   explicitly includes a system header.  GCC knows the name of this
+   header in order to preinclude it.
+*/
+/*
+glibc's intent is to support the IEC 559 math functionality, real
+   and complex.  If the GCC (4.9 and later) predefined macros
+   specifying compiler intent are available, use them to determine
+   whether the overall intent is to support these features; otherwise,
+   presume an older compiler has intent to support these features and
+   define these macros by default.
+*/
+/*
+wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
+   synchronized with ISOIEC 10646:2017, fifth edition, plus
+   the following additions from Amendment 1 to the fifth edition:
+   - 56 emoji characters
+   - 285 hentaigana
+   - 3 additional Zanabazar Square characters
+*/
+/* ------------------------------------------------------------------------- */
+/*                                                                          */
+/*  This benchmark is a serial C version of the NPB FT code. This C         */
+/*  version is developed by the Center for Manycore Programming at Seoul    */
+/*  National University and derived from the serial Fortran versions in     */
+/*  "NPB3.3-SER" developed by NAS.                                          */
+/*                                                                          */
+/*  Permission to use, copy, distribute and modify this software for any    */
+/*  purpose with or without fee is hereby granted. This software is         */
+/*  provided "as is" without express or implied warranty.                   */
+/*                                                                          */
+/*  Information on NPB 3.3, including the technical report, the original    */
+/*  specifications, source code, results and information on how to submit   */
+/*  new results, is available at:                                           */
+/*                                                                          */
+/*           http:www.nas.nasa.govSoftware/NPB/                          */
+/*                                                                          */
+/*  Send comments or suggestions for this C version to cmp@aces.snu.ac.kr   */
+/*                                                                          */
+/*          Center for Manycore Programming                                 */
+/*          School of Computer Science and Engineering                      */
+/*          Seoul National University                                       */
+/*          Seoul 151-744, Korea                                            */
+/*                                                                          */
+/*          E-mail:  cmp@aces.snu.ac.kr                                     */
+/*                                                                          */
+/* ------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
+/* Authors: Sangmin Seo, Jungwon Kim, Jun Lee, Jeongho Nah, Gangwon Jo,     */
+/*          and Jaejin Lee                                                  */
+/* ------------------------------------------------------------------------- */
+#include "global.h"
+#include "randdp.h"
+#include <math.h>
+#include <stdio.h>
+/* --------------------------------------------------------------------- */
+/* compute the roots-of-unity array that will be used for subsequent FFTs.  */
+/* --------------------------------------------------------------------- */
+void CompExp(int n, dcomplex exponent[n]) {
+  int m, nu, ku, i, j, ln;
+  double t, ti;
+  const double pi = 3.141592653589793;
+  nu = n;
+  m = ilog2(n);
+  exponent[0] = (dcomplex){m, 0.0};
+  ku = 2;
+  ln = 1;
+#pragma cetus private(i, j, t, ti)
+#pragma loop name CompExp #0
+#pragma cetus private(i, j, t, ti)
+#pragma loop name CompExp #0
+  for (j = 1; j <= m; j++) {
+    t = (pi / ln);
+#pragma cetus private(i, ti)
+#pragma loop name CompExp #0 #0
+#pragma cetus private(i, ti)
+#pragma loop name CompExp #0 #0
+    for (i = 0; i <= (ln - 1); i++) {
+      ti = (i * t);
+      exponent[(i + ku) - 1] = (dcomplex){cos(ti), sin(ti)};
+    }
+    ku = (ku + ln);
+    ln = (2 * ln);
+  }
+}
+
+int ilog2(int n) {
+  int nn, lg;
+  if (n == 1) {
+    return 0;
+  }
+  lg = 1;
+  nn = 2;
+  while (nn < n) {
+    nn = (nn * 2);
+    lg = (lg + 1);
+  }
+  return lg;
+}
+
+/* --------------------------------------------------------------------- */
+/* compute a^exponent mod 2^46 */
+/* --------------------------------------------------------------------- */
+static double ipow46(double a, int exponent) {
+  double result, dummy, q, r;
+  int n, n2;
+  /* --------------------------------------------------------------------- */
+  /* Use */
+  /*   a^n = a^(n2)*a^(n/2) if n even else */
+  /*   a^n = aa^(n-1)       if n odd */
+  /* --------------------------------------------------------------------- */
+  result = 1;
+  if (exponent == 0) {
+    return result;
+  }
+  q = a;
+  r = 1;
+  n = exponent;
+  while (n > 1) {
+    n2 = (n / 2);
+    if ((n2 * 2) == n) {
+      dummy = randlc(&q, q);
+      n = n2;
+    } else {
+      dummy = randlc(&r, q);
+      n = (n - 1);
+    }
+  }
+  dummy = randlc(&r, q);
+  result = r;
+  return result;
+}
+
+void CalculateChecksum(dcomplex *csum, int iterN, int d1, int d2, int d3,
+                       dcomplex u[d3][d2][(d1 + 1)]) {
+  int i, i1, ii, ji, ki;
+  dcomplex csum_temp = (dcomplex){0.0, 0.0};
+#pragma cetus private(i, i1, ii, ji, ki)
+#pragma loop name CalculateChecksum #0
+#pragma cetus private(i, i1, ii, ji, ki)
+#pragma loop name CalculateChecksum #0
+  for (i = 1; i <= 1024; i++) {
+    i1 = i;
+    ii = (i1 % d1);
+    ji = ((3 * i1) % d2);
+    ki = ((5 * i1) % d3);
+    csum_temp = (dcomplex){csum_temp.real + u[ki][ji][ii].real,
+                           csum_temp.imag + u[ki][ji][ii].imag};
+  }
+  csum_temp = (dcomplex){csum_temp.real / ((double)((d1 * d2) * d3)),
+                         csum_temp.imag / ((double)((d1 * d2) * d3))};
+  printf(" T =%5d     Checksum =%22.12E%22.12E\n", iterN, csum_temp.real,
+         csum_temp.imag);
+  (*csum) = csum_temp;
+}
+
+void compute_initial_conditions(int d1, int d2, int d3,
+                                dcomplex u0[d3][d2][(d1 + 1)]) {
+  dcomplex tmp[64];
+  double x0, start, an, dummy;
+  double RanStarts[64];
+  int i, j, k;
+  const double seed = 3.14159265E8;
+  const double a = 1.220703125E9;
+  start = seed;
+  /* --------------------------------------------------------------------- */
+  /* Jump to the starting element for our first plane. */
+  /* --------------------------------------------------------------------- */
+  an = ipow46(a, 0);
+  dummy = randlc(&start, an);
+  an = ipow46(a, (2 * d1) * d2);
+  /* --------------------------------------------------------------------- */
+  /* Go through by z planes filling in one square at a time. */
+  /* --------------------------------------------------------------------- */
+  RanStarts[0] = start;
+#pragma cetus private(dummy, k)
+#pragma loop name compute_initial_conditions #0
+#pragma cetus private(dummy, k)
+#pragma loop name compute_initial_conditions #0
+  for (k = 1; k < d3; k++) {
+    dummy = randlc(&start, an);
+    RanStarts[k] = start;
+  }
+#pragma cetus private(i, j, k)
+#pragma loop name compute_initial_conditions #1
+#pragma cetus private(i, j, k)
+#pragma loop name compute_initial_conditions #1
+  for (k = 0; k < d3; k++) {
+    x0 = RanStarts[k];
+#pragma cetus private(i, j)
+#pragma loop name compute_initial_conditions #1 #0
+#pragma cetus private(i, j)
+#pragma loop name compute_initial_conditions #1 #0
+    for (j = 0; j < d2; j++) {
+      vranlc(2 * d1, &x0, a, (double *)tmp);
+#pragma loop name compute_initial_conditions #1 #0 #0
+#pragma cetus parallel
+#pragma loop name compute_initial_conditions #1 #0 #0
+#pragma omp parallel for
+      for (i = 0; i < d1; i++) {
+        u0[k][j][i] = tmp[i];
+      }
+    }
+  }
+}
+
+void evolve(int nx, int ny, int nz, dcomplex x[nz][ny][(nx + 1)],
+            dcomplex y[nz][ny][(nx + 1)], double twiddle[nz][ny][(nx + 1)]) {
+  int i, j, k;
+  int cetus_tile_evolve_0_j = 2544;
+  int j_cetus_cross;
+  int cetus_tile_evolve_0_k = 2544;
+  int k_cetus_cross;
+  int cetus_tile_evolve_0_i = (nz / (4 * ((10175 + nz) / 10176)));
+  int i_cetus_cross;
+  if (((((1 * (-1 + nz)) * (-1 + ny)) * (-1 + nx)) <= 100000) ||
+      (3276800 >= (((3 * ny) * nz) + (((3 * nx) * ny) * nz)))) {
+#pragma cetus private(j, k)
+#pragma loop name evolve #0
+#pragma cetus parallel
+#pragma cetus private(i, j, k)
+#pragma loop name evolve #0
+#pragma omp parallel for private(i, j, k)
+    for (i = 0; i < nz; i++) {
+#pragma cetus private(j, k)
+#pragma loop name evolve #0 #0
+#pragma cetus private(j, k)
+#pragma cetus private(j, k)
+#pragma loop name evolve #0 #0
+#pragma loop name evolve #1 #0 #0 #0 #0
+      for (k = 0; k < ny; k++) {
+#pragma cetus private(j)
+#pragma loop name evolve #0 #0 #0
+#pragma cetus private(j)
+#pragma cetus private(j)
+#pragma loop name evolve #0 #0 #0
+#pragma loop name evolve #1 #0 #0 #0 #0 #0
+        for (j = 0; j < nx; j++) {
+          y[i][k][j] = (dcomplex){y[i][k][j].real * twiddle[i][k][j],
+                                  y[i][k][j].imag * twiddle[i][k][j]};
+          x[i][k][j] = y[i][k][j];
+        }
+      }
+    }
+  } else {
+#pragma cetus parallel
+#pragma cetus private(i, j, j_cetus_cross, k, k_cetus_cross)
+#pragma loop name evolve #1
+#pragma c_paw_tiling evolve #1 = j #2544
+#pragma c_paw_tiling evolve #1 = k #2544
+#pragma c_paw_tiling evolve #1 = i #symbolic
+#pragma omp parallel for private(i, j, j_cetus_cross, k, k_cetus_cross)
+    for (i_cetus_cross = 0; i_cetus_cross < nz;
+         i_cetus_cross += cetus_tile_evolve_0_i) {
+#pragma cetus private(i, j, j_cetus_cross, k, k_cetus_cross)
+#pragma loop name evolve #1 #0
+      for (k_cetus_cross = 0; k_cetus_cross < ny;
+           k_cetus_cross += cetus_tile_evolve_0_k) {
+#pragma cetus private(i, j, j_cetus_cross, k)
+#pragma loop name evolve #1 #0 #0
+        for (j_cetus_cross = 0; j_cetus_cross < nx;
+             j_cetus_cross += cetus_tile_evolve_0_j) {
+#pragma cetus private(i, j, k)
+#pragma loop name evolve #1 #0 #0 #0
+          for (i = i_cetus_cross;
+               i < MIN(nz, (cetus_tile_evolve_0_i + i_cetus_cross)); i++) {
+#pragma cetus private(j, k)
+#pragma loop name evolve #0 #0
+#pragma cetus private(j, k)
+#pragma cetus private(j, k)
+#pragma loop name evolve #0 #0
+#pragma loop name evolve #1 #0 #0 #0 #0
+            for (k = k_cetus_cross;
+                 k < MIN(ny, (cetus_tile_evolve_0_k + k_cetus_cross)); k++) {
+#pragma cetus private(j)
+#pragma loop name evolve #0 #0 #0
+#pragma cetus private(j)
+#pragma cetus private(j)
+#pragma loop name evolve #0 #0 #0
+#pragma loop name evolve #1 #0 #0 #0 #0 #0
+              for (j = j_cetus_cross;
+                   j < MIN(nx, (cetus_tile_evolve_0_j + j_cetus_cross)); j++) {
+                y[i][k][j] = (dcomplex){y[i][k][j].real * twiddle[i][k][j],
+                                        y[i][k][j].imag * twiddle[i][k][j]};
+                x[i][k][j] = y[i][k][j];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

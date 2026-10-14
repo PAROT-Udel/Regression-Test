@@ -78,10 +78,9 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* --------------------------------------------------------------------- */
 void exact_solution(double xi, double eta, double zeta, double dtemp[5]) {
   int m;
-#pragma cetus private(m)
 #pragma loop name exact_solution #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     dtemp[m] =
         (((ce[m][0] +

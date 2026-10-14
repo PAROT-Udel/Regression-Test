@@ -257,51 +257,49 @@ double t[16][16];
 int main(int argc, char *argv[]) {
   int i, j, k;
   double checksum = 0.0;
+#pragma cetus private(j)
 #pragma loop name main #0
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < 16; i++) {
-#pragma loop name main #0 #0
 #pragma cetus private(j)
+#pragma loop name main #0 #0
 #pragma cetus private(j)
     for (j = 0; j < 16; j++) {
       s[i][j] = ((double)(i + j));
       t[i][j] = 0.0;
     }
   }
+#pragma cetus private(j, k)
 #pragma loop name main #1
 #pragma cetus parallel
 #pragma cetus private(i, j, k)
-#pragma cetus private(i, j, k)
 #pragma omp parallel for private(i, j, k)
   for (i = 0; i < 16; i++) {
+#pragma cetus private(j, k)
 #pragma loop name main #1 #0
 #pragma cetus private(j, k)
-#pragma cetus private(j, k)
-#pragma cetus reduction(+ : t[i][j])
     for (k = 0; k < 16; k++) {
+#pragma cetus private(k)
 #pragma loop name main #1 #0 #0
-/* #pragma cetus reduction(+: t[i][j])  */
-#pragma cetus private(j)
 #pragma cetus private(j)
       for (j = 0; j < 16; j++) {
         t[i][j] = (t[i][j] + (s[i][k] * s[k][j]));
       }
     }
   }
+#pragma cetus private(j)
 #pragma loop name main #2
 #pragma cetus reduction(+ : checksum)
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma cetus reduction(+ : checksum)
 #pragma omp parallel for private(i, j) reduction(+ : checksum)
   for (i = 0; i < 16; i++) {
+#pragma cetus private(j)
 #pragma loop name main #2 #0
 /* #pragma cetus reduction(+: checksum)  */
-#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma cetus reduction(+ : checksum)
     for (j = 0; j < 16; j++) {

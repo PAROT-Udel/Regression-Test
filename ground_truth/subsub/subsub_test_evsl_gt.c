@@ -1,3 +1,4 @@
+#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -694,13 +695,26 @@ int main() {
       ind[numPlaced++] = j;
     }
   }
-#pragma cetus private(j)
-#pragma loop name main #1
-/* #pragma cetus reduction(+: y[ind[j]])  */
 #pragma cetus parallel
-  for (j = 0; j < numPlaced; j++) {
-    y[ind[j]] += (gamma2[i] *
-                  exp((-((xdos[ind[j]] - t) * (xdos[ind[j]] - t))) / sigma2));
+  {
+    int *reduce = (int *)malloc(30000 * sizeof(int));
+    int reduce_span_0;
+    for (reduce_span_0 = 0; reduce_span_0 < 30000; reduce_span_0++) {
+      reduce[reduce_span_0] = 0;
+    }
+#pragma loop name main #1
+#pragma cetus for
+    for (j = 0; j < numPlaced; j++) {
+      reduce[ind[j]] +=
+          (gamma2[i] *
+           exp((-((xdos[ind[j]] - t) * (xdos[ind[j]] - t))) / sigma2));
+    }
+#pragma cetus critical
+    {
+      for (reduce_span_0 = 0; reduce_span_0 < 30000; reduce_span_0++) {
+        y[reduce_span_0] += reduce[reduce_span_0];
+      }
+    }
   }
   _ret_val_0 = 0;
   return _ret_val_0;

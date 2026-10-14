@@ -145,8 +145,8 @@ void benchmark_selection_init(BenchmarkSelection *selection);
 void benchmark_selection_free(BenchmarkSelection *selection);
 int benchmark_runner_select(const BenchmarkConfig *config,
                             const RunnerStringVector *suite_ids,
-                            const char *kernel_filter,
-                            const char *profile_filter,
+                            const RunnerStringVector *kernel_filters,
+                            const RunnerStringVector *profile_filters,
                             BenchmarkSelection *selection,
                             char *error,
                             size_t error_size);

@@ -62,17 +62,17 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "deriche.h"
 /* Array initialization. */
-static void init_array(int w, int h, float* alpha,
+static void init_array(int w, int h, float *alpha,
                        float imgIn[(64 + 0)][(64 + 0)],
                        float imgOut[(64 + 0)][(64 + 0)]) {
   int i, j;
   (*alpha) = 0.25;
 /* parameter of the filter */
 /* input should be between 0 and 1 (grayscale image pixel) */
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < w; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #0 #0
@@ -134,10 +134,10 @@ static void kernel_deriche(int w, int h, float alpha,
   b1 = powf(2.0F, -alpha);
   b2 = (-expf((-2.0F) * alpha));
   c1 = (c2 = 1);
-#pragma cetus private(i, j, xm1, ym1, ym2)
+#pragma cetus private(j, xm1, ym1, ym2)
 #pragma loop name kernel_deriche #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, xm1, ym1, ym2)
+#pragma omp parallel for private(j, xm1, ym1, ym2)
   for (i = 0; i < w; i++) {
     ym1 = 0.0F;
     ym2 = 0.0F;
@@ -152,10 +152,10 @@ static void kernel_deriche(int w, int h, float alpha,
       ym1 = y1[i][j];
     }
   }
-#pragma cetus private(i, j, xp1, xp2, yp1, yp2)
+#pragma cetus private(j, xp1, xp2, yp1, yp2)
 #pragma loop name kernel_deriche #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, xp1, xp2, yp1, yp2)
+#pragma omp parallel for private(j, xp1, xp2, yp1, yp2)
   for (i = 0; i < w; i++) {
     yp1 = 0.0F;
     yp2 = 0.0F;
@@ -171,10 +171,10 @@ static void kernel_deriche(int w, int h, float alpha,
       yp1 = y2[i][j];
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_deriche #2
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < w; i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_deriche #2 #0
@@ -182,10 +182,10 @@ static void kernel_deriche(int w, int h, float alpha,
       imgOut[i][j] = (c1 * (y1[i][j] + y2[i][j]));
     }
   }
-#pragma cetus private(i, j, tm1, ym1, ym2)
+#pragma cetus private(i, tm1, ym1, ym2)
 #pragma loop name kernel_deriche #3
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, tm1, ym1, ym2)
+#pragma omp parallel for private(i, tm1, ym1, ym2)
   for (j = 0; j < h; j++) {
     tm1 = 0.0F;
     ym1 = 0.0F;
@@ -200,10 +200,10 @@ static void kernel_deriche(int w, int h, float alpha,
       ym1 = y1[i][j];
     }
   }
-#pragma cetus private(i, j, tp1, tp2, yp1, yp2)
+#pragma cetus private(i, tp1, tp2, yp1, yp2)
 #pragma loop name kernel_deriche #4
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, tp1, tp2, yp1, yp2)
+#pragma omp parallel for private(i, tp1, tp2, yp1, yp2)
   for (j = 0; j < h; j++) {
     tp1 = 0.0F;
     tp2 = 0.0F;
@@ -219,10 +219,10 @@ static void kernel_deriche(int w, int h, float alpha,
       yp1 = y2[i][j];
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_deriche #5
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < w; i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_deriche #5 #0
@@ -233,7 +233,7 @@ static void kernel_deriche(int w, int h, float alpha,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int w = 64;
   int h = 64;
@@ -270,13 +270,13 @@ int main(int argc, char** argv) {
   */
   print_array(w, h, *imgOut);
   /* Be clean. */
-  free((void*)imgIn);
+  free((void *)imgIn);
   ;
-  free((void*)imgOut);
+  free((void *)imgOut);
   ;
-  free((void*)y1);
+  free((void *)y1);
   ;
-  free((void*)y2);
+  free((void *)y2);
   ;
   return 0;
 }

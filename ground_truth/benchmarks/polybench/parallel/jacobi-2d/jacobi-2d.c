@@ -65,10 +65,10 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 static void init_array(int n, double A[(30 + 0)][(30 + 0)],
                        double B[(30 + 0)][(30 + 0)]) {
   int i, j;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #0 #0
@@ -114,11 +114,11 @@ static void kernel_jacobi_2d(int tsteps, int n, double A[(30 + 0)][(30 + 0)],
 #pragma experimental section start
 #pragma cetus private(i, j, t)
 #pragma loop name kernel_jacobi_2d #0
-#pragma cetus parallel
-#pragma omp parallel for private(i, j, t)
   for (t = 0; t < tsteps; t++) {
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_jacobi_2d #0 #0
+#pragma cetus parallel
+#pragma omp parallel for private(j)
     for (i = 1; i < (n - 1); i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_jacobi_2d #0 #0 #0
@@ -128,8 +128,10 @@ static void kernel_jacobi_2d(int tsteps, int n, double A[(30 + 0)][(30 + 0)],
                     A[i - 1][j]));
       }
     }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_jacobi_2d #0 #1
+#pragma cetus parallel
+#pragma omp parallel for private(j)
     for (i = 1; i < (n - 1); i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_jacobi_2d #0 #1 #0
@@ -144,7 +146,7 @@ static void kernel_jacobi_2d(int tsteps, int n, double A[(30 + 0)][(30 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 30;
   int tsteps = 20;
@@ -172,9 +174,9 @@ int main(int argc, char** argv) {
   */
   print_array(n, *A);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)B);
+  free((void *)B);
   ;
   return 0;
 }

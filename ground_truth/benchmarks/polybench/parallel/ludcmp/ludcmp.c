@@ -68,10 +68,9 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)], double b[(40 + 0)],
   double fn = (double)n;
   int r, s, t;
   double(*B)[(40 + 0)][(40 + 0)];
-#pragma cetus private(i)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < n; i++) {
     x[i] = 0;
     y[i] = 0;
@@ -79,16 +78,16 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)], double b[(40 + 0)],
   }
 #pragma cetus private(i, j)
 #pragma loop name init_array #1
-#pragma cetus parallel
-#pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #1 #0
+#pragma cetus parallel
+#pragma omp parallel for
     for (j = 0; j <= i; j++) {
       A[i][j] = ((((double)((-j) % n)) / n) + 1);
     }
-#pragma cetus private(j)
 #pragma loop name init_array #1 #1
+#pragma cetus parallel
+#pragma omp parallel for
     for (j = (i + 1); j < n; j++) {
       A[i][j] = 0;
     }
@@ -99,10 +98,10 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)], double b[(40 + 0)],
   B = ((double(*)[(40 + 0)][(40 + 0)])
            polybench_alloc_data((40 + 0) * (40 + 0), sizeof(double)));
   ;
-#pragma cetus private(r, s)
+#pragma cetus private(s)
 #pragma loop name init_array #2
 #pragma cetus parallel
-#pragma omp parallel for private(r, s)
+#pragma omp parallel for private(s)
   for (r = 0; r < n; ++r) {
 #pragma cetus private(s)
 #pragma loop name init_array #2 #0
@@ -112,11 +111,11 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)], double b[(40 + 0)],
   }
 #pragma cetus private(r, s, t)
 #pragma loop name init_array #3
-#pragma cetus parallel
-#pragma omp parallel for private(r, s, t)
   for (t = 0; t < n; ++t) {
-#pragma cetus private(r, s)
+#pragma cetus private(s)
 #pragma loop name init_array #3 #0
+#pragma cetus parallel
+#pragma omp parallel for private(s)
     for (r = 0; r < n; ++r) {
 #pragma cetus private(s)
 #pragma loop name init_array #3 #0 #0
@@ -125,10 +124,10 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)], double b[(40 + 0)],
       }
     }
   }
-#pragma cetus private(r, s)
+#pragma cetus private(s)
 #pragma loop name init_array #4
 #pragma cetus parallel
-#pragma omp parallel for private(r, s)
+#pragma omp parallel for private(s)
   for (r = 0; r < n; ++r) {
 #pragma cetus private(s)
 #pragma loop name init_array #4 #0
@@ -136,7 +135,7 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)], double b[(40 + 0)],
       A[r][s] = (*B)[r][s];
     }
   }
-  free((void*)B);
+  free((void *)B);
   ;
 }
 
@@ -172,11 +171,11 @@ static void kernel_ludcmp(int n, double A[(40 + 0)][(40 + 0)],
 #pragma scop
 #pragma cetus private(i, j, k, w)
 #pragma loop name kernel_ludcmp #0
-#pragma cetus parallel
-#pragma omp parallel for private(i, j, k, w)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j, k, w)
+#pragma cetus private(k, w)
 #pragma loop name kernel_ludcmp #0 #0
+#pragma cetus parallel
+#pragma omp parallel for private(k, w)
     for (j = 0; j < i; j++) {
       w = A[i][j];
 #pragma cetus private(k)
@@ -187,8 +186,10 @@ static void kernel_ludcmp(int n, double A[(40 + 0)][(40 + 0)],
       }
       A[i][j] = (w / A[j][j]);
     }
-#pragma cetus private(j, k, w)
+#pragma cetus private(k, w)
 #pragma loop name kernel_ludcmp #0 #1
+#pragma cetus parallel
+#pragma omp parallel for private(k, w)
     for (j = i; j < n; j++) {
       w = A[i][j];
 #pragma cetus private(k)
@@ -200,10 +201,10 @@ static void kernel_ludcmp(int n, double A[(40 + 0)][(40 + 0)],
       A[i][j] = w;
     }
   }
-#pragma cetus private(i, j, w)
+#pragma cetus private(j, w)
 #pragma loop name kernel_ludcmp #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, w)
+#pragma omp parallel for private(j, w)
   for (i = 0; i < n; i++) {
     w = b[i];
 #pragma cetus private(j)
@@ -216,13 +217,12 @@ static void kernel_ludcmp(int n, double A[(40 + 0)][(40 + 0)],
   }
 #pragma cetus private(i, j, w)
 #pragma loop name kernel_ludcmp #2
-#pragma cetus parallel
-#pragma omp parallel for private(i, j, w)
   for (i = (n - 1); i >= 0; i--) {
     w = y[i];
-#pragma cetus private(j)
 #pragma loop name kernel_ludcmp #2 #0
-    /* #pragma cetus reduction(+: w)  */
+#pragma cetus reduction(+ : w)
+#pragma cetus parallel
+#pragma omp parallel for reduction(+ : w)
     for (j = (i + 1); j < n; j++) {
       w -= (A[i][j] * x[j]);
     }
@@ -231,7 +231,7 @@ static void kernel_ludcmp(int n, double A[(40 + 0)][(40 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 40;
   /* Variable declarationallocation. */
@@ -263,13 +263,13 @@ int main(int argc, char** argv) {
   */
   print_array(n, *x);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)b);
+  free((void *)b);
   ;
-  free((void*)x);
+  free((void *)x);
   ;
-  free((void*)y);
+  free((void *)y);
   ;
   return 0;
 }

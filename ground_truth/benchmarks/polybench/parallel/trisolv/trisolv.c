@@ -65,10 +65,10 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 static void init_array(int n, double L[(40 + 0)][(40 + 0)], double x[(40 + 0)],
                        double b[(40 + 0)]) {
   int i, j;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
     x[i] = (-999);
     b[i] = i;
@@ -108,10 +108,10 @@ static void kernel_trisolv(int n, double L[(40 + 0)][(40 + 0)],
                            double x[(40 + 0)], double b[(40 + 0)]) {
   int i, j;
 #pragma scop
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_trisolv #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
     x[i] = b[i];
 #pragma cetus private(j)
@@ -124,7 +124,7 @@ static void kernel_trisolv(int n, double L[(40 + 0)][(40 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 40;
   /* Variable declarationallocation. */
@@ -153,11 +153,11 @@ int main(int argc, char** argv) {
   */
   print_array(n, *x);
   /* Be clean. */
-  free((void*)L);
+  free((void *)L);
   ;
-  free((void*)x);
+  free((void *)x);
   ;
-  free((void*)b);
+  free((void *)b);
   ;
   return 0;
 }

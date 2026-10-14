@@ -65,10 +65,10 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 static void init_array(int n, double A[(10 + 0)][(10 + 0)][(10 + 0)],
                        double B[(10 + 0)][(10 + 0)][(10 + 0)]) {
   int i, j, k;
-#pragma cetus private(i, j, k)
+#pragma cetus private(j, k)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k)
+#pragma omp parallel for private(j, k)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j, k)
 #pragma loop name init_array #0 #0
@@ -121,11 +121,11 @@ static void kernel_heat_3d(int tsteps, int n,
 #pragma scop
 #pragma cetus private(i, j, k, t)
 #pragma loop name kernel_heat_3d #0
-#pragma cetus parallel
-#pragma omp parallel for private(i, j, k, t)
   for (t = 1; t <= 20; t++) {
-#pragma cetus private(i, j, k)
+#pragma cetus private(j, k)
 #pragma loop name kernel_heat_3d #0 #0
+#pragma cetus parallel
+#pragma omp parallel for private(j, k)
     for (i = 1; i < (n - 1); i++) {
 #pragma cetus private(j, k)
 #pragma loop name kernel_heat_3d #0 #0 #0
@@ -144,8 +144,10 @@ static void kernel_heat_3d(int tsteps, int n,
         }
       }
     }
-#pragma cetus private(i, j, k)
+#pragma cetus private(j, k)
 #pragma loop name kernel_heat_3d #0 #1
+#pragma cetus parallel
+#pragma omp parallel for private(j, k)
     for (i = 1; i < (n - 1); i++) {
 #pragma cetus private(j, k)
 #pragma loop name kernel_heat_3d #0 #1 #0
@@ -168,7 +170,7 @@ static void kernel_heat_3d(int tsteps, int n,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 10;
   int tsteps = 20;
@@ -196,7 +198,7 @@ int main(int argc, char** argv) {
   */
   print_array(n, *A);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
   return 0;
 }

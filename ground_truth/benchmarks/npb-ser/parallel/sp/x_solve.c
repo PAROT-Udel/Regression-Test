@@ -97,11 +97,11 @@ void x_solve() {
 /* --------------------------------------------------------------------- */
 #pragma cetus private(i, j, ru1)
 #pragma loop name x_solve #0 #0
-#pragma cetus parallel
-#pragma omp parallel for private(i, j, ru1)
     for (j = 1; j <= ny2; j++) {
-#pragma cetus private(i, ru1)
+#pragma cetus private(ru1)
 #pragma loop name x_solve #0 #0 #0
+#pragma cetus parallel
+#pragma omp parallel for private(ru1)
       for (i = 0; i <= (grid_points[0] - 1); i++) {
         ru1 = (c3c4 * rho_i[k][j][i]);
         cv[i] = us[k][j][i];
@@ -114,8 +114,9 @@ void x_solve() {
                               : (dx5 + (c1c5 * ru1)))
                        : (((dxmax + ru1) > dx1) ? (dxmax + ru1) : dx1));
       }
-#pragma cetus private(i)
 #pragma loop name x_solve #0 #0 #1
+#pragma cetus parallel
+#pragma omp parallel for
       for (i = 1; i <= nx2; i++) {
         lhs[j][i][0] = 0.0;
         lhs[j][i][1] = (((-dttx2) * cv[i - 1]) - (dttx1 * rhon[i - 1]));
@@ -127,10 +128,10 @@ void x_solve() {
 /* --------------------------------------------------------------------- */
 /* add fourth order dissipation                              */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j)
+#pragma cetus private(i)
 #pragma loop name x_solve #0 #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(i)
     for (j = 1; j <= ny2; j++) {
       i = 1;
       lhs[j][i][2] = (lhs[j][i][2] + comz5);
@@ -141,10 +142,10 @@ void x_solve() {
       lhs[j][i + 1][3] = (lhs[j][i + 1][3] - comz4);
       lhs[j][i + 1][4] = (lhs[j][i + 1][4] + comz1);
     }
-#pragma cetus private(i, j)
+#pragma cetus private(i)
 #pragma loop name x_solve #0 #2
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(i)
     for (j = 1; j <= ny2; j++) {
 #pragma cetus private(i)
 #pragma loop name x_solve #0 #2 #0
@@ -156,10 +157,10 @@ void x_solve() {
         lhs[j][i][4] = (lhs[j][i][4] + comz1);
       }
     }
-#pragma cetus private(i, j)
+#pragma cetus private(i)
 #pragma loop name x_solve #0 #3
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(i)
     for (j = 1; j <= ny2; j++) {
       i = (grid_points[0] - 3);
       lhs[j][i][0] = (lhs[j][i][0] + comz1);
@@ -174,10 +175,10 @@ void x_solve() {
 /* subsequently, fill the other factors (u+c), (u-c) by adding to  */
 /* the first   */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j)
+#pragma cetus private(i)
 #pragma loop name x_solve #0 #4
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(i)
     for (j = 1; j <= ny2; j++) {
 #pragma cetus private(i)
 #pragma loop name x_solve #0 #4 #0
@@ -200,10 +201,10 @@ void x_solve() {
 /* --------------------------------------------------------------------- */
 /* perform the Thomas algorithm; first, FORWARD ELIMINATION      */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(fac1, i, i1, i2, j, m)
+#pragma cetus private(fac1, i, i1, i2, m)
 #pragma loop name x_solve #0 #5
 #pragma cetus parallel
-#pragma omp parallel for private(fac1, i, i1, i2, j, m)
+#pragma omp parallel for private(fac1, i, i1, i2, m)
     for (j = 1; j <= ny2; j++) {
 #pragma cetus private(fac1, i, i1, i2, m)
 #pragma loop name x_solve #0 #5 #0
@@ -241,10 +242,10 @@ void x_solve() {
 /* since they for (not have two more rows available for the */
 /* elimination of off-diagonal entries */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(fac1, fac2, i, i1, j, m)
+#pragma cetus private(fac1, fac2, i, i1, m)
 #pragma loop name x_solve #0 #6
 #pragma cetus parallel
-#pragma omp parallel for private(fac1, fac2, i, i1, j, m)
+#pragma omp parallel for private(fac1, fac2, i, i1, m)
     for (j = 1; j <= ny2; j++) {
       i = (grid_points[0] - 2);
       i1 = (grid_points[0] - 1);
@@ -279,10 +280,10 @@ void x_solve() {
 /* --------------------------------------------------------------------- */
 /* for (the u+c and the u-c factors                  */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(fac1, i, i1, i2, j, m)
+#pragma cetus private(fac1, i, i1, i2, m)
 #pragma loop name x_solve #0 #7
 #pragma cetus parallel
-#pragma omp parallel for private(fac1, i, i1, i2, j, m)
+#pragma omp parallel for private(fac1, i, i1, i2, m)
     for (j = 1; j <= ny2; j++) {
 #pragma cetus private(fac1, i, i1, i2, m)
 #pragma loop name x_solve #0 #7 #0
@@ -320,10 +321,10 @@ void x_solve() {
 /* --------------------------------------------------------------------- */
 /* And again the last two rows separately */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(fac1, i, i1, j, m)
+#pragma cetus private(fac1, i, i1, m)
 #pragma loop name x_solve #0 #8
 #pragma cetus parallel
-#pragma omp parallel for private(fac1, i, i1, j, m)
+#pragma omp parallel for private(fac1, i, i1, m)
     for (j = 1; j <= ny2; j++) {
       i = (grid_points[0] - 2);
       i1 = (grid_points[0] - 1);
@@ -356,10 +357,10 @@ void x_solve() {
 /* --------------------------------------------------------------------- */
 /* BACKSUBSTITUTION  */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, i1, j, m)
+#pragma cetus private(i, i1, m)
 #pragma loop name x_solve #0 #9
 #pragma cetus parallel
-#pragma omp parallel for private(i, i1, j, m)
+#pragma omp parallel for private(i, i1, m)
     for (j = 1; j <= ny2; j++) {
       i = (grid_points[0] - 2);
       i1 = (grid_points[0] - 1);
@@ -374,10 +375,10 @@ void x_solve() {
 /* --------------------------------------------------------------------- */
 /* The first three factors */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, i1, i2, j, m)
+#pragma cetus private(i, i1, i2, m)
 #pragma loop name x_solve #0 #10
 #pragma cetus parallel
-#pragma omp parallel for private(i, i1, i2, j, m)
+#pragma omp parallel for private(i, i1, i2, m)
     for (j = 1; j <= ny2; j++) {
 #pragma cetus private(i, i1, i2, m)
 #pragma loop name x_solve #0 #10 #0

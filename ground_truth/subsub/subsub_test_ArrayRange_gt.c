@@ -52,7 +52,6 @@ int main() {
   initialize(b, n);
 #pragma cetus private(c, i, j)
 #pragma loop name main #0
-#pragma cetus parallel
   for (i = 0; i < n; i++) {
 #pragma cetus firstprivate(c)
 #pragma cetus private(j)
@@ -69,7 +68,6 @@ int main() {
 int initialize(int a[], int m) {
   int i;
   int _ret_val_0;
-#pragma cetus private(i)
 #pragma loop name initialize #0
 #pragma cetus parallel
   for (i = 0; i < m; i++) {

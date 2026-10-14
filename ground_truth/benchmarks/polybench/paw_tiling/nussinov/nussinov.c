@@ -77,18 +77,17 @@ static void init_array(int n, base seq[(60 + 0)],
 /* base is AGCT0..3 */
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma cetus private(i)
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < n; i++) {
     seq[i] = ((base)((i + 1) % 4));
   }
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
-#pragma loop name init_array #1 #0
 #pragma cetus private(j)
+#pragma loop name init_array #1 #0
     for (j = 0; j < n; j++) {
       table[i][j] = 0;
     }
@@ -104,11 +103,11 @@ static void print_array(int n, int table[(60 + 0)][(60 + 0)]) {
   int t = 0;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "table");
-#pragma loop name print_array #0
 #pragma cetus private(i, j)
+#pragma loop name print_array #0
   for (i = 0; i < n; i++) {
-#pragma loop name print_array #0 #0
 #pragma cetus private(j)
+#pragma loop name print_array #0 #0
     for (j = i; j < n; j++) {
       if ((t % 20) == 0) {
         fprintf(stderr, "\n");
@@ -137,14 +136,11 @@ static void kernel_nussinov(int n, base seq[(60 + 0)],
                             int table[(60 + 0)][(60 + 0)]) {
   int i, j, k;
 #pragma scop
-#pragma loop name kernel_nussinov #0
 #pragma cetus private(i, j, k)
+#pragma loop name kernel_nussinov #0
   for (i = (n - 1); i >= 0; i--) {
 #pragma cetus private(j, k)
 #pragma loop name kernel_nussinov #0 #0
-#pragma cetus parallel
-#pragma cetus private(j, k)
-#pragma omp parallel for private(j, k)
     for (j = (i + 1); j < n; j++) {
       if ((j - 1) >= 0) {
         table[i][j] =
@@ -168,8 +164,8 @@ static void kernel_nussinov(int n, base seq[(60 + 0)],
                                                     : table[i + 1][j - 1]);
         }
       }
-#pragma loop name kernel_nussinov #0 #0 #0
 #pragma cetus private(k)
+#pragma loop name kernel_nussinov #0 #0 #0
       for (k = (i + 1); k < j; k++) {
         table[i][j] = ((table[i][j] >= (table[i][k] + table[k + 1][j]))
                            ? table[i][j]
@@ -180,7 +176,7 @@ static void kernel_nussinov(int n, base seq[(60 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 60;
   /* Variable declarationallocation. */
@@ -206,9 +202,9 @@ int main(int argc, char** argv) {
   */
   print_array(n, *table);
   /* Be clean. */
-  free((void*)seq);
+  free((void *)seq);
   ;
-  free((void*)table);
+  free((void *)table);
   ;
   return 0;
 }

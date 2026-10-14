@@ -1,3 +1,4 @@
+#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -185,14 +186,14 @@ int main(int argc, char *argv[]) {
 /*      to local, i.e., (0 --> lastcol-firstcol) */
 /* --------------------------------------------------------------------- */
 #pragma cetus parallel
-#pragma cetus private(j, k)
-#pragma omp parallel private(j, k)
+#pragma cetus private(k)
+#pragma omp parallel private(k)
   {
-    int *reduce0 = (int *)malloc(((1400 * (7 + 1)) * (7 + 1)) * sizeof(int));
+    int *reduce = (int *)malloc(((1400 * (7 + 1)) * (7 + 1)) * sizeof(int));
     int reduce_span_0;
     for (reduce_span_0 = 0; reduce_span_0 < ((1400 * (7 + 1)) * (7 + 1));
          reduce_span_0++) {
-      reduce0[reduce_span_0] = 0;
+      reduce[reduce_span_0] = 0;
     }
 #pragma loop name main #1
 #pragma cetus for
@@ -201,7 +202,7 @@ int main(int argc, char *argv[]) {
 #pragma cetus private(k)
 #pragma loop name main #1 #0
       for (k = rowstr[j]; k < rowstr[j + 1]; k++) {
-        reduce0[k] = (reduce0[k] - firstcol);
+        reduce[k] = (reduce[k] - firstcol);
       }
     }
 #pragma cetus critical
@@ -209,24 +210,22 @@ int main(int argc, char *argv[]) {
     {
       for (reduce_span_0 = 0; reduce_span_0 < ((1400 * (7 + 1)) * (7 + 1));
            reduce_span_0++) {
-        colidx[reduce_span_0] += reduce0[reduce_span_0];
+        colidx[reduce_span_0] += reduce[reduce_span_0];
       }
     }
   }
 /* --------------------------------------------------------------------- */
 /* set starting vector to (1, 1, .... 1) */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i)
 #pragma loop name main #2
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < (1400 + 1); i++) {
     x[i] = 1.0;
   }
-#pragma cetus private(j)
 #pragma loop name main #3
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma omp parallel for
   for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
     q[j] = 0.0;
     z[j] = 0.0;
@@ -254,11 +253,10 @@ int main(int argc, char *argv[]) {
     /* --------------------------------------------------------------------- */
     norm_temp1 = 0.0;
     norm_temp2 = 0.0;
-#pragma cetus private(j)
 #pragma loop name main #4 #0
 #pragma cetus reduction(+ : norm_temp1, norm_temp2)
 #pragma cetus parallel
-#pragma omp parallel for private(j) reduction(+ : norm_temp1, norm_temp2)
+#pragma omp parallel for reduction(+ : norm_temp1, norm_temp2)
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       norm_temp1 = (norm_temp1 + (x[j] * z[j]));
       norm_temp2 = (norm_temp2 + (z[j] * z[j]));
@@ -267,10 +265,9 @@ int main(int argc, char *argv[]) {
 /* --------------------------------------------------------------------- */
 /* Normalize z to obtain x */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(j)
 #pragma loop name main #4 #1
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma omp parallel for
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       x[j] = (norm_temp2 * z[j]);
     }
@@ -279,10 +276,9 @@ int main(int argc, char *argv[]) {
 /* --------------------------------------------------------------------- */
 /* set starting vector to (1, 1, .... 1) */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i)
 #pragma loop name main #5
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < (1400 + 1); i++) {
     x[i] = 1.0;
   }
@@ -318,11 +314,10 @@ int main(int argc, char *argv[]) {
     /* --------------------------------------------------------------------- */
     norm_temp1 = 0.0;
     norm_temp2 = 0.0;
-#pragma cetus private(j)
 #pragma loop name main #6 #0
 #pragma cetus reduction(+ : norm_temp1, norm_temp2)
 #pragma cetus parallel
-#pragma omp parallel for private(j) reduction(+ : norm_temp1, norm_temp2)
+#pragma omp parallel for reduction(+ : norm_temp1, norm_temp2)
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       norm_temp1 = (norm_temp1 + (x[j] * z[j]));
       norm_temp2 = (norm_temp2 + (z[j] * z[j]));
@@ -336,10 +331,9 @@ int main(int argc, char *argv[]) {
 /* --------------------------------------------------------------------- */
 /* Normalize z to obtain x */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(j)
 #pragma loop name main #6 #1
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma omp parallel for
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       x[j] = (norm_temp2 * z[j]);
     }
@@ -429,10 +423,9 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 /* --------------------------------------------------------------------- */
 /* Initialize the CG algorithm: */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(j)
 #pragma loop name conj_grad #0
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma omp parallel for
   for (j = 0; j < (naa + 1); j++) {
     q[j] = 0.0;
     z[j] = 0.0;
@@ -443,11 +436,10 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 /* rho = r.r */
 /* Now, obtain the norm of r: First, sum squares of r elements locally... */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(j)
 #pragma loop name conj_grad #1
 #pragma cetus reduction(+ : rho)
 #pragma cetus parallel
-#pragma omp parallel for private(j) reduction(+ : rho)
+#pragma omp parallel for reduction(+ : rho)
   for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
     rho = (rho + (r[j] * r[j]));
   }
@@ -471,10 +463,10 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 /*       unrolled-by-two version is some 10% faster.   */
 /*       The unrolled-by-8 version below is significantly faster */
 /*       on the Cray t3d - overall speed of code is 1.5 times faster. */
-#pragma cetus private(j, k, sum)
+#pragma cetus private(k, sum)
 #pragma loop name conj_grad #2 #0
 #pragma cetus parallel
-#pragma omp parallel for private(j, k, sum)
+#pragma omp parallel for private(k, sum)
     for (j = 0; j < ((lastrow - firstrow) + 1); j++) {
       sum = 0.0;
 #pragma cetus private(k)
@@ -489,11 +481,10 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
     /* Obtain p.q */
     /* --------------------------------------------------------------------- */
     d = 0.0;
-#pragma cetus private(j)
 #pragma loop name conj_grad #2 #1
 #pragma cetus reduction(+ : d)
 #pragma cetus parallel
-#pragma omp parallel for private(j) reduction(+ : d)
+#pragma omp parallel for reduction(+ : d)
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       d = (d + (p[j] * q[j]));
     }
@@ -510,10 +501,9 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
     /* and    r = r - alphaq */
     /* --------------------------------------------------------------------- */
     rho = 0.0;
-#pragma cetus private(j)
 #pragma loop name conj_grad #2 #2
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma omp parallel for
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       z[j] = (z[j] + (alpha * p[j]));
       r[j] = (r[j] - (alpha * q[j]));
@@ -522,11 +512,10 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 /* rho = r.r */
 /* Now, obtain the norm of r: First, sum squares of r elements locally... */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(j)
 #pragma loop name conj_grad #2 #3
 #pragma cetus reduction(+ : rho)
 #pragma cetus parallel
-#pragma omp parallel for private(j) reduction(+ : rho)
+#pragma omp parallel for reduction(+ : rho)
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       rho = (rho + (r[j] * r[j]));
     }
@@ -537,10 +526,9 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 /* --------------------------------------------------------------------- */
 /* p = r + betap */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(j)
 #pragma loop name conj_grad #2 #4
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma omp parallel for
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       p[j] = (r[j] + (beta * p[j]));
     }
@@ -552,10 +540,10 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
   /* The partition submatrix-vector multiply */
   /* --------------------------------------------------------------------- */
   sum = 0.0;
-#pragma cetus private(d, j, k)
+#pragma cetus private(d, k)
 #pragma loop name conj_grad #3
 #pragma cetus parallel
-#pragma omp parallel for private(d, j, k)
+#pragma omp parallel for private(d, k)
   for (j = 0; j < ((lastrow - firstrow) + 1); j++) {
     d = 0.0;
 #pragma cetus private(k)
@@ -569,11 +557,11 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 /* --------------------------------------------------------------------- */
 /* At this point, r contains A.z */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(d, j)
+#pragma cetus private(d)
 #pragma loop name conj_grad #4
 #pragma cetus reduction(+ : sum)
 #pragma cetus parallel
-#pragma omp parallel for private(d, j) reduction(+ : sum)
+#pragma omp parallel for private(d) reduction(+ : sum)
   for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
     d = (x[j] - r[j]);
     sum = (sum + (d * d));
@@ -636,10 +624,9 @@ static void makea(int n, int nz, double a[], int colidx[], int rowstr[],
     sprnvc(n, nzv, nn1, vc, ivc);
     vecset(n, vc, ivc, &nzv, iouter + 1, 0.5);
     arow[iouter] = nzv;
-#pragma cetus private(ivelt)
 #pragma loop name makea #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(ivelt)
+#pragma omp parallel for
     for (ivelt = 0; ivelt < nzv; ivelt++) {
       acol[iouter][ivelt] = (ivc[ivelt] - 1);
       aelt[iouter][ivelt] = vc[ivelt];
@@ -676,16 +663,15 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
 /* --------------------------------------------------------------------- */
 /* ...count the number of triples in each row */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(j)
 #pragma loop name sparse #0
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma omp parallel for
   for (j = 0; j < (nrows + 1); j++) {
     rowstr[j] = 0;
   }
-#pragma cetus private(i, j, nza)
+#pragma cetus private(j, nza)
 #pragma loop name sparse #1
-  /* #pragma cetus reduction(+: )  */
+  /* #pragma cetus reduction(+: rowstr[j])  */
   for (i = 0; i < n; i++) {
 #pragma cetus private(j, nza)
 #pragma loop name sparse #1 #0
@@ -716,11 +702,10 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
 /* --------------------------------------------------------------------- */
 #pragma cetus private(j, k)
 #pragma loop name sparse #3
-#pragma cetus parallel
-#pragma omp parallel for private(j, k)
   for (j = 0; j < nrows; j++) {
-#pragma cetus private(k)
 #pragma loop name sparse #3 #0
+#pragma cetus parallel
+#pragma omp parallel for
     for (k = rowstr[j]; k < rowstr[j + 1]; k++) {
       a[k] = 0.0;
       colidx[k] = (-1);
@@ -834,10 +819,9 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
       nza += (((-1 * j1) + (-1 * nzloc[j])) + rowstr[1 + j]);
     }
   }
-#pragma cetus private(j)
 #pragma loop name sparse #7
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma omp parallel for
   for (j = 1; j < (nrows + 1); j++) {
     rowstr[j] = (rowstr[j] - nzloc[j - 1]);
   }

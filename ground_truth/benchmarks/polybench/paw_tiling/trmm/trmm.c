@@ -69,24 +69,24 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "trmm.h"
 /* Array initialization. */
-static void init_array(int m, int n, double* alpha,
+static void init_array(int m, int n, double *alpha,
                        double A[(20 + 0)][(20 + 0)],
                        double B[(20 + 0)][(30 + 0)]) {
   int i, j;
   (*alpha) = 1.5;
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < m; i++) {
-#pragma loop name init_array #0 #0
 #pragma cetus private(j)
+#pragma loop name init_array #0 #0
     for (j = 0; j < i; j++) {
       A[i][j] = (((double)((i + j) % m)) / m);
     }
     A[i][i] = 1.0;
-#pragma loop name init_array #0 #1
 #pragma cetus private(j)
+#pragma loop name init_array #0 #1
     for (j = 0; j < n; j++) {
       B[i][j] = (((double)((n + (i - j)) % n)) / n);
     }
@@ -101,11 +101,11 @@ static void print_array(int m, int n, double B[(20 + 0)][(30 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "B");
-#pragma loop name print_array #0
 #pragma cetus private(i, j)
+#pragma loop name print_array #0
   for (i = 0; i < m; i++) {
-#pragma loop name print_array #0 #0
 #pragma cetus private(j)
+#pragma loop name print_array #0 #0
     for (j = 0; j < n; j++) {
       if ((((i * m) + j) % 20) == 0) {
         fprintf(stderr, "\n");
@@ -134,16 +134,16 @@ static void kernel_trmm(int m, int n, double alpha,
 /* A is MxM */
 /* B is MxN */
 #pragma scop
-#pragma loop name kernel_trmm #0
-#pragma cetus parallel
 #pragma cetus private(i, j, k)
-#pragma omp parallel for private(i, j, k)
+#pragma loop name kernel_trmm #0
   for (i = 0; i < m; i++) {
-#pragma loop name kernel_trmm #0 #0
-#pragma cetus private(j, k)
-    for (j = 0; j < n; j++) {
-#pragma loop name kernel_trmm #0 #0 #0
 #pragma cetus private(k)
+#pragma loop name kernel_trmm #0 #0
+#pragma cetus parallel
+#pragma omp parallel for private(k)
+    for (j = 0; j < n; j++) {
+#pragma cetus private(k)
+#pragma loop name kernel_trmm #0 #0 #0
       for (k = (i + 1); k < m; k++) {
         B[i][j] += (A[k][i] * B[k][j]);
       }
@@ -153,7 +153,7 @@ static void kernel_trmm(int m, int n, double alpha,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int m = 20;
   int n = 30;
@@ -182,9 +182,9 @@ int main(int argc, char** argv) {
   */
   print_array(m, n, *B);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)B);
+  free((void *)B);
   ;
   return 0;
 }

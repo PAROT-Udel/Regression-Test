@@ -689,7 +689,6 @@ int main() {
   int i, j, k, n, b, tmp0, tmp1, tmp2, mvb;
   int a1, a2, start;
   int _ret_val_0;
-  int n_0;
   blnr[0] = 0;
 #pragma cetus private(a1, a2, i, k)
 #pragma loop name main #0
@@ -714,8 +713,8 @@ int main() {
   }
 #pragma cetus private(b, i, j, k, mvb, n, n_0, tmp0, tmp1, tmp2)
 #pragma loop name main #1
-#pragma cetus parallel
   for (b = 0; b < 30000; b++) {
+    int n_0;
     tmp0 = r[b][0];
     tmp1 = r[b][1];
     tmp2 = r[b][2];

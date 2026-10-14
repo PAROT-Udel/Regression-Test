@@ -87,10 +87,9 @@ void error() {
   int i, j, k, m;
   double tmp;
   double u000ijk[5];
-#pragma cetus private(m)
 #pragma loop name error #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     errnm[m] = 0.0;
   }
@@ -107,10 +106,10 @@ void error() {
       /* #pragma cetus reduction(+: errnm[m])  */
       for (i = ist; i < iend; i++) {
         exact(i, j, k, u000ijk);
-#pragma cetus private(m, tmp)
+#pragma cetus private(tmp)
 #pragma loop name error #1 #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m, tmp)
+#pragma omp parallel for private(tmp)
         for (m = 0; m < 5; m++) {
           tmp = (u000ijk[m] - u[k][j][i][m]);
           errnm[m] = (errnm[m] + (tmp * tmp));
@@ -118,10 +117,9 @@ void error() {
       }
     }
   }
-#pragma cetus private(m)
 #pragma loop name error #2
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     errnm[m] = sqrt(errnm[m] / (((nx0 - 2) * (ny0 - 2)) * (nz0 - 2)));
   }

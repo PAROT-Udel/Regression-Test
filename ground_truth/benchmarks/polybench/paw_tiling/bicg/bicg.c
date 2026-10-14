@@ -5,6 +5,7 @@
 #define FLOOR(x) ((int)((x) - 0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
+#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -78,11 +79,13 @@ static void init_array(int m, int n, double A[(42 + 0)][(38 + 0)],
   for (i = 0; i < m; i++) {
     p[i] = (((double)(i % m)) / m);
   }
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
     r[i] = (((double)(i % n)) / n);
+#pragma cetus private(j)
 #pragma loop name init_array #1 #0
     for (j = 0; j < m; j++) {
       A[i][j] = (((double)((i * (j + 1)) % n)) / n);
@@ -98,6 +101,7 @@ static void print_array(int m, int n, double s[(38 + 0)], double q[(42 + 0)]) {
   int i;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "s");
+#pragma cetus private(i)
 #pragma loop name print_array #0
   for (i = 0; i < m; i++) {
     if ((i % 20) == 0) {
@@ -107,6 +111,7 @@ static void print_array(int m, int n, double s[(38 + 0)], double q[(42 + 0)]) {
   }
   fprintf(stderr, "\nend   dump: %s\n", "s");
   fprintf(stderr, "begin dump: %s", "q");
+#pragma cetus private(i)
 #pragma loop name print_array #1
   for (i = 0; i < n; i++) {
     if ((i % 20) == 0) {
@@ -134,24 +139,24 @@ static void kernel_bicg(int m, int n, double A[(42 + 0)][(38 + 0)],
     s[i] = 0;
   }
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel private(i, j)
+#pragma cetus private(j)
+#pragma omp parallel private(j)
   {
-    double* reduce0 = (double*)malloc(m * sizeof(double));
+    double *reduce = (double *)malloc(m * sizeof(double));
     int reduce_span_0;
     for (reduce_span_0 = 0; reduce_span_0 < m; reduce_span_0++) {
-      reduce0[reduce_span_0] = 0;
+      reduce[reduce_span_0] = 0;
     }
-#pragma cetus lastprivate(q)
 #pragma loop name kernel_bicg #1
 #pragma cetus for
-#pragma omp for lastprivate(q)
+#pragma omp for
     for (i = 0; i < n; i++) {
       q[i] = 0.0;
+#pragma cetus private(j)
 #pragma loop name kernel_bicg #1 #0
       /* #pragma cetus reduction(+: q[i])  */
       for (j = 0; j < m; j++) {
-        reduce0[j] = (reduce0[j] + (r[i] * A[i][j]));
+        reduce[j] = (reduce[j] + (r[i] * A[i][j]));
         q[i] = (q[i] + (A[i][j] * p[j]));
       }
     }
@@ -159,14 +164,14 @@ static void kernel_bicg(int m, int n, double A[(42 + 0)][(38 + 0)],
 #pragma omp critical
     {
       for (reduce_span_0 = 0; reduce_span_0 < m; reduce_span_0++) {
-        s[reduce_span_0] += reduce0[reduce_span_0];
+        s[reduce_span_0] += reduce[reduce_span_0];
       }
     }
   }
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 42;
   int m = 38;
@@ -202,15 +207,15 @@ int main(int argc, char** argv) {
   */
   print_array(m, n, *s, *q);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)s);
+  free((void *)s);
   ;
-  free((void*)q);
+  free((void *)q);
   ;
-  free((void*)p);
+  free((void *)p);
   ;
-  free((void*)r);
+  free((void *)r);
   ;
   return 0;
 }

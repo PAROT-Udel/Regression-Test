@@ -31,5 +31,19 @@
       "-ompGen=1",
       "-paw_tiling=1"
     ]
+  },
+  "reuse_analysis": {
+    "description": "OpenMP parallelization with explicit reuse-vector analysis",
+    "flags": [
+      "-alias=3",
+      "-verbosity=0",
+      "-profitable-omp=0",
+      "-ddt=2",
+      "-privatize=2",
+      "-reduction=2",
+      "-reuse-vector-analysis=1",
+      "-parallelize-loops=1",
+      "-ompGen=1"
+    ]
   }
 }

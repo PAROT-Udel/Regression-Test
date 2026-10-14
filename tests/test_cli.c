@@ -264,8 +264,8 @@ static int test_benchmark_kernel(void)
     CliOptions opts;
     char error[256];
     CHECK(cli_parse(4, argv, &opts, error, sizeof(error)) == 0);
-    CHECK(opts.benchmark_kernel != NULL);
-    CHECK(strcmp(opts.benchmark_kernel, "gemm") == 0);
+    CHECK(opts.benchmark_kernels.length == 1);
+    CHECK(strcmp(opts.benchmark_kernels.items[0], "gemm") == 0);
     cli_options_free(&opts);
     return 0;
 }
@@ -276,8 +276,28 @@ static int test_profile(void)
     CliOptions opts;
     char error[256];
     CHECK(cli_parse(4, argv, &opts, error, sizeof(error)) == 0);
-    CHECK(opts.profile != NULL);
-    CHECK(strcmp(opts.profile, "parallel") == 0);
+    CHECK(opts.profiles.length == 1);
+    CHECK(strcmp(opts.profiles.items[0], "parallel") == 0);
+    cli_options_free(&opts);
+    return 0;
+}
+
+static int test_repeatable_kernels_and_profiles(void)
+{
+    char *argv[] = {"prog", "--benchmarks",
+                    "--benchmark-kernel", "gemm",
+                    "--benchmark-kernel", "atax",
+                    "--profile", "parallel",
+                    "--profile", "paw_tiling", NULL};
+    CliOptions opts;
+    char error[256];
+    CHECK(cli_parse(10, argv, &opts, error, sizeof(error)) == 0);
+    CHECK(opts.benchmark_kernels.length == 2);
+    CHECK(strcmp(opts.benchmark_kernels.items[0], "gemm") == 0);
+    CHECK(strcmp(opts.benchmark_kernels.items[1], "atax") == 0);
+    CHECK(opts.profiles.length == 2);
+    CHECK(strcmp(opts.profiles.items[0], "parallel") == 0);
+    CHECK(strcmp(opts.profiles.items[1], "paw_tiling") == 0);
     cli_options_free(&opts);
     return 0;
 }
@@ -377,7 +397,8 @@ static int test_full_with_kernel_and_benchmark_filters(void)
     CHECK(opts.mode == CLI_MODE_FULL);
     CHECK(strcmp(opts.suite_identifier, "tiling") == 0);
     CHECK(opts.benchmark_suite_ids.length == 1);
-    CHECK(strcmp(opts.benchmark_kernel, "gemm") == 0);
+    CHECK(opts.benchmark_kernels.length == 1);
+    CHECK(strcmp(opts.benchmark_kernels.items[0], "gemm") == 0);
     cli_options_free(&opts);
     return 0;
 }
@@ -822,8 +843,10 @@ static int test_benchmarks_all_options(void)
     CHECK(cli_parse(21, argv, &opts, error, sizeof(error)) == 0);
     CHECK(opts.mode == CLI_MODE_BENCHMARKS);
     CHECK(opts.benchmark_suite_ids.length == 1);
-    CHECK(strcmp(opts.benchmark_kernel, "gemm") == 0);
-    CHECK(strcmp(opts.profile, "paw_tiling") == 0);
+    CHECK(opts.benchmark_kernels.length == 1);
+    CHECK(strcmp(opts.benchmark_kernels.items[0], "gemm") == 0);
+    CHECK(opts.profiles.length == 1);
+    CHECK(strcmp(opts.profiles.items[0], "paw_tiling") == 0);
     CHECK(strcmp(opts.dataset, "SMALL_DATASET") == 0);
     CHECK(strcmp(opts.npb_class, "W") == 0);
     CHECK(opts.skip_gt == 1);
@@ -863,6 +886,7 @@ int main(void)
     CHECK(test_benchmark_suite_repeatable() == 0);
     CHECK(test_benchmark_kernel() == 0);
     CHECK(test_profile() == 0);
+    CHECK(test_repeatable_kernels_and_profiles() == 0);
     CHECK(test_dataset() == 0);
     CHECK(test_class() == 0);
     CHECK(test_skip_gt() == 0);

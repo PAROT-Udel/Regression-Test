@@ -110,11 +110,10 @@ void x_solve() {
 #pragma cetus private(i, j, m, n)
 #pragma loop name x_solve #0 #0
     for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i)
 #pragma cetus lastprivate(tmp1, tmp2, tmp3)
 #pragma loop name x_solve #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(i) lastprivate(tmp1, tmp2, tmp3)
+#pragma omp parallel for lastprivate(tmp1, tmp2, tmp3)
       for (i = 0; i <= isize; i++) {
         tmp1 = rho_i[k][j][i];
         tmp2 = (tmp1 * tmp1);
@@ -191,11 +190,10 @@ void x_solve() {
       /* ---------------------------------------------------------------------
        */
       lhsinit(lhs, isize);
-#pragma cetus private(i)
 #pragma cetus lastprivate(tmp1, tmp2)
 #pragma loop name x_solve #0 #0 #1
 #pragma cetus parallel
-#pragma omp parallel for private(i) lastprivate(tmp1, tmp2)
+#pragma omp parallel for lastprivate(tmp1, tmp2)
       for (i = 1; i <= (isize - 1); i++) {
         tmp1 = (dt * tx1);
         tmp2 = (dt * tx2);
@@ -420,11 +418,11 @@ void x_solve() {
 /* --------------------------------------------------------------------- */
 #pragma cetus private(i, m, n)
 #pragma loop name x_solve #0 #0 #3
-#pragma cetus parallel
-#pragma omp parallel for private(i, m, n)
       for (i = (isize - 1); i >= 0; i--) {
-#pragma cetus private(m, n)
+#pragma cetus private(n)
 #pragma loop name x_solve #0 #0 #3 #0
+#pragma cetus parallel
+#pragma omp parallel for private(n)
         for (m = 0; m < 5; m++) {
 #pragma cetus private(n)
 #pragma loop name x_solve #0 #0 #3 #0 #0

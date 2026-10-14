@@ -1,18 +1,17 @@
 {
   "id": "npb-ser",
   "adapter": "npb",
-  "description": "NPB 3.3 serial C (vanilla via NPB_SER_ROOT); CLASS=S; parallel profile only",
+  "description": "NPB 3.3 serial C (vanilla via NPB_SER_ROOT); CLASS=S; parallel, paw_tiling, and reuse_analysis",
   "default": true,
   "root_env": "NPB_SER_ROOT",
   "class": "S",
-  "profiles": ["parallel"],
+  "profiles": ["parallel", "paw_tiling", "reuse_analysis"],
   "kernels": [
     {
       "name": "bt",
       "bench": "BT",
       "binary": "bt",
       "headers": ["header.h", "work_lhs.h"],
-      "xfail": "Cetus-transformed BT produces incorrect numerical results at CLASS=S (release/3.0)",
       "sources": [
         "bt.c",
         "initialize.c",
@@ -35,7 +34,6 @@
       "bench": "SP",
       "binary": "sp",
       "headers": ["header.h"],
-      "xfail": "Cetus-transformed SP produces incorrect numerical results at CLASS=S (release/3.0)",
       "sources": [
         "sp.c",
         "initialize.c",
@@ -61,7 +59,6 @@
       "bench": "LU",
       "binary": "lu",
       "headers": ["applu.incl"],
-      "xfail": "Cetus-transformed LU produces NaN results at CLASS=S (release/3.0)",
       "sources": [
         "lu.c",
         "read_input.c",
@@ -108,8 +105,7 @@
         "fft3d.c",
         "mainft.c",
         "verify.c"
-      ],
-      "xfail": "Cetus InternalError in ArrayPrivatization on fft3d compound literals (release/3.0)"
+      ]
     },
     {
       "name": "ep",
@@ -142,8 +138,7 @@
         "transfer.c",
         "verify.c",
         "setup.c"
-      ],
-      "xfail": "Cetus parse failure on ua.c with default parallel profile (release/3.0)"
+      ]
     }
   ]
 }

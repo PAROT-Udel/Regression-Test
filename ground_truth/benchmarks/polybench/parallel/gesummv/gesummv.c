@@ -62,16 +62,16 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "gesummv.h"
 /* Array initialization. */
-static void init_array(int n, double* alpha, double* beta,
+static void init_array(int n, double *alpha, double *beta,
                        double A[(30 + 0)][(30 + 0)],
                        double B[(30 + 0)][(30 + 0)], double x[(30 + 0)]) {
   int i, j;
   (*alpha) = 1.5;
   (*beta) = 1.2;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
     x[i] = (((double)(i % n)) / n);
 #pragma cetus private(j)
@@ -113,10 +113,10 @@ static void kernel_gesummv(int n, double alpha, double beta,
                            double x[(30 + 0)], double y[(30 + 0)]) {
   int i, j;
 #pragma scop
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_gesummv #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
     tmp[i] = 0.0;
     y[i] = 0.0;
@@ -132,7 +132,7 @@ static void kernel_gesummv(int n, double alpha, double beta,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 30;
   /* Variable declarationallocation. */
@@ -170,15 +170,15 @@ int main(int argc, char** argv) {
   */
   print_array(n, *y);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)B);
+  free((void *)B);
   ;
-  free((void*)tmp);
+  free((void *)tmp);
   ;
-  free((void*)x);
+  free((void *)x);
   ;
-  free((void*)y);
+  free((void *)y);
   ;
   return 0;
 }

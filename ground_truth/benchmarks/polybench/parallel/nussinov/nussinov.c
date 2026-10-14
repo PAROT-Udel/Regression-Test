@@ -68,17 +68,16 @@ static void init_array(int n, base seq[(60 + 0)],
                        int table[(60 + 0)][(60 + 0)]) {
   int i, j;
 /* base is AGCT0..3 */
-#pragma cetus private(i)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < n; i++) {
     seq[i] = ((base)((i + 1) % 4));
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #1 #0
@@ -135,8 +134,6 @@ static void kernel_nussinov(int n, base seq[(60 + 0)],
   for (i = (n - 1); i >= 0; i--) {
 #pragma cetus private(j, k)
 #pragma loop name kernel_nussinov #0 #0
-#pragma cetus parallel
-#pragma omp parallel for private(j, k)
     for (j = (i + 1); j < n; j++) {
       if ((j - 1) >= 0) {
         table[i][j] =
@@ -172,7 +169,7 @@ static void kernel_nussinov(int n, base seq[(60 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 60;
   /* Variable declarationallocation. */
@@ -198,9 +195,9 @@ int main(int argc, char** argv) {
   */
   print_array(n, *table);
   /* Be clean. */
-  free((void*)seq);
+  free((void *)seq);
   ;
-  free((void*)table);
+  free((void *)table);
   ;
   return 0;
 }

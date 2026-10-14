@@ -293,6 +293,8 @@ static int test_selection_and_summary(void)
     RunnerStringVector suite_profiles = {0};
     BenchmarkSelection selection;
     BenchmarkSummary summary = {0};
+    RunnerStringVector kernel_filters = {0};
+    RunnerStringVector profile_filters = {0};
     char error[256];
 
     init_config(&config, &suites[0], &kernels[0], &profile, "/tmp");
@@ -310,9 +312,14 @@ static int test_selection_and_summary(void)
     CHECK(selection.length == 1);
     CHECK(strcmp(selection.items[0].suite->id, "suite") == 0);
     runner_string_vector_init(&suite_profiles);
+    runner_string_vector_init(&kernel_filters);
+    runner_string_vector_init(&profile_filters);
     CHECK(runner_string_vector_push(&suite_profiles, "other") == 0);
-    CHECK(benchmark_runner_select(&config, &suite_profiles, "sec", "parallel",
-                                  &selection, error, sizeof(error)) == 0);
+    CHECK(runner_string_vector_push(&kernel_filters, "sec") == 0);
+    CHECK(runner_string_vector_push(&profile_filters, "parallel") == 0);
+    CHECK(benchmark_runner_select(&config, &suite_profiles, &kernel_filters,
+                                  &profile_filters, &selection, error,
+                                  sizeof(error)) == 0);
     CHECK(selection.length == 1);
     CHECK(strcmp(selection.items[0].kernel->name, "second") == 0);
     selection.items[0].result.status = BENCHMARK_STATUS_XPASS;
@@ -320,7 +327,103 @@ static int test_selection_and_summary(void)
     CHECK(summary.xpass == 1 && benchmark_summary_exit_code(&summary) == 1);
     benchmark_selection_free(&selection);
     runner_string_vector_free(&suite_profiles);
+    runner_string_vector_free(&kernel_filters);
+    runner_string_vector_free(&profile_filters);
     runner_key_value_map_free(&config.paths);
+    return 0;
+}
+
+/* Suites, kernels, and profiles combine. An omitted axis means all. */
+static int test_select_kernel_profile_combinations(void)
+{
+    BenchmarkConfig config = {0};
+    BenchmarkSuite suite = {0};
+    BenchmarkKernel kernels[3] = {0};
+    BenchmarkProfile profiles[2] = {0};
+    char *suite_profiles[] = {"parallel", "paw_tiling"};
+    BenchmarkSelection selection;
+    RunnerStringVector kernel_filters = {0};
+    RunnerStringVector profile_filters = {0};
+    char error[256];
+    size_t index;
+    int saw_gemm_parallel = 0;
+    int saw_atax_paw = 0;
+
+    kernels[0].name = "gemm";
+    kernels[1].name = "atax";
+    kernels[2].name = "lu";
+    profiles[0].name = "parallel";
+    profiles[1].name = "paw_tiling";
+    suite.id = "polybench";
+    suite.is_default = 1;
+    suite.kernels = kernels;
+    suite.kernel_count = 3;
+    suite.profiles.items = suite_profiles;
+    suite.profiles.length = 2;
+    config.suites = &suite;
+    config.suite_count = 1;
+    config.profiles = profiles;
+    config.profile_count = 2;
+    benchmark_selection_init(&selection);
+
+    CHECK(benchmark_runner_select(&config, NULL, NULL, NULL, &selection, error,
+                                  sizeof(error)) == 0);
+    CHECK(selection.length == 6);
+
+    runner_string_vector_init(&profile_filters);
+    CHECK(runner_string_vector_push(&profile_filters, "paw_tiling") == 0);
+    CHECK(benchmark_runner_select(&config, NULL, NULL, &profile_filters,
+                                  &selection, error, sizeof(error)) == 0);
+    CHECK(selection.length == 3);
+    for (index = 0; index < selection.length; ++index) {
+        CHECK(strcmp(selection.items[index].profile->name, "paw_tiling") == 0);
+    }
+
+    runner_string_vector_init(&kernel_filters);
+    CHECK(runner_string_vector_push(&kernel_filters, "gemm") == 0);
+    CHECK(benchmark_runner_select(&config, NULL, &kernel_filters,
+                                  &profile_filters, &selection, error,
+                                  sizeof(error)) == 0);
+    CHECK(selection.length == 1);
+    CHECK(strcmp(selection.items[0].kernel->name, "gemm") == 0);
+    CHECK(strcmp(selection.items[0].profile->name, "paw_tiling") == 0);
+
+    CHECK(benchmark_runner_select(&config, NULL, &kernel_filters, NULL,
+                                  &selection, error, sizeof(error)) == 0);
+    CHECK(selection.length == 2);
+
+    CHECK(runner_string_vector_push(&kernel_filters, "atax") == 0);
+    CHECK(runner_string_vector_push(&profile_filters, "parallel") == 0);
+    CHECK(benchmark_runner_select(&config, NULL, &kernel_filters,
+                                  &profile_filters, &selection, error,
+                                  sizeof(error)) == 0);
+    CHECK(selection.length == 4);
+    for (index = 0; index < selection.length; ++index) {
+        if (strcmp(selection.items[index].kernel->name, "gemm") == 0 &&
+            strcmp(selection.items[index].profile->name, "parallel") == 0) {
+            saw_gemm_parallel = 1;
+        }
+        if (strcmp(selection.items[index].kernel->name, "atax") == 0 &&
+            strcmp(selection.items[index].profile->name, "paw_tiling") == 0) {
+            saw_atax_paw = 1;
+        }
+        CHECK(strcmp(selection.items[index].kernel->name, "lu") != 0);
+    }
+    CHECK(saw_gemm_parallel && saw_atax_paw);
+
+    CHECK(benchmark_runner_select(&config, NULL, NULL, &profile_filters,
+                                  &selection, error, sizeof(error)) == 0);
+    CHECK(selection.length == 6);
+    runner_string_vector_free(&profile_filters);
+    runner_string_vector_init(&profile_filters);
+    CHECK(runner_string_vector_push(&profile_filters, "missing") == 0);
+    CHECK(benchmark_runner_select(&config, NULL, NULL, &profile_filters,
+                                  &selection, error, sizeof(error)) != 0);
+    CHECK(strstr(error, "unknown profile") != NULL);
+
+    benchmark_selection_free(&selection);
+    runner_string_vector_free(&kernel_filters);
+    runner_string_vector_free(&profile_filters);
     return 0;
 }
 
@@ -891,6 +994,7 @@ static int test_timeout_parser_rejects_nonpositive(void)
 int main(void)
 {
     CHECK(test_selection_and_summary() == 0);
+    CHECK(test_select_kernel_profile_combinations() == 0);
     CHECK(test_lifecycle_compare_and_skip_run() == 0);
     CHECK(test_failures_and_xfail_mapping() == 0);
     CHECK(test_missing_gt_and_generate_preserves_stale() == 0);

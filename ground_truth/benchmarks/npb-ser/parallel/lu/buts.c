@@ -98,10 +98,10 @@ void buts(int ldmx, int ldmy, int ldmz, int nx, int ny, int nz, int k,
   int i, j, m;
   double tmp, tmp1;
   double tmat[5][5];
-#pragma cetus private(i, j, m)
+#pragma cetus private(i, m)
 #pragma loop name buts #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, m)
+#pragma omp parallel for private(i, m)
   for (j = (jend - 1); j >= jst; j--) {
 #pragma cetus private(i, m)
 #pragma loop name buts #0 #0
@@ -125,10 +125,9 @@ void buts(int ldmx, int ldmy, int ldmz, int nx, int ny, int nz, int k,
 #pragma cetus lastprivate(tmat)
 #pragma loop name buts #1 #0
     for (i = (iend - 1); i >= ist; i--) {
-#pragma cetus private(m)
 #pragma loop name buts #1 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         tv[j][i][m] =
             (tv[j][i][m] +
@@ -146,10 +145,9 @@ void buts(int ldmx, int ldmy, int ldmz, int nx, int ny, int nz, int k,
 /* --------------------------------------------------------------------- */
 /* diagonal block inversion */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(m)
 #pragma loop name buts #1 #0 #1
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         tmat[m][0] = d[j][i][0][m];
         tmat[m][1] = d[j][i][1][m];

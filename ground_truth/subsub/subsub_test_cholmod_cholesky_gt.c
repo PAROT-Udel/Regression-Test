@@ -49,10 +49,7 @@ int main() {
   int stype;
   int _ret_val_0;
   int k_0;
-  int pf_0;
-  int p_0;
   stype = 0;
-#pragma cetus private(i)
 #pragma loop name main #0
 #pragma cetus parallel
   for (i = 0; i < nsrow; i++) {
@@ -67,9 +64,9 @@ int main() {
 #pragma cetus private(i, p, p_0, pf, pf_0)
 #pragma cetus lastprivate(k_0)
 #pragma loop name main #2
-/* #pragma cetus reduction(+: Lx[((Map[i]+psx)+(((k1+k_0)-k1)nsrow))])  */
-#pragma cetus parallel
+  /* #pragma cetus reduction(+: Lx[((Map[i]+psx)+(((k1+k_0)-k1)nsrow))])  */
   for (k_0 = 0; k_0 <= ((-1 + (-1 * k1)) + k2); k_0++) {
+    int pf_0;
 /* Normalized Loop */
 #pragma cetus private(i, p, p_0)
 #pragma cetus lastprivate(pf_0)
@@ -77,6 +74,7 @@ int main() {
     /* #pragma cetus reduction(+: Lx[((Map[i]+psx)+(((k1+k_0)-k1)nsrow))])  */
     for (pf_0 = 0; pf_0 <= ((-1 + Fp[(1 + k1) + k_0]) + (-1 * Fp[k1 + k_0]));
          pf_0++) {
+      int p_0;
 /* Normalized Loop */
 #pragma cetus private(i)
 #pragma cetus lastprivate(p_0)

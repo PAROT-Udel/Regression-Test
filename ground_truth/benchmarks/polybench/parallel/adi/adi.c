@@ -64,10 +64,10 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Array initialization. */
 static void init_array(int n, double u[(20 + 0)][(20 + 0)]) {
   int i, j;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #0 #0
@@ -140,10 +140,10 @@ static void kernel_adi(int tsteps, int n, double u[(20 + 0)][(20 + 0)],
 #pragma loop name kernel_adi #0
   for (t = 1; t <= tsteps; t++) {
 /* Column Sweep */
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_adi #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
     for (i = 1; i < (n - 1); i++) {
       v[0][i] = 1.0;
       p[i][0] = 0.0;
@@ -165,10 +165,10 @@ static void kernel_adi(int tsteps, int n, double u[(20 + 0)][(20 + 0)],
       }
     }
 /* Row Sweep */
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_adi #0 #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
     for (i = 1; i < (n - 1); i++) {
       u[i][0] = 1.0;
       p[i][0] = 0.0;
@@ -194,7 +194,7 @@ static void kernel_adi(int tsteps, int n, double u[(20 + 0)][(20 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 20;
   int tsteps = 20;
@@ -230,13 +230,13 @@ int main(int argc, char** argv) {
   */
   print_array(n, *u);
   /* Be clean. */
-  free((void*)u);
+  free((void *)u);
   ;
-  free((void*)v);
+  free((void *)v);
   ;
-  free((void*)p);
+  free((void *)p);
   ;
-  free((void*)q);
+  free((void *)q);
   ;
   return 0;
 }

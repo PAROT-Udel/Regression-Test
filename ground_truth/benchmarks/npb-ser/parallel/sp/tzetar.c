@@ -83,12 +83,12 @@ void tzetar() {
   if (timeron) {
     timer_start(14);
   }
-#pragma cetus private(ac, ac2u, btuz, i, j, k, r1, r2, r3, r4, r5, t1, t2, t3, \
+#pragma cetus private(ac, ac2u, btuz, i, j, r1, r2, r3, r4, r5, t1, t2, t3,    \
                       uzik1, xvel, yvel, zvel)
 #pragma loop name tzetar #0
 #pragma cetus parallel
-#pragma omp parallel for private(ac, ac2u, btuz, i, j, k, r1, r2, r3, r4, r5,  \
-                                     t1, t2, t3, uzik1, xvel, yvel, zvel)
+#pragma omp parallel for private(ac, ac2u, btuz, i, j, r1, r2, r3, r4, r5, t1, \
+                                     t2, t3, uzik1, xvel, yvel, zvel)
   for (k = 1; k <= nz2; k++) {
 #pragma cetus private(ac, ac2u, btuz, i, j, r1, r2, r3, r4, r5, t1, t2, t3,    \
                       uzik1, xvel, yvel, zvel)

@@ -22,10 +22,11 @@ typedef struct {
     const char *suite_identifier;
     const char *custom_cetus_options;
 
-    /* Benchmark selection (mode == BENCHMARKS, FULL, or LIST_BENCHMARK_SUITES). */
+    /* Benchmark selection (mode == BENCHMARKS, FULL, or LIST_BENCHMARK_SUITES).
+       Empty kernel or profile lists mean every kernel or profile. */
     RunnerStringVector benchmark_suite_ids;
-    const char *benchmark_kernel;
-    const char *profile;
+    RunnerStringVector benchmark_kernels;
+    RunnerStringVector profiles;
     const char *dataset;
     const char *npb_class;
     int skip_gt;

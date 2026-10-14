@@ -93,10 +93,9 @@ void setbv() {
     for (i = 0; i < nx; i++) {
       exact(i, j, 0, temp1);
       exact(i, j, nz - 1, temp2);
-#pragma cetus private(m)
 #pragma loop name setbv #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         u[0][j][i][m] = temp1[m];
         u[nz - 1][j][i][m] = temp2[m];
@@ -114,10 +113,9 @@ void setbv() {
     for (i = 0; i < nx; i++) {
       exact(i, 0, k, temp1);
       exact(i, ny - 1, k, temp2);
-#pragma cetus private(m)
 #pragma loop name setbv #1 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         u[k][0][i][m] = temp1[m];
         u[k][ny - 1][i][m] = temp2[m];
@@ -135,10 +133,9 @@ void setbv() {
     for (j = 0; j < ny; j++) {
       exact(0, j, k, temp1);
       exact(nx - 1, j, k, temp2);
-#pragma cetus private(m)
 #pragma loop name setbv #2 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
       for (m = 0; m < 5; m++) {
         u[k][j][0][m] = temp1[m];
         u[k][j][nx - 1][m] = temp2[m];

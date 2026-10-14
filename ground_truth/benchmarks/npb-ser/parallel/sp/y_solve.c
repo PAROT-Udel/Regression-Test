@@ -98,11 +98,11 @@ void y_solve() {
 /* first fill the lhs for the u-eigenvalue          */
 /* --------------------------------------------------------------------- */
 #pragma cetus firstprivate(cv, rhoq)
-#pragma cetus private(i, j, ru1)
+#pragma cetus private(j, ru1)
 #pragma cetus lastprivate(cv, rhoq)
 #pragma loop name y_solve #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, ru1) firstprivate(cv, rhoq)             \
+#pragma omp parallel for private(j, ru1) firstprivate(cv, rhoq)                \
     lastprivate(cv, rhoq)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
 #pragma cetus private(j, ru1)
@@ -132,10 +132,10 @@ void y_solve() {
 /* --------------------------------------------------------------------- */
 /* add fourth order dissipation                              */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name y_solve #0 #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
       j = 1;
       lhs[j][i][2] = (lhs[j][i][2] + comz5);
@@ -146,10 +146,10 @@ void y_solve() {
       lhs[j + 1][i][3] = (lhs[j + 1][i][3] - comz4);
       lhs[j + 1][i][4] = (lhs[j + 1][i][4] + comz1);
     }
-#pragma cetus private(i, j)
+#pragma cetus private(i)
 #pragma loop name y_solve #0 #2
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(i)
     for (j = 3; j <= (grid_points[1] - 4); j++) {
 #pragma cetus private(i)
 #pragma loop name y_solve #0 #2 #0
@@ -161,10 +161,10 @@ void y_solve() {
         lhs[j][i][4] = (lhs[j][i][4] + comz1);
       }
     }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name y_solve #0 #3
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
       j = (grid_points[1] - 3);
       lhs[j][i][0] = (lhs[j][i][0] + comz1);
@@ -178,10 +178,10 @@ void y_solve() {
 /* --------------------------------------------------------------------- */
 /* subsequently, for (the other two factors                     */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j)
+#pragma cetus private(i)
 #pragma loop name y_solve #0 #4
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(i)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
 #pragma cetus private(i)
 #pragma loop name y_solve #0 #4 #0
@@ -206,10 +206,10 @@ void y_solve() {
     for (j = 0; j <= (grid_points[1] - 3); j++) {
       j1 = (j + 1);
       j2 = (j + 2);
-#pragma cetus private(fac1, i, m)
+#pragma cetus private(fac1, m)
 #pragma loop name y_solve #0 #5 #0
 #pragma cetus parallel
-#pragma omp parallel for private(fac1, i, m)
+#pragma omp parallel for private(fac1, m)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
         fac1 = (1.0 / lhs[j][i][2]);
         lhs[j][i][3] = (fac1 * lhs[j][i][3]);
@@ -244,10 +244,10 @@ void y_solve() {
     /* --------------------------------------------------------------------- */
     j = (grid_points[1] - 2);
     j1 = (grid_points[1] - 1);
-#pragma cetus private(fac1, fac2, i, m)
+#pragma cetus private(fac1, fac2, m)
 #pragma loop name y_solve #0 #6
 #pragma cetus parallel
-#pragma omp parallel for private(fac1, fac2, i, m)
+#pragma omp parallel for private(fac1, fac2, m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
       fac1 = (1.0 / lhs[j][i][2]);
       lhs[j][i][3] = (fac1 * lhs[j][i][3]);
@@ -285,10 +285,10 @@ void y_solve() {
     for (j = 0; j <= (grid_points[1] - 3); j++) {
       j1 = (j + 1);
       j2 = (j + 2);
-#pragma cetus private(fac1, i, m)
+#pragma cetus private(fac1, m)
 #pragma loop name y_solve #0 #7 #0
 #pragma cetus parallel
-#pragma omp parallel for private(fac1, i, m)
+#pragma omp parallel for private(fac1, m)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
         m = 3;
         fac1 = (1.0 / lhsp[j][i][2]);
@@ -323,10 +323,10 @@ void y_solve() {
     /* --------------------------------------------------------------------- */
     j = (grid_points[1] - 2);
     j1 = (grid_points[1] - 1);
-#pragma cetus private(fac1, i, m)
+#pragma cetus private(fac1, m)
 #pragma loop name y_solve #0 #8
 #pragma cetus parallel
-#pragma omp parallel for private(fac1, i, m)
+#pragma omp parallel for private(fac1, m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
       m = 3;
       fac1 = (1.0 / lhsp[j][i][2]);
@@ -359,10 +359,10 @@ void y_solve() {
     /* --------------------------------------------------------------------- */
     j = (grid_points[1] - 2);
     j1 = (grid_points[1] - 1);
-#pragma cetus private(i, m)
+#pragma cetus private(m)
 #pragma loop name y_solve #0 #9
 #pragma cetus parallel
-#pragma omp parallel for private(i, m)
+#pragma omp parallel for private(m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
 #pragma cetus private(m)
 #pragma loop name y_solve #0 #9 #0
@@ -377,13 +377,13 @@ void y_solve() {
 /* --------------------------------------------------------------------- */
 #pragma cetus private(i, j, j1, j2, m)
 #pragma loop name y_solve #0 #10
-#pragma cetus parallel
-#pragma omp parallel for private(i, j, j1, j2, m)
     for (j = (grid_points[1] - 3); j >= 0; j--) {
       j1 = (j + 1);
       j2 = (j + 2);
-#pragma cetus private(i, m)
+#pragma cetus private(m)
 #pragma loop name y_solve #0 #10 #0
+#pragma cetus parallel
+#pragma omp parallel for private(m)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
 #pragma cetus private(m)
 #pragma loop name y_solve #0 #10 #0 #0

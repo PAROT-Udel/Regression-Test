@@ -62,17 +62,17 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "gemm.h"
 /* Array initialization. */
-static void init_array(int ni, int nj, int nk, double* alpha, double* beta,
+static void init_array(int ni, int nj, int nk, double *alpha, double *beta,
                        double C[(20 + 0)][(25 + 0)],
                        double A[(20 + 0)][(30 + 0)],
                        double B[(30 + 0)][(25 + 0)]) {
   int i, j;
   (*alpha) = 1.5;
   (*beta) = 1.2;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < ni; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #0 #0
@@ -80,10 +80,10 @@ static void init_array(int ni, int nj, int nk, double* alpha, double* beta,
       C[i][j] = (((double)(((i * j) + 1) % ni)) / ni);
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < ni; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #1 #0
@@ -91,10 +91,10 @@ static void init_array(int ni, int nj, int nk, double* alpha, double* beta,
       A[i][j] = (((double)((i * (j + 1)) % nk)) / nk);
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #2
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < nk; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #2 #0
@@ -145,10 +145,10 @@ static void kernel_gemm(int ni, int nj, int nk, double alpha, double beta,
 /* B is NKxNJ */
 /* C is NIxNJ */
 #pragma scop
-#pragma cetus private(i, j, k)
+#pragma cetus private(j, k)
 #pragma loop name kernel_gemm #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k)
+#pragma omp parallel for private(j, k)
   for (i = 0; i < ni; i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_gemm #0 #0
@@ -157,7 +157,6 @@ static void kernel_gemm(int ni, int nj, int nk, double alpha, double beta,
     }
 #pragma cetus private(j, k)
 #pragma loop name kernel_gemm #0 #1
-    /* #pragma cetus reduction(+: C[i][j])  */
     for (k = 0; k < nk; k++) {
 #pragma cetus private(j)
 #pragma loop name kernel_gemm #0 #1 #0
@@ -169,7 +168,7 @@ static void kernel_gemm(int ni, int nj, int nk, double alpha, double beta,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int ni = 20;
   int nj = 25;
@@ -204,11 +203,11 @@ int main(int argc, char** argv) {
   */
   print_array(ni, nj, *C);
   /* Be clean. */
-  free((void*)C);
+  free((void *)C);
   ;
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)B);
+  free((void *)B);
   ;
   return 0;
 }

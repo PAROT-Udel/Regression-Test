@@ -62,18 +62,18 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "2mm.h"
 /* Array initialization. */
-static void init_array(int ni, int nj, int nk, int nl, double* alpha,
-                       double* beta, double A[(16 + 0)][(22 + 0)],
+static void init_array(int ni, int nj, int nk, int nl, double *alpha,
+                       double *beta, double A[(16 + 0)][(22 + 0)],
                        double B[(22 + 0)][(18 + 0)],
                        double C[(18 + 0)][(24 + 0)],
                        double D[(16 + 0)][(24 + 0)]) {
   int i, j;
   (*alpha) = 1.5;
   (*beta) = 1.2;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < ni; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #0 #0
@@ -81,10 +81,10 @@ static void init_array(int ni, int nj, int nk, int nl, double* alpha,
       A[i][j] = (((double)(((i * j) + 1) % ni)) / ni);
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < nk; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #1 #0
@@ -92,10 +92,10 @@ static void init_array(int ni, int nj, int nk, int nl, double* alpha,
       B[i][j] = (((double)((i * (j + 1)) % nj)) / nj);
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #2
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < nj; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #2 #0
@@ -103,10 +103,10 @@ static void init_array(int ni, int nj, int nk, int nl, double* alpha,
       C[i][j] = (((double)(((i * (j + 3)) + 1) % nl)) / nl);
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #3
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < ni; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #3 #0
@@ -154,12 +154,10 @@ static void kernel_2mm(int ni, int nj, int nk, int nl, double alpha,
 #pragma scop
 #pragma experimental section start
 /* D := alphaA*B*C + beta*D */
-#pragma cetus firstprivate(tmp)
-#pragma cetus private(i, j, k)
-#pragma cetus lastprivate(tmp)
+#pragma cetus private(j, k)
 #pragma loop name kernel_2mm #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k) firstprivate(tmp) lastprivate(tmp)
+#pragma omp parallel for private(j, k)
   for (i = 0; i < ni; i++) {
 #pragma cetus firstprivate(tmp)
 #pragma cetus private(j, k)
@@ -169,16 +167,15 @@ static void kernel_2mm(int ni, int nj, int nk, int nl, double alpha,
       tmp[i][j] = 0.0;
 #pragma cetus private(k)
 #pragma loop name kernel_2mm #0 #0 #0
-      /* #pragma cetus reduction(+: tmp[i][j])  */
       for (k = 0; k < nk; ++k) {
         tmp[i][j] += ((alpha * A[i][k]) * B[k][j]);
       }
     }
   }
-#pragma cetus private(i, j, k)
+#pragma cetus private(j, k)
 #pragma loop name kernel_2mm #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k)
+#pragma omp parallel for private(j, k)
   for (i = 0; i < ni; i++) {
 #pragma cetus private(j, k)
 #pragma loop name kernel_2mm #1 #0
@@ -186,7 +183,6 @@ static void kernel_2mm(int ni, int nj, int nk, int nl, double alpha,
       D[i][j] *= beta;
 #pragma cetus private(k)
 #pragma loop name kernel_2mm #1 #0 #0
-      /* #pragma cetus reduction(+: D[i][j])  */
       for (k = 0; k < nj; ++k) {
         D[i][j] += (tmp[i][k] * C[k][j]);
       }
@@ -196,7 +192,7 @@ static void kernel_2mm(int ni, int nj, int nk, int nl, double alpha,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int ni = 16;
   int nj = 18;
@@ -240,15 +236,15 @@ int main(int argc, char** argv) {
   */
   print_array(ni, nl, *D);
   /* Be clean. */
-  free((void*)tmp);
+  free((void *)tmp);
   ;
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)B);
+  free((void *)B);
   ;
-  free((void*)C);
+  free((void *)C);
   ;
-  free((void*)D);
+  free((void *)D);
   ;
   return 0;
 }

@@ -66,10 +66,10 @@ static void init_array(int n, double x1[(40 + 0)], double x2[(40 + 0)],
                        double y_1[(40 + 0)], double y_2[(40 + 0)],
                        double A[(40 + 0)][(40 + 0)]) {
   int i, j;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
     x1[i] = (((double)(i % n)) / n);
     x2[i] = (((double)((i + 1) % n)) / n);
@@ -122,10 +122,10 @@ static void kernel_mvt(int n, double x1[(40 + 0)], double x2[(40 + 0)],
                        double A[(40 + 0)][(40 + 0)]) {
   int i, j;
 #pragma scop
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_mvt #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_mvt #0 #0
@@ -134,10 +134,10 @@ static void kernel_mvt(int n, double x1[(40 + 0)], double x2[(40 + 0)],
       x1[i] = (x1[i] + (A[i][j] * y_1[j]));
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_mvt #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_mvt #1 #0
@@ -149,7 +149,7 @@ static void kernel_mvt(int n, double x1[(40 + 0)], double x2[(40 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 40;
   /* Variable declarationallocation. */
@@ -184,15 +184,15 @@ int main(int argc, char** argv) {
   */
   print_array(n, *x1, *x2);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)x1);
+  free((void *)x1);
   ;
-  free((void*)x2);
+  free((void *)x2);
   ;
-  free((void*)y_1);
+  free((void *)y_1);
   ;
-  free((void*)y_2);
+  free((void *)y_2);
   ;
   return 0;
 }

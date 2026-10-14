@@ -88,10 +88,10 @@ void jacld(int k) {
   r43 = (4.0 / 3.0);
   c1345 = (((1.4 * 0.1) * 1.0) * 1.4);
   c34 = (0.1 * 1.0);
-#pragma cetus private(i, j, tmp1, tmp2, tmp3)
+#pragma cetus private(i, tmp1, tmp2, tmp3)
 #pragma loop name jacld #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, tmp1, tmp2, tmp3)
+#pragma omp parallel for private(i, tmp1, tmp2, tmp3)
   for (j = jst; j < jend; j++) {
 #pragma cetus private(i, tmp1, tmp2, tmp3)
 #pragma loop name jacld #0 #0

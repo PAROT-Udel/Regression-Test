@@ -62,15 +62,15 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "trmm.h"
 /* Array initialization. */
-static void init_array(int m, int n, double* alpha,
+static void init_array(int m, int n, double *alpha,
                        double A[(20 + 0)][(20 + 0)],
                        double B[(20 + 0)][(30 + 0)]) {
   int i, j;
   (*alpha) = 1.5;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < m; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #0 #0
@@ -129,11 +129,11 @@ static void kernel_trmm(int m, int n, double alpha,
 #pragma scop
 #pragma cetus private(i, j, k)
 #pragma loop name kernel_trmm #0
-#pragma cetus parallel
-#pragma omp parallel for private(i, j, k)
   for (i = 0; i < m; i++) {
-#pragma cetus private(j, k)
+#pragma cetus private(k)
 #pragma loop name kernel_trmm #0 #0
+#pragma cetus parallel
+#pragma omp parallel for private(k)
     for (j = 0; j < n; j++) {
 #pragma cetus private(k)
 #pragma loop name kernel_trmm #0 #0 #0
@@ -146,7 +146,7 @@ static void kernel_trmm(int m, int n, double alpha,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int m = 20;
   int n = 30;
@@ -175,9 +175,9 @@ int main(int argc, char** argv) {
   */
   print_array(m, n, *B);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)B);
+  free((void *)B);
   ;
   return 0;
 }

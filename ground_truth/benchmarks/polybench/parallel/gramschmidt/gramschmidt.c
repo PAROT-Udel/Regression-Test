@@ -66,10 +66,10 @@ static void init_array(int m, int n, double A[(20 + 0)][(30 + 0)],
                        double R[(30 + 0)][(30 + 0)],
                        double Q[(20 + 0)][(30 + 0)]) {
   int i, j;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < m; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #0 #0
@@ -78,10 +78,10 @@ static void init_array(int m, int n, double A[(20 + 0)][(30 + 0)],
       Q[i][j] = 0.0;
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #1 #0
@@ -149,31 +149,30 @@ static void kernel_gramschmidt(int m, int n, double A[(20 + 0)][(30 + 0)],
 #pragma cetus private(i, j, k, nrm)
 #pragma cetus lastprivate(R)
 #pragma loop name kernel_gramschmidt #0
-#pragma cetus parallel
-#pragma omp parallel for private(i, j, k, nrm) firstprivate(R) lastprivate(R)
   for (k = 0; k < n; k++) {
     nrm = 0.0;
-#pragma cetus private(i)
 #pragma loop name kernel_gramschmidt #0 #0
-    /* #pragma cetus reduction(+: nrm)  */
+#pragma cetus reduction(+ : nrm)
+#pragma cetus parallel
+#pragma omp parallel for reduction(+ : nrm)
     for (i = 0; i < m; i++) {
       nrm += (A[i][k] * A[i][k]);
     }
     R[k][k] = sqrt(nrm);
-#pragma cetus private(i)
 #pragma loop name kernel_gramschmidt #0 #1
+#pragma cetus parallel
+#pragma omp parallel for
     for (i = 0; i < m; i++) {
       Q[i][k] = (A[i][k] / R[k][k]);
     }
-#pragma cetus firstprivate(R)
-#pragma cetus private(i, j)
-#pragma cetus lastprivate(R)
+#pragma cetus private(i)
 #pragma loop name kernel_gramschmidt #0 #2
+#pragma cetus parallel
+#pragma omp parallel for private(i)
     for (j = (k + 1); j < n; j++) {
       R[k][j] = 0.0;
 #pragma cetus private(i)
 #pragma loop name kernel_gramschmidt #0 #2 #0
-      /* #pragma cetus reduction(+: R[k][j])  */
       for (i = 0; i < m; i++) {
         R[k][j] += (Q[i][k] * A[i][j]);
       }
@@ -187,7 +186,7 @@ static void kernel_gramschmidt(int m, int n, double A[(20 + 0)][(30 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int m = 20;
   int n = 30;
@@ -219,11 +218,11 @@ int main(int argc, char** argv) {
   */
   print_array(m, n, *A, *R, *Q);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)R);
+  free((void *)R);
   ;
-  free((void*)Q);
+  free((void *)Q);
   ;
   return 0;
 }

@@ -106,10 +106,10 @@ void setiv() {
         exact(i, ny0 - 1, k, ue_iny0k);
         exact(i, j, 0, ue_ij1);
         exact(i, j, nz - 1, ue_ijnz);
-#pragma cetus private(m, peta, pxi, pzeta)
+#pragma cetus private(peta, pxi, pzeta)
 #pragma loop name setiv #0 #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(m, peta, pxi, pzeta)
+#pragma omp parallel for private(peta, pxi, pzeta)
         for (m = 0; m < 5; m++) {
           pxi = (((1.0 - xi) * ue_1jk[m]) + (xi * ue_nx0jk[m]));
           peta = (((1.0 - eta) * ue_i1k[m]) + (eta * ue_iny0k[m]));

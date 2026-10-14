@@ -92,19 +92,17 @@ void verify(int no_time_steps, char *Class, logical *verified) {
   error_norm(xce);
   compute_rhs();
   rhs_norm(xcr);
-#pragma cetus private(m)
 #pragma loop name verify #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     xcr[m] = (xcr[m] / dt);
   }
   (*Class) = 'U';
   (*verified) = true;
-#pragma cetus private(m)
 #pragma loop name verify #1
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     xcrref[m] = 1.0;
     xceref[m] = 1.0;
@@ -341,10 +339,9 @@ void verify(int no_time_steps, char *Class, logical *verified) {
 /* --------------------------------------------------------------------- */
 /* Compute the difference of solution values and the known reference values. */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(m)
 #pragma loop name verify #2
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     xcrdif[m] = fabs((xcr[m] - xcrref[m]) / xcrref[m]);
     xcedif[m] = fabs((xce[m] - xceref[m]) / xceref[m]);

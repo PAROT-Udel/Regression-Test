@@ -69,37 +69,37 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "symm.h"
 /* Array initialization. */
-static void init_array(int m, int n, double* alpha, double* beta,
+static void init_array(int m, int n, double *alpha, double *beta,
                        double C[(20 + 0)][(30 + 0)],
                        double A[(20 + 0)][(20 + 0)],
                        double B[(20 + 0)][(30 + 0)]) {
   int i, j;
   (*alpha) = 1.5;
   (*beta) = 1.2;
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < m; i++) {
-#pragma loop name init_array #0 #0
 #pragma cetus private(j)
+#pragma loop name init_array #0 #0
     for (j = 0; j < n; j++) {
       C[i][j] = (((double)((i + j) % 100)) / m);
       B[i][j] = (((double)(((n + i) - j) % 100)) / m);
     }
   }
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < m; i++) {
-#pragma loop name init_array #1 #0
 #pragma cetus private(j)
+#pragma loop name init_array #1 #0
     for (j = 0; j <= i; j++) {
       A[i][j] = (((double)((i + j) % 100)) / m);
     }
-#pragma loop name init_array #1 #1
 #pragma cetus private(j)
+#pragma loop name init_array #1 #1
     for (j = (i + 1); j < m; j++) {
       A[i][j] = (-999);
     }
@@ -115,11 +115,11 @@ static void print_array(int m, int n, double C[(20 + 0)][(30 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "C");
-#pragma loop name print_array #0
 #pragma cetus private(i, j)
+#pragma loop name print_array #0
   for (i = 0; i < m; i++) {
-#pragma loop name print_array #0 #0
 #pragma cetus private(j)
+#pragma loop name print_array #0 #0
     for (j = 0; j < n; j++) {
       if ((((i * m) + j) % 20) == 0) {
         fprintf(stderr, "\n");
@@ -151,18 +151,18 @@ static void kernel_symm(int m, int n, double alpha, double beta,
 /* note that due to Fortran array layout, the code below more closely resembles
  * upper triangular case in BLAS */
 #pragma scop
-#pragma loop name kernel_symm #0
-#pragma cetus parallel
 #pragma cetus private(i, j, k, temp2)
-#pragma omp parallel for private(i, j, k, temp2)
+#pragma loop name kernel_symm #0
   for (i = 0; i < m; i++) {
+#pragma cetus private(k, temp2)
 #pragma loop name kernel_symm #0 #0
-#pragma cetus private(j, k, temp2)
+#pragma cetus parallel
+#pragma omp parallel for private(k, temp2)
     for (j = 0; j < n; j++) {
       temp2 = 0;
-#pragma loop name kernel_symm #0 #0 #0
-/* #pragma cetus reduction(+: temp2)  */
 #pragma cetus private(k)
+#pragma loop name kernel_symm #0 #0 #0
+      /* #pragma cetus reduction(+: temp2)  */
       for (k = 0; k < i; k++) {
         C[k][j] += ((alpha * B[i][j]) * A[i][k]);
         temp2 += (B[k][j] * A[i][k]);
@@ -174,7 +174,7 @@ static void kernel_symm(int m, int n, double alpha, double beta,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int m = 20;
   int n = 30;
@@ -208,11 +208,11 @@ int main(int argc, char** argv) {
   */
   print_array(m, n, *C);
   /* Be clean. */
-  free((void*)C);
+  free((void *)C);
   ;
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)B);
+  free((void *)B);
   ;
   return 0;
 }

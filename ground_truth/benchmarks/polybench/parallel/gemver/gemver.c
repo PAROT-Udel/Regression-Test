@@ -62,7 +62,7 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Include benchmark-specific header. */
 #include "gemver.h"
 /* Array initialization. */
-static void init_array(int n, double* alpha, double* beta,
+static void init_array(int n, double *alpha, double *beta,
                        double A[(40 + 0)][(40 + 0)], double u1[(40 + 0)],
                        double v1[(40 + 0)], double u2[(40 + 0)],
                        double v2[(40 + 0)], double w[(40 + 0)],
@@ -72,10 +72,10 @@ static void init_array(int n, double* alpha, double* beta,
   double fn = (double)n;
   (*alpha) = 1.5;
   (*beta) = 1.2;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
     u1[i] = i;
     u2[i] = (((i + 1) / fn) / 2.0);
@@ -125,10 +125,10 @@ static void kernel_gemver(int n, double alpha, double beta,
                           double z[(40 + 0)]) {
   int i, j;
 #pragma scop
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_gemver #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_gemver #0 #0
@@ -136,10 +136,10 @@ static void kernel_gemver(int n, double alpha, double beta,
       A[i][j] = ((A[i][j] + (u1[i] * v1[j])) + (u2[i] * v2[j]));
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_gemver #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_gemver #1 #0
@@ -148,17 +148,16 @@ static void kernel_gemver(int n, double alpha, double beta,
       x[i] = (x[i] + ((beta * A[j][i]) * y[j]));
     }
   }
-#pragma cetus private(i)
 #pragma loop name kernel_gemver #2
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < n; i++) {
     x[i] = (x[i] + z[i]);
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name kernel_gemver #3
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_gemver #3 #0
@@ -170,7 +169,7 @@ static void kernel_gemver(int n, double alpha, double beta,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 40;
   /* Variable declarationallocation. */
@@ -219,23 +218,23 @@ int main(int argc, char** argv) {
   */
   print_array(n, *w);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)u1);
+  free((void *)u1);
   ;
-  free((void*)v1);
+  free((void *)v1);
   ;
-  free((void*)u2);
+  free((void *)u2);
   ;
-  free((void*)v2);
+  free((void *)v2);
   ;
-  free((void*)w);
+  free((void *)w);
   ;
-  free((void*)x);
+  free((void *)x);
   ;
-  free((void*)y);
+  free((void *)y);
   ;
-  free((void*)z);
+  free((void *)z);
   ;
   return 0;
 }

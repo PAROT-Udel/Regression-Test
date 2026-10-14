@@ -1056,7 +1056,10 @@ static int run_benchmarks(const CliOptions *opts,
             opts->benchmark_suite_ids.length > 0
                 ? &opts->benchmark_suite_ids
                 : NULL,
-            opts->benchmark_kernel, opts->profile, &selection, error,
+            opts->benchmark_kernels.length > 0 ? &opts->benchmark_kernels
+                                               : NULL,
+            opts->profiles.length > 0 ? &opts->profiles : NULL, &selection,
+            error,
             sizeof(error)) != 0) {
         fprintf(stderr, "ERROR: Benchmark selection failed: %s\n", error);
         result = 1;

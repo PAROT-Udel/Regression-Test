@@ -1,3 +1,4 @@
+#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -624,7 +625,6 @@ int main() {
   int A_i[30000], Arownnz[30000], y_data[30000], A_data[30000], A_j[30000],
       x_data[30000];
   int _ret_val_0;
-  int jj_0;
   irownnz = 0;
 #pragma cetus private(adiag, i)
 #pragma loop name main #0
@@ -634,31 +634,44 @@ int main() {
       Arownnz[irownnz++] = i;
     }
   }
-#pragma cetus private(i, j, jj, jj_0)
-#pragma loop name main #1
-/* #pragma cetus reduction(+: y_data[((jvecstride_y)+(Arownnz[i]*idxstride_y))])
- */
 #pragma cetus parallel
-  for (i = 0; i < num_rows; i++) {
+#pragma cetus private(j, jj, jj_0)
+  {
+    int *reduce = (int *)malloc(30000 * sizeof(int));
+    int reduce_span_0;
+    for (reduce_span_0 = 0; reduce_span_0 < 30000; reduce_span_0++) {
+      reduce[reduce_span_0] = 0;
+    }
+#pragma loop name main #1
+#pragma cetus for
+    for (i = 0; i < num_rows; i++) {
 #pragma cetus private(j, jj, jj_0)
 #pragma loop name main #1 #0
-    /* #pragma cetus reduction(+:
-     * y_data[((jvecstride_y)+(Arownnz[i]*idxstride_y))])  */
-    for (j = 0; j < num_vectors; ++j) {
+      /* #pragma cetus reduction(+:
+       * y_data[((jvecstride_y)+(Arownnz[i]*idxstride_y))])  */
+      for (j = 0; j < num_vectors; ++j) {
+        int jj_0;
 /* Normalized Loop */
 #pragma cetus lastprivate(jj_0)
 #pragma loop name main #1 #0 #0
-      /* #pragma cetus reduction(+:
-       * y_data[((jvecstride_y)+(Arownnz[i]*idxstride_y))])  */
-      for (jj_0 = 0;
-           jj_0 <= ((-1 + A_i[1 + Arownnz[i]]) + (-1 * A_i[Arownnz[i]]));
-           jj_0++) {
-        y_data[(j * vecstride_y) + (Arownnz[i] * idxstride_y)] +=
-            (A_data[jj_0 + A_i[Arownnz[i]]] *
-             x_data[(j * vecstride_x) +
-                    (A_j[jj_0 + A_i[Arownnz[i]]] * idxstride_x)]);
+        /* #pragma cetus reduction(+:
+         * y_data[((jvecstride_y)+(Arownnz[i]*idxstride_y))])  */
+        for (jj_0 = 0;
+             jj_0 <= ((-1 + A_i[1 + Arownnz[i]]) + (-1 * A_i[Arownnz[i]]));
+             jj_0++) {
+          reduce[(j * vecstride_y) + (Arownnz[i] * idxstride_y)] +=
+              (A_data[jj_0 + A_i[Arownnz[i]]] *
+               x_data[(j * vecstride_x) +
+                      (A_j[jj_0 + A_i[Arownnz[i]]] * idxstride_x)]);
+        }
+        jj = (jj_0 + A_i[Arownnz[i]]);
       }
-      jj = (jj_0 + A_i[Arownnz[i]]);
+    }
+#pragma cetus critical
+    {
+      for (reduce_span_0 = 0; reduce_span_0 < 30000; reduce_span_0++) {
+        y_data[reduce_span_0] += reduce[reduce_span_0];
+      }
     }
   }
   _ret_val_0 = 0;

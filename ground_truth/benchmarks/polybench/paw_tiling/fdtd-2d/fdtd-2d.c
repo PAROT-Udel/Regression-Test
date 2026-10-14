@@ -75,20 +75,18 @@ static void init_array(int tmax, int nx, int ny, double ex[(20 + 0)][(30 + 0)],
   int i, j;
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma cetus private(i)
-#pragma cetus private(i)
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < tmax; i++) {
     _fict_[i] = ((double)i);
   }
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < nx; i++) {
-#pragma loop name init_array #1 #0
 #pragma cetus private(j)
+#pragma loop name init_array #1 #0
 #pragma cetus private(j)
     for (j = 0; j < ny; j++) {
       ex[i][j] = ((((double)i) * (j + 1)) / nx);
@@ -108,12 +106,12 @@ static void print_array(int nx, int ny, double ex[(20 + 0)][(30 + 0)],
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "ex");
+#pragma cetus private(i, j)
 #pragma loop name print_array #0
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
   for (i = 0; i < nx; i++) {
-#pragma loop name print_array #0 #0
 #pragma cetus private(j)
+#pragma loop name print_array #0 #0
 #pragma cetus private(j)
     for (j = 0; j < ny; j++) {
       if ((((i * nx) + j) % 20) == 0) {
@@ -125,12 +123,12 @@ static void print_array(int nx, int ny, double ex[(20 + 0)][(30 + 0)],
   fprintf(stderr, "\nend   dump: %s\n", "ex");
   fprintf(stderr, "==END   DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "ey");
+#pragma cetus private(i, j)
 #pragma loop name print_array #1
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
   for (i = 0; i < nx; i++) {
-#pragma loop name print_array #1 #0
 #pragma cetus private(j)
+#pragma loop name print_array #1 #0
 #pragma cetus private(j)
     for (j = 0; j < ny; j++) {
       if ((((i * nx) + j) % 20) == 0) {
@@ -141,12 +139,12 @@ static void print_array(int nx, int ny, double ex[(20 + 0)][(30 + 0)],
   }
   fprintf(stderr, "\nend   dump: %s\n", "ey");
   fprintf(stderr, "begin dump: %s", "hz");
+#pragma cetus private(i, j)
 #pragma loop name print_array #2
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
   for (i = 0; i < nx; i++) {
-#pragma loop name print_array #2 #0
 #pragma cetus private(j)
+#pragma loop name print_array #2 #0
 #pragma cetus private(j)
     for (j = 0; j < ny; j++) {
       if ((((i * nx) + j) % 20) == 0) {
@@ -169,52 +167,50 @@ static void kernel_fdtd_2d(int tmax, int nx, int ny,
                            double _fict_[(20 + 0)]) {
   int t, i, j;
 #pragma scop
-#pragma loop name kernel_fdtd_2d #0
 #pragma cetus private(i, j, t)
+#pragma loop name kernel_fdtd_2d #0
 #pragma cetus private(i, j, t)
   for (t = 0; t < tmax; t++) {
 #pragma loop name kernel_fdtd_2d #0 #0
 #pragma cetus parallel
-#pragma cetus private(j)
-#pragma cetus private(j)
-#pragma omp parallel for private(j)
+#pragma omp parallel for
     for (j = 0; j < ny; j++) {
       ey[0][j] = _fict_[t];
     }
+#pragma cetus private(j)
 #pragma loop name kernel_fdtd_2d #0 #1
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
     for (i = 1; i < nx; i++) {
-#pragma loop name kernel_fdtd_2d #0 #1 #0
 #pragma cetus private(j)
+#pragma loop name kernel_fdtd_2d #0 #1 #0
 #pragma cetus private(j)
       for (j = 0; j < ny; j++) {
         ey[i][j] = (ey[i][j] - (0.5 * (hz[i][j] - hz[i - 1][j])));
       }
     }
+#pragma cetus private(j)
 #pragma loop name kernel_fdtd_2d #0 #2
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
     for (i = 0; i < nx; i++) {
-#pragma loop name kernel_fdtd_2d #0 #2 #0
 #pragma cetus private(j)
+#pragma loop name kernel_fdtd_2d #0 #2 #0
 #pragma cetus private(j)
       for (j = 1; j < ny; j++) {
         ex[i][j] = (ex[i][j] - (0.5 * (hz[i][j] - hz[i][j - 1])));
       }
     }
+#pragma cetus private(j)
 #pragma loop name kernel_fdtd_2d #0 #3
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
     for (i = 0; i < (nx - 1); i++) {
-#pragma loop name kernel_fdtd_2d #0 #3 #0
 #pragma cetus private(j)
+#pragma loop name kernel_fdtd_2d #0 #3 #0
 #pragma cetus private(j)
       for (j = 0; j < (ny - 1); j++) {
         hz[i][j] =
@@ -226,7 +222,7 @@ static void kernel_fdtd_2d(int tmax, int nx, int ny,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int tmax = 20;
   int nx = 20;
@@ -262,13 +258,13 @@ int main(int argc, char** argv) {
   */
   print_array(nx, ny, *ex, *ey, *hz);
   /* Be clean. */
-  free((void*)ex);
+  free((void *)ex);
   ;
-  free((void*)ey);
+  free((void *)ey);
   ;
-  free((void*)hz);
+  free((void *)hz);
   ;
-  free((void*)_fict_);
+  free((void *)_fict_);
   ;
   return 0;
 }

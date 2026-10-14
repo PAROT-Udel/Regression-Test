@@ -73,8 +73,7 @@ static void init_array(int n, double A[(30 + 0)], double B[(30 + 0)]) {
   int i;
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma cetus private(i)
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < n; i++) {
     A[i] = ((((double)i) + 2) / n);
     B[i] = ((((double)i) + 3) / n);
@@ -89,8 +88,8 @@ static void print_array(int n, double A[(30 + 0)]) {
   int i;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "A");
-#pragma loop name print_array #0
 #pragma cetus private(i)
+#pragma loop name print_array #0
   for (i = 0; i < n; i++) {
     if ((i % 20) == 0) {
       fprintf(stderr, "\n");
@@ -109,18 +108,18 @@ static void kernel_jacobi_1d(int tsteps, int n, double A[(30 + 0)],
                              double B[(30 + 0)]) {
   int t, i;
 #pragma scop
-#pragma loop name kernel_jacobi_1d #0
-#pragma cetus parallel
 #pragma cetus private(i, t)
-#pragma omp parallel for private(i, t)
+#pragma loop name kernel_jacobi_1d #0
   for (t = 0; t < tsteps; t++) {
 #pragma loop name kernel_jacobi_1d #0 #0
-#pragma cetus private(i)
+#pragma cetus parallel
+#pragma omp parallel for
     for (i = 1; i < (n - 1); i++) {
       B[i] = (0.33333 * ((A[i - 1] + A[i]) + A[i + 1]));
     }
 #pragma loop name kernel_jacobi_1d #0 #1
-#pragma cetus private(i)
+#pragma cetus parallel
+#pragma omp parallel for
     for (i = 1; i < (n - 1); i++) {
       A[i] = (0.33333 * ((B[i - 1] + B[i]) + B[i + 1]));
     }
@@ -128,7 +127,7 @@ static void kernel_jacobi_1d(int tsteps, int n, double A[(30 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 30;
   int tsteps = 20;
@@ -154,9 +153,9 @@ int main(int argc, char** argv) {
   */
   print_array(n, *A);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)B);
+  free((void *)B);
   ;
   return 0;
 }

@@ -66,10 +66,10 @@ static void init_array(int nr, int nq, int np,
                        double A[(10 + 0)][(8 + 0)][(12 + 0)],
                        double C4[(12 + 0)][(12 + 0)]) {
   int i, j, k;
-#pragma cetus private(i, j, k)
+#pragma cetus private(j, k)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k)
+#pragma omp parallel for private(j, k)
   for (i = 0; i < nr; i++) {
 #pragma cetus private(j, k)
 #pragma loop name init_array #0 #0
@@ -81,10 +81,10 @@ static void init_array(int nr, int nq, int np,
       }
     }
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < np; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #1 #0
@@ -133,11 +133,11 @@ void kernel_doitgen(int nr, int nq, int np,
   int r, q, p, s;
 #pragma scop
 #pragma cetus firstprivate(sum)
-#pragma cetus private(p, q, r, s)
+#pragma cetus private(p, q, s)
 #pragma cetus lastprivate(sum)
 #pragma loop name kernel_doitgen #0
 #pragma cetus parallel
-#pragma omp parallel for private(p, q, r, s) firstprivate(sum) lastprivate(sum)
+#pragma omp parallel for private(p, q, s) firstprivate(sum) lastprivate(sum)
   for (r = 0; r < nr; r++) {
 #pragma cetus firstprivate(sum)
 #pragma cetus private(p, q, s)
@@ -165,7 +165,7 @@ void kernel_doitgen(int nr, int nq, int np,
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int nr = 10;
   int nq = 8;
@@ -197,11 +197,11 @@ int main(int argc, char** argv) {
   */
   print_array(nr, nq, np, *A);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)sum);
+  free((void *)sum);
   ;
-  free((void*)C4);
+  free((void *)C4);
   ;
   return 0;
 }

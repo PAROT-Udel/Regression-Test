@@ -320,14 +320,14 @@ double C[64][64];
 double A[64][64];
 void init_array(void) {
   int i, j;
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < 64; i++) {
-#pragma loop name init_array #0 #0
 #pragma cetus private(j)
+#pragma loop name init_array #0 #0
 #pragma cetus private(j)
     for (j = 0; j < 64; j++) {
       A[i][j] = (((double)(i + j)) / 64);
@@ -338,26 +338,24 @@ void init_array(void) {
 
 void kernel_compute(void) {
   int i, j, k;
+#pragma cetus private(j, k)
 #pragma loop name kernel_compute #0
 #pragma cetus parallel
 #pragma cetus private(i, j, k)
-#pragma cetus private(i, j, k)
 #pragma omp parallel for private(i, j, k)
   for (i = 0; i < 64; i++) {
-#pragma loop name kernel_compute #0 #0
 #pragma cetus private(j)
+#pragma loop name kernel_compute #0 #0
 #pragma cetus private(j)
     for (j = 0; j < 64; j++) {
       C[i][j] = (C[i][j] * 1.25);
     }
+#pragma cetus private(j, k)
 #pragma loop name kernel_compute #0 #1
-/* #pragma cetus reduction(+: C[i][j])  */
 #pragma cetus private(j, k)
-#pragma cetus private(j, k)
-#pragma cetus reduction(+ : C[i][j])
     for (k = 0; k < 64; k++) {
-#pragma loop name kernel_compute #0 #1 #0
 #pragma cetus private(j)
+#pragma loop name kernel_compute #0 #1 #0
 #pragma cetus private(j)
       for (j = 0; j < 64; j++) {
         C[i][j] = (C[i][j] + (A[i][k] * A[j][k]));
@@ -373,17 +371,17 @@ int main(int argc, char *argv[]) {
   (void)argv;
   init_array();
   kernel_compute();
+#pragma cetus private(j)
 #pragma loop name main #0
 #pragma cetus reduction(+ : checksum)
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma cetus reduction(+ : checksum)
 #pragma omp parallel for private(i, j) reduction(+ : checksum)
   for (i = 0; i < 64; i++) {
+#pragma cetus private(j)
 #pragma loop name main #0 #0
 /* #pragma cetus reduction(+: checksum)  */
-#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma cetus reduction(+ : checksum)
     for (j = 0; j < 64; j++) {

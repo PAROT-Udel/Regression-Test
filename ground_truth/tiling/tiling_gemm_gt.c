@@ -322,14 +322,14 @@ double d[512][512];
 int main(int argc, char *argv[]) {
   int i, j, k;
   double checksum = 0.0;
+#pragma cetus private(j)
 #pragma loop name main #0
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < 512; i++) {
-#pragma loop name main #0 #0
 #pragma cetus private(j)
+#pragma loop name main #0 #0
 #pragma cetus private(j)
     for (j = 0; j < 512; j++) {
       a[i][j] = (((double)(i + j)) / 512);
@@ -337,37 +337,35 @@ int main(int argc, char *argv[]) {
       d[i][j] = 0.0;
     }
   }
+#pragma cetus private(j, k)
 #pragma loop name main #1
 #pragma cetus parallel
 #pragma cetus private(i, j, k)
-#pragma cetus private(i, j, k)
 #pragma omp parallel for private(i, j, k)
   for (i = 0; i < 512; i++) {
+#pragma cetus private(j, k)
 #pragma loop name main #1 #0
 #pragma cetus private(j, k)
-#pragma cetus private(j, k)
-#pragma cetus reduction(+ : d[i][j])
     for (k = 0; k < 512; k++) {
+#pragma cetus private(k)
 #pragma loop name main #1 #0 #0
-/* #pragma cetus reduction(+: d[i][j])  */
-#pragma cetus private(j)
 #pragma cetus private(j)
       for (j = 0; j < 512; j++) {
         d[i][j] = (d[i][j] + (a[i][k] * b[k][j]));
       }
     }
   }
+#pragma cetus private(j)
 #pragma loop name main #2
 #pragma cetus reduction(+ : checksum)
 #pragma cetus parallel
 #pragma cetus private(i, j)
-#pragma cetus private(i, j)
 #pragma cetus reduction(+ : checksum)
 #pragma omp parallel for private(i, j) reduction(+ : checksum)
   for (i = 0; i < 512; i++) {
+#pragma cetus private(j)
 #pragma loop name main #2 #0
 /* #pragma cetus reduction(+: checksum)  */
-#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma cetus reduction(+ : checksum)
     for (j = 0; j < 512; j++) {

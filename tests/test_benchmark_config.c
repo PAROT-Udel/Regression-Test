@@ -271,7 +271,7 @@ static int test_repository_configuration(void)
     benchmark_config_init(&config);
     CHECK(benchmark_config_load(
               "benchmarks/config", &config, error, sizeof(error)) == 0);
-    CHECK(config.profile_count == 2);
+    CHECK(config.profile_count == 3);
     CHECK(config.suite_count == 4);
     CHECK(strcmp(config.suites[0].id, "generic-example") == 0);
     CHECK(strcmp(config.suites[1].id, "npb-omp") == 0);

@@ -68,16 +68,16 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)]) {
   double(*B)[(40 + 0)][(40 + 0)];
 #pragma cetus private(i, j)
 #pragma loop name init_array #0
-#pragma cetus parallel
-#pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus parallel
+#pragma omp parallel for
     for (j = 0; j <= i; j++) {
       A[i][j] = ((((double)((-j) % n)) / n) + 1);
     }
-#pragma cetus private(j)
 #pragma loop name init_array #0 #1
+#pragma cetus parallel
+#pragma omp parallel for
     for (j = (i + 1); j < n; j++) {
       A[i][j] = 0;
     }
@@ -87,10 +87,10 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)]) {
   B = ((double(*)[(40 + 0)][(40 + 0)])
            polybench_alloc_data((40 + 0) * (40 + 0), sizeof(double)));
   ;
-#pragma cetus private(r, s)
+#pragma cetus private(s)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for private(r, s)
+#pragma omp parallel for private(s)
   for (r = 0; r < n; ++r) {
 #pragma cetus private(s)
 #pragma loop name init_array #1 #0
@@ -100,11 +100,11 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)]) {
   }
 #pragma cetus private(r, s, t)
 #pragma loop name init_array #2
-#pragma cetus parallel
-#pragma omp parallel for private(r, s, t)
   for (t = 0; t < n; ++t) {
-#pragma cetus private(r, s)
+#pragma cetus private(s)
 #pragma loop name init_array #2 #0
+#pragma cetus parallel
+#pragma omp parallel for private(s)
     for (r = 0; r < n; ++r) {
 #pragma cetus private(s)
 #pragma loop name init_array #2 #0 #0
@@ -113,10 +113,10 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)]) {
       }
     }
   }
-#pragma cetus private(r, s)
+#pragma cetus private(s)
 #pragma loop name init_array #3
 #pragma cetus parallel
-#pragma omp parallel for private(r, s)
+#pragma omp parallel for private(s)
   for (r = 0; r < n; ++r) {
 #pragma cetus private(s)
 #pragma loop name init_array #3 #0
@@ -124,7 +124,7 @@ static void init_array(int n, double A[(40 + 0)][(40 + 0)]) {
       A[r][s] = (*B)[r][s];
     }
   }
-  free((void*)B);
+  free((void *)B);
   ;
 }
 
@@ -159,10 +159,10 @@ Main computational kernel. The whole function will be timed,
 static void kernel_cholesky(int n, double A[(40 + 0)][(40 + 0)]) {
   int i, j, k;
 #pragma scop
-#pragma cetus private(i, j, k)
+#pragma cetus private(j, k)
 #pragma loop name kernel_cholesky #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j, k)
+#pragma omp parallel for private(j, k)
   for (i = 0; i < n; i++) {
 /* j<i */
 #pragma cetus private(j, k)
@@ -186,7 +186,7 @@ static void kernel_cholesky(int n, double A[(40 + 0)][(40 + 0)]) {
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 40;
   /* Variable declarationallocation. */
@@ -209,7 +209,7 @@ int main(int argc, char** argv) {
   */
   print_array(n, *A);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
   return 0;
 }

@@ -64,10 +64,10 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Array initialization. */
 static void init_array(int n, double A[(40 + 0)][(40 + 0)]) {
   int i, j;
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #0 #0
@@ -116,8 +116,6 @@ static void kernel_seidel_2d(int tsteps, int n, double A[(40 + 0)][(40 + 0)]) {
     for (i = 1; i <= (n - 2); i++) {
 #pragma cetus private(j)
 #pragma loop name kernel_seidel_2d #0 #0 #0
-#pragma cetus parallel
-#pragma omp parallel for private(j)
       for (j = 1; j <= (n - 2); j++) {
         A[i][j] = (((((((((A[i - 1][j - 1] + A[i - 1][j]) + A[i - 1][j + 1]) +
                          A[i][j - 1]) +
@@ -133,7 +131,7 @@ static void kernel_seidel_2d(int tsteps, int n, double A[(40 + 0)][(40 + 0)]) {
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int n = 40;
   int tsteps = 20;
@@ -157,7 +155,7 @@ int main(int argc, char** argv) {
   */
   print_array(n, *A);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
   return 0;
 }

@@ -1,3 +1,4 @@
+#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -140,10 +141,9 @@ int main() {
   /* -------------------------------------------------------------------- */
   vranlc(0, &dum[0], dum[1], &dum[2]);
   dum[0] = randlc(&dum[1], dum[2]);
-#pragma cetus private(i)
 #pragma loop name main #0
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < (2 * (1 << 16)); i++) {
     x[i] = (-1.0E99);
   }
@@ -168,10 +168,9 @@ int main() {
   gc = 0.0;
   sx = 0.0;
   sy = 0.0;
-#pragma cetus private(i)
 #pragma loop name main #2
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < 10; i++) {
     q[i] = 0.0;
   }
@@ -220,13 +219,13 @@ int main() {
       timer_start(1);
     }
 #pragma cetus parallel
-#pragma cetus private(i, l, t1, t2, t3, t4, x1, x2)
-#pragma omp parallel private(i, l, t1, t2, t3, t4, x1, x2)
+#pragma cetus private(l, t1, t2, t3, t4, x1, x2)
+#pragma omp parallel private(l, t1, t2, t3, t4, x1, x2)
     {
-      double *reduce0 = (double *)malloc(10 * sizeof(double));
+      double *reduce = (double *)malloc(10 * sizeof(double));
       int reduce_span_0;
       for (reduce_span_0 = 0; reduce_span_0 < 10; reduce_span_0++) {
-        reduce0[reduce_span_0] = 0;
+        reduce[reduce_span_0] = 0;
       }
 #pragma loop name main #3 #1
 #pragma cetus reduction(+ : sx, sy)
@@ -241,7 +240,7 @@ int main() {
           t3 = (x1 * t2);
           t4 = (x2 * t2);
           l = ((fabs(t3) > fabs(t4)) ? fabs(t3) : fabs(t4));
-          reduce0[l] = (reduce0[l] + 1.0);
+          reduce[l] = (reduce[l] + 1.0);
           sx = (sx + t3);
           sy = (sy + t4);
         }
@@ -250,7 +249,7 @@ int main() {
 #pragma omp critical
       {
         for (reduce_span_0 = 0; reduce_span_0 < 10; reduce_span_0++) {
-          q[reduce_span_0] += reduce0[reduce_span_0];
+          q[reduce_span_0] += reduce[reduce_span_0];
         }
       }
     }
@@ -258,11 +257,10 @@ int main() {
       timer_stop(1);
     }
   }
-#pragma cetus private(i)
 #pragma loop name main #4
 #pragma cetus reduction(+ : gc)
 #pragma cetus parallel
-#pragma omp parallel for private(i) reduction(+ : gc)
+#pragma omp parallel for reduction(+ : gc)
   for (i = 0; i < 10; i++) {
     gc = (gc + q[i]);
   }

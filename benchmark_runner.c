@@ -119,6 +119,28 @@ static int suite_requested(const RunnerStringVector *suite_ids, const char *id)
     return 0;
 }
 
+/* Empty or NULL filters match every name. Kernel filters are substrings;
+   profile filters are exact names. */
+static int filter_matches(const RunnerStringVector *filters,
+                          const char *name,
+                          int substring)
+{
+    size_t index;
+    if (filters == NULL || filters->length == 0) {
+        return 1;
+    }
+    for (index = 0; index < filters->length; ++index) {
+        if (substring) {
+            if (strstr(name, filters->items[index]) != NULL) {
+                return 1;
+            }
+        } else if (strcmp(filters->items[index], name) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int selection_push(BenchmarkSelection *selection,
                           const BenchmarkSuite *suite,
                           const BenchmarkKernel *kernel,
@@ -151,8 +173,8 @@ static int selection_push(BenchmarkSelection *selection,
 
 int benchmark_runner_select(const BenchmarkConfig *config,
                             const RunnerStringVector *suite_ids,
-                            const char *kernel_filter,
-                            const char *profile_filter,
+                            const RunnerStringVector *kernel_filters,
+                            const RunnerStringVector *profile_filters,
                             BenchmarkSelection *selection,
                             char *error,
                             size_t error_size)
@@ -160,11 +182,22 @@ int benchmark_runner_select(const BenchmarkConfig *config,
     size_t suite_index;
     size_t kernel_index;
     size_t profile_index;
+    size_t filter_index;
 
     if (config == NULL || selection == NULL) {
         return fail(error, error_size, "invalid selection arguments");
     }
     benchmark_selection_free(selection);
+    if (profile_filters != NULL) {
+        for (filter_index = 0; filter_index < profile_filters->length;
+             ++filter_index) {
+            if (find_profile(config, profile_filters->items[filter_index]) ==
+                NULL) {
+                return fail(error, error_size, "unknown profile '%s'",
+                            profile_filters->items[filter_index]);
+            }
+        }
+    }
     for (suite_index = 0; suite_index < config->suite_count; ++suite_index) {
         const BenchmarkSuite *suite = &config->suites[suite_index];
         int selected = suite_ids != NULL && suite_ids->length != 0
@@ -176,16 +209,14 @@ int benchmark_runner_select(const BenchmarkConfig *config,
         for (kernel_index = 0; kernel_index < suite->kernel_count;
              ++kernel_index) {
             const BenchmarkKernel *kernel = &suite->kernels[kernel_index];
-            if (kernel_filter != NULL &&
-                strstr(kernel->name, kernel_filter) == NULL) {
+            if (!filter_matches(kernel_filters, kernel->name, 1)) {
                 continue;
             }
             for (profile_index = 0; profile_index < suite->profiles.length;
                  ++profile_index) {
                 const char *name = suite->profiles.items[profile_index];
                 const BenchmarkProfile *profile;
-                if (profile_filter != NULL &&
-                    strcmp(profile_filter, name) != 0) {
+                if (!filter_matches(profile_filters, name, 0)) {
                     continue;
                 }
                 profile = find_profile(config, name);

@@ -90,10 +90,9 @@ void verify(double xcr[5], double xce[5], double xci, char *Class,
   epsilon = 1.0E-8;
   (*Class) = 'U';
   (*verified) = true;
-#pragma cetus private(m)
 #pragma loop name verify #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     xcrref[m] = 1.0;
     xceref[m] = 1.0;
@@ -366,10 +365,9 @@ void verify(double xcr[5], double xce[5], double xci, char *Class,
 /* --------------------------------------------------------------------- */
 /* Compute the difference of solution values and the known reference values. */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(m)
 #pragma loop name verify #1
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     xcrdif[m] = fabs((xcr[m] - xcrref[m]) / xcrref[m]);
     xcedif[m] = fabs((xce[m] - xceref[m]) / xceref[m]);

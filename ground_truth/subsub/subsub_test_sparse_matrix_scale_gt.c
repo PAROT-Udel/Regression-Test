@@ -1,3 +1,4 @@
+#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -687,10 +688,8 @@ int main() {
   int i, n, p, x;
   int j, k;
   int _ret_val_0;
-  int k_0;
   p = 1;
   n = 30000;
-#pragma cetus private(i)
 #pragma loop name main #0
 #pragma cetus parallel
   for (i = 0; i < n; i++) {
@@ -700,7 +699,6 @@ int main() {
 #pragma loop name main #1
   for (j = 0; j < n; j++) {
     d[j] = p;
-#pragma cetus private(i)
 #pragma loop name main #1 #0
 #pragma cetus reduction(+ : p)
 #pragma cetus parallel
@@ -715,30 +713,30 @@ int main() {
     }
   }
 #pragma cetus parallel
-#pragma cetus private(j, k, k_0)
+#pragma cetus private(k, k_0)
   {
-    int *reduce0 = (int *)malloc(30000 * sizeof(int));
+    int *reduce = (int *)malloc(30000 * sizeof(int));
     int reduce_span_0;
     for (reduce_span_0 = 0; reduce_span_0 < 30000; reduce_span_0++) {
-      reduce0[reduce_span_0] = 1;
+      reduce[reduce_span_0] = 1;
     }
 #pragma loop name main #2
 #pragma cetus for
     for (j = 0; j < n; j++) {
+      int k_0;
 /* Normalized Loop */
 #pragma cetus lastprivate(k_0)
 #pragma loop name main #2 #0
       /* #pragma cetus reduction(: Ax[(k_0+d[j])])  */
       for (k_0 = 0; k_0 <= ((-1 + d[1 + j]) + (-1 * d[j])); k_0++) {
-        reduce0[k_0 + d[j]] =
-            ((s[j] * reduce0[k_0 + d[j]]) * s[Ai[k_0 + d[j]]]);
+        reduce[k_0 + d[j]] = ((s[j] * reduce[k_0 + d[j]]) * s[Ai[k_0 + d[j]]]);
       }
       k = (k_0 + d[j]);
     }
 #pragma cetus critical
     {
       for (reduce_span_0 = 0; reduce_span_0 < 30000; reduce_span_0++) {
-        Ax[reduce_span_0] *= reduce0[reduce_span_0];
+        Ax[reduce_span_0] *= reduce[reduce_span_0];
       }
     }
   }

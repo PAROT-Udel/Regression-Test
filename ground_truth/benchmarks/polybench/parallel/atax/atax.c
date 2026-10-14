@@ -1,3 +1,4 @@
+#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -67,17 +68,16 @@ static void init_array(int m, int n, double A[(38 + 0)][(42 + 0)],
   int i, j;
   double fn;
   fn = ((double)n);
-#pragma cetus private(i)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < n; i++) {
     x[i] = (1 + (i / fn));
   }
-#pragma cetus private(i, j)
+#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(j)
   for (i = 0; i < m; i++) {
 #pragma cetus private(j)
 #pragma loop name init_array #1 #0
@@ -117,26 +117,24 @@ static void kernel_atax(int m, int n, double A[(38 + 0)][(42 + 0)],
   int i, j;
 #pragma scop
 #pragma experimental section start
-#pragma cetus private(i)
 #pragma loop name kernel_atax #0
 #pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma omp parallel for
   for (i = 0; i < n; i++) {
     y[i] = 0;
   }
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel private(i, j)
+#pragma cetus private(j)
+#pragma omp parallel private(j)
   {
-    double* reduce0 = (double*)malloc(n * sizeof(double));
+    double *reduce = (double *)malloc(n * sizeof(double));
     int reduce_span_0;
     for (reduce_span_0 = 0; reduce_span_0 < n; reduce_span_0++) {
-      reduce0[reduce_span_0] = 0;
+      reduce[reduce_span_0] = 0;
     }
-#pragma cetus lastprivate(tmp)
 #pragma loop name kernel_atax #1
 #pragma cetus for
-#pragma omp for lastprivate(tmp)
+#pragma omp for
     for (i = 0; i < m; i++) {
       tmp[i] = 0.0;
 #pragma cetus private(j)
@@ -148,14 +146,14 @@ static void kernel_atax(int m, int n, double A[(38 + 0)][(42 + 0)],
 #pragma cetus private(j)
 #pragma loop name kernel_atax #1 #1
       for (j = 0; j < n; j++) {
-        reduce0[j] = (reduce0[j] + (A[i][j] * tmp[i]));
+        reduce[j] = (reduce[j] + (A[i][j] * tmp[i]));
       }
     }
 #pragma cetus critical
 #pragma omp critical
     {
       for (reduce_span_0 = 0; reduce_span_0 < n; reduce_span_0++) {
-        y[reduce_span_0] += reduce0[reduce_span_0];
+        y[reduce_span_0] += reduce[reduce_span_0];
       }
     }
   }
@@ -163,7 +161,7 @@ static void kernel_atax(int m, int n, double A[(38 + 0)][(42 + 0)],
 #pragma endscop
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   /* Retrieve problem size. */
   int m = 38;
   int n = 42;
@@ -196,13 +194,13 @@ int main(int argc, char** argv) {
   */
   print_array(n, *y);
   /* Be clean. */
-  free((void*)A);
+  free((void *)A);
   ;
-  free((void*)x);
+  free((void *)x);
   ;
-  free((void*)y);
+  free((void *)y);
   ;
-  free((void*)tmp);
+  free((void *)tmp);
   ;
   return 0;
 }

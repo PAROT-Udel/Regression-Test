@@ -1,3 +1,4 @@
+#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -89,21 +90,20 @@ void l2norm(int ldx, int ldy, int ldz, int nx0, int ny0, int nz0, int ist,
   /* local variables */
   /* --------------------------------------------------------------------- */
   int i, j, k, m;
-#pragma cetus private(m)
 #pragma loop name l2norm #0
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     sum[m] = 0.0;
   }
 #pragma cetus parallel
-#pragma cetus private(i, j, k, m)
-#pragma omp parallel private(i, j, k, m)
+#pragma cetus private(i, j, m)
+#pragma omp parallel private(i, j, m)
   {
-    double *reduce0 = (double *)malloc(5 * sizeof(double));
+    double *reduce = (double *)malloc(5 * sizeof(double));
     int reduce_span_0;
     for (reduce_span_0 = 0; reduce_span_0 < 5; reduce_span_0++) {
-      reduce0[reduce_span_0] = 0;
+      reduce[reduce_span_0] = 0;
     }
 #pragma loop name l2norm #1
 #pragma cetus for
@@ -120,7 +120,7 @@ void l2norm(int ldx, int ldy, int ldz, int nx0, int ny0, int nz0, int ist,
 #pragma cetus private(m)
 #pragma loop name l2norm #1 #0 #0 #0
           for (m = 0; m < 5; m++) {
-            reduce0[m] = (reduce0[m] + (v[k][j][i][m] * v[k][j][i][m]));
+            reduce[m] = (reduce[m] + (v[k][j][i][m] * v[k][j][i][m]));
           }
         }
       }
@@ -129,14 +129,13 @@ void l2norm(int ldx, int ldy, int ldz, int nx0, int ny0, int nz0, int ist,
 #pragma omp critical
     {
       for (reduce_span_0 = 0; reduce_span_0 < 5; reduce_span_0++) {
-        sum[reduce_span_0] += reduce0[reduce_span_0];
+        sum[reduce_span_0] += reduce[reduce_span_0];
       }
     }
   }
-#pragma cetus private(m)
 #pragma loop name l2norm #2
 #pragma cetus parallel
-#pragma omp parallel for private(m)
+#pragma omp parallel for
   for (m = 0; m < 5; m++) {
     sum[m] = sqrt(sum[m] / (((nx0 - 2) * (ny0 - 2)) * (nz0 - 2)));
   }
