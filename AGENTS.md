@@ -2,7 +2,7 @@
 
 This project is **independent of the Cetus source tree**. It validates Cetus compiler output by diffing transformed code against checked-in ground truth files, then (for benchmarks) rebuilding and running transformed programs.
 
-**Runtime is entirely native C** — no Python. Benchmark configuration is JSON under `benchmarks/config/` (loaded at runtime, no recompile needed to change suites).
+**Runtime is entirely native C** — no Python. Benchmark configuration is JSON under `config/` (loaded at runtime, no recompile needed to change suites).
 
 Run from **Linux or WSL**, not native Windows cmd.
 
@@ -52,13 +52,13 @@ cd /path/to/The-Cetus-Project
 
 ## Configure paths
 
-Kernel and benchmark runs both read `benchmarks/config/paths.env`. Copy and edit it:
+Kernel and benchmark runs both read `config/paths.env`. Copy and edit it:
 
 ```bash
-cp benchmarks/config/paths.example.env benchmarks/config/paths.env
+cp config/paths.example.env config/paths.env
 ```
 
-Set `CETUS`, `CLANG_FORMAT`, `GCC`, `DIFF`, `CPP`, `POLYBENCH_ROOT`, `NPB_SER_ROOT`, and `NPB_OMP_ROOT`. The harness reads `paths.env` only. `paths.example.env` is a template and is not loaded. Env vars override `paths.env`. `profiles.json` supplies the benchmark Cetus flags (`parallel`, `paw_tiling_nt`, and the other named profiles). Kernel snippet flags stay in `benchmarks/config/kernels/*.json`. Kernel snippets and benchmarks share `CETUS` and `CLANG_FORMAT`. The preprocessor for kernel snippets is `clang` (`CLANG_PATH` in `helper_tests.h`).
+Set `CETUS`, `CLANG_FORMAT`, `GCC`, `DIFF`, `CPP`, `POLYBENCH_ROOT`, and `NPB_SER_ROOT`. The vendored trees are `benchmarks/polybench-c-4.2.1-beta` and `benchmarks/NPB3.3-SER-C`. `NPB_OMP_ROOT` is only needed for the opt-in `npb-omp` suite; that OpenMP C tree is not vendored. The harness reads `paths.env` only. `paths.example.env` is a template and is not loaded. Env vars override `paths.env`. `profiles.json` supplies the benchmark Cetus flags (`parallel`, `paw_tiling_nt`, and the other named profiles). Kernel snippet flags stay in `config/kernels/*.json`. Kernel snippets and benchmarks share `CETUS` and `CLANG_FORMAT`. The preprocessor for kernel snippets is `clang` (`CLANG_PATH` in `helper_tests.h`).
 
 ## Build the harness
 
@@ -197,11 +197,12 @@ cetus_regression_test_suite/
 ├── run_all.sh
 ├── tests/                     # Native unit tests
 ├── third_party/cjson/         # Vendored JSON parser
-├── benchmarks/config/
+├── config/
 │   ├── paths.example.env      # template only; not loaded
 │   ├── profiles.json
 │   ├── suites/                # polybench.json, npb-ser.json, …
 │   └── kernels/               # tiling.json, subsub.json
+├── benchmarks/                # vendored PolyBench/C 4.2.1-beta and NPB3.3-SER-C
 ├── input_files/
 │   ├── tiling/                # PAW tiling (6 tests)
 │   └── subsub/                # Subscripted-subscript (9 tests)
@@ -227,13 +228,13 @@ cetus_regression_test_suite/
 | Adapters | `*_adapter.c` | Suite-specific prepare/cetus/inject/build/verify vtable hooks |
 | Process | `process_runner.c` | `fork`/`execvp`, capture stdout/stderr, timeout, process-group kill |
 
-Benchmark JSON is loaded when `--benchmarks`, `--full`, or `--list-benchmark-suites` is used. Kernel JSON under `benchmarks/config/kernels/` is loaded for kernel runs and `--list-suites`. Neither requires a rebuild.
+Benchmark JSON is loaded when `--benchmarks`, `--full`, or `--list-benchmark-suites` is used. Kernel JSON under `config/kernels/` is loaded for kernel runs and `--list-suites`. Neither requires a rebuild.
 
 ## Test suites
 
 ### PAW tiling (`TRANSFORM_TILING`)
 
-Six kernels in `benchmarks/config/kernels/tiling.json`. Shared flags, with `-tileSizes=64` added on `tiling_gemm.c`:
+Six kernels in `config/kernels/tiling.json`. Shared flags, with `-tileSizes=64` added on `tiling_gemm.c`:
 
 ```
 -alias=3 -verbosity=0 -profitable-omp=0 -tile-profitability=1
@@ -245,7 +246,7 @@ Six kernels in `benchmarks/config/kernels/tiling.json`. Shared flags, with `-til
 
 ### Subscripted-subscript analysis (`TRANSFORM_SUBSUB_ANALYSIS`)
 
-Nine cases in `benchmarks/config/kernels/subsub.json`. Flags:
+Nine cases in `config/kernels/subsub.json`. Flags:
 
 ```
 -subsub_analysis -normalize-loops -ompGen=0 -profitable-omp=0
@@ -255,7 +256,7 @@ Nine cases in `benchmarks/config/kernels/subsub.json`. Flags:
 
 ### Benchmark profiles
 
-From `benchmarks/config/profiles.json`. A suite lists which of these it runs. `--profile` selects by exact name and is repeatable; omit it to run every profile that suite enables.
+From `config/profiles.json`. A suite lists which of these it runs. `--profile` selects by exact name and is repeatable; omit it to run every profile that suite enables.
 
 - **`parallel`** — OpenMP parallelization (PolyBench and NPB). Not stock Cetus: `-alias=3` (default 1) and `-profitable-omp=0` (default 1).
 - **`paw_tiling_nt`** — parallel-aware tiling, NT tile sizes (PolyBench and NPB serial)
@@ -289,19 +290,19 @@ The checked-in PolyBench and NPB suites do not use `xfail`. NPB verify sets `OMP
 ## Adding a new kernel test
 
 1. Place input under `input_files/tiling/` or `input_files/subsub/`.
-2. Add the kernel to `benchmarks/config/kernels/<suite>.json` (name, input path, and any extra flags). No recompile.
+2. Add the kernel to `config/kernels/<suite>.json` (name, input path, and any extra flags). No recompile.
 3. `./cetus_regression_test --run-test <name> --generate`
 4. Commit input, the JSON, and `ground_truth/<suite>/*_gt.c`.
 5. `./cetus_regression_test --run-test <name>`
 
 ## Adding a new benchmark case
 
-1. Edit `benchmarks/config/suites/<suite>.json` — no recompile.
+1. Edit `config/suites/<suite>.json` — no recompile.
 2. `./cetus_regression_test --benchmarks --run-test …` is **not** valid. Select cases with `--benchmark-suite`, `--benchmark-kernel`, and `--profile` (each repeatable; omit one to keep all of that axis).
 3. Generate GT: `--generate --skip-run` then full run without `--generate`.
 4. Commit JSON + `ground_truth/benchmarks/`.
 
-Generic adapter: copy `benchmarks/config/suites/generic-example.json`. Commands must be **argv arrays** (shell strings rejected). Verify types: `exit_code`, `regex`, `dump_diff`.
+Generic adapter: copy `config/suites/generic-example.json`. Commands must be **argv arrays** (shell strings rejected). Verify types: `exit_code`, `regex`, `dump_diff`.
 
 ## Debugging failures
 

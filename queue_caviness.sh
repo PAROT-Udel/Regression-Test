@@ -61,7 +61,7 @@ if [[ "$SYNC" -eq 1 ]]; then
         --exclude logs/ \
         --exclude cetus_intermediate_i_files/ \
         --exclude cetus_transformed_output/ \
-        --exclude benchmarks/config/paths.env \
+        --exclude config/paths.env \
         --exclude '*.o' \
         --exclude cetus_regression_test \
         --exclude tests/test_runner \

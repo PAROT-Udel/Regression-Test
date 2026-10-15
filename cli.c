@@ -98,7 +98,7 @@ void cli_options_init(CliOptions *options)
     memset(options, 0, sizeof(*options));
     options->mode = CLI_MODE_KERNELS;
     options->timeout_seconds = 600;
-    options->config_dir = "benchmarks/config";
+    options->config_dir = "config";
     runner_string_vector_init(&options->benchmark_suite_ids);
     runner_string_vector_init(&options->benchmark_kernels);
     runner_string_vector_init(&options->profiles);
@@ -311,6 +311,6 @@ void cli_print_usage(const char *program_name)
         "  --skip-run               Skip build/run/verify after transform\n"
         "  --timeout <seconds>      Benchmark tool timeout (default: 600)\n"
         "  --config-dir <path>      Benchmark config directory "
-        "(default: benchmarks/config)\n",
+        "(default: config)\n",
         program_name);
 }

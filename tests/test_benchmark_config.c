@@ -333,7 +333,7 @@ static int test_repository_configuration(void)
 
     benchmark_config_init(&config);
     CHECK(benchmark_config_load(
-              "benchmarks/config", &config, error, sizeof(error)) == 0);
+              "config", &config, error, sizeof(error)) == 0);
     CHECK(config.profile_count == 5);
     CHECK(profile_has_flag(&config, "parallel", "-alias=3"));
     CHECK(profile_has_flag(&config, "paw_tiling_nt", "-paw_tiling=1"));

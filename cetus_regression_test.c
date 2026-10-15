@@ -230,7 +230,7 @@ static int load_kernels(const char *config_dir,
 }
 
 /* --------------------------------------------------------------------- */
-/*  list_suites (kernel suites from benchmarks/config/kernels)           */
+/*  list_suites (kernel suites from config/kernels)                     */
 /* --------------------------------------------------------------------- */
 
 static int list_suites(const char *config_dir)
@@ -670,7 +670,7 @@ int run_test_case(const char *category, const char *input_file_base_name,
     /* --- 3. Cetus execution --- */
     if (cetus_path == NULL || cetus_path[0] == '\0') {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
-                         "CETUS is not set in benchmarks/config/paths.env "
+                         "CETUS is not set in config/paths.env "
                          "or the environment.",
                          NULL);
         return 0;
@@ -864,7 +864,7 @@ int run_test_case(const char *category, const char *input_file_base_name,
     if (clang_format_path == NULL || clang_format_path[0] == '\0') {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
                          "CLANG_FORMAT is not set in "
-                         "benchmarks/config/paths.env or the environment.",
+                         "config/paths.env or the environment.",
                          NULL);
         return 0;
     }

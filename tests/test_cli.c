@@ -30,7 +30,7 @@ static int test_no_args(void)
     CHECK(opts.test_identifier == NULL);
     CHECK(opts.suite_identifier == NULL);
     CHECK(opts.timeout_seconds == 600);
-    CHECK(strcmp(opts.config_dir, "benchmarks/config") == 0);
+    CHECK(strcmp(opts.config_dir, "config") == 0);
     cli_options_free(&opts);
     return 0;
 }

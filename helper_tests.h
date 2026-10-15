@@ -8,7 +8,7 @@
 #define GROUND_TRUTH_SUFFIX "_gt.c" // Suffix for ground truth files
 
 /* Preprocessor for kernel snippets. CETUS and CLANG_FORMAT come from
-   benchmarks/config/paths.env (environment variables override the file). */
+   config/paths.env (environment variables override the file). */
 #define CLANG_PATH       "clang"          // Or "/usr/bin/clang"
 
 

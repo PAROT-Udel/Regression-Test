@@ -82,7 +82,7 @@
   Kernel snippets are JSON too, under \texttt{kernels/}.
   They stop after the source diff and are not compiled or run.
   \end{minipage}
-  \note{Benchmark JSON is benchmarks/config/suites and profiles.json. Kernel snippets are benchmarks/config/kernels. Both load at runtime. The original NPB and PolyBench trees are never edited. Ground truth lives under ground\_truth/benchmarks/suite/profile/kernel. NPB verify looks for the verification-successful line. PolyBench diffs POLYBENCH\_DUMP\_ARRAYS output of the original and the transformed binary.}
+  \note{Benchmark JSON is config/suites and profiles.json. Kernel snippets are config/kernels. Both load at runtime. The original NPB and PolyBench trees are never edited. Ground truth lives under ground\_truth/benchmarks/suite/profile/kernel. NPB verify looks for the verification-successful line. PolyBench diffs POLYBENCH\_DUMP\_ARRAYS output of the original and the transformed binary.}
 \end{frame}
 
 \begin{frame}{How a test is configured}
@@ -111,7 +111,7 @@
   \texttt{paths.example.env} is a template and is not loaded.
   Kernel snippets use that same Cetus path.
   Their flags are in \texttt{kernels/*.json}, not \texttt{profiles.json}.
-  \note{Say the JSON lives in benchmarks/config. Suites pick kernels, class or dataset, and which profiles apply. Profiles are a separate file of Cetus flags. Kernel snippets are benchmarks/config/kernels and share CETUS from paths.env. The harness does not read paths.example.env. Environment variables override the file. Six unit-test programs check the harness itself and are not Cetus runs.}
+  \note{Say the JSON lives in config. Suites pick kernels, class or dataset, and which profiles apply. Profiles are a separate file of Cetus flags. Kernel snippets are config/kernels and share CETUS from paths.env. The harness does not read paths.example.env. Environment variables override the file. Six unit-test programs check the harness itself and are not Cetus runs.}
 \end{frame}
 
 \begin{frame}{What is tested}

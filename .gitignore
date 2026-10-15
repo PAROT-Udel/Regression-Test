@@ -16,7 +16,7 @@ logs/
 input_files/cetus_output/
 
 # Benchmark harness (local overrides + sandboxes)
-benchmarks/config/paths.env
+config/paths.env
 work/
 
 # OS / editor

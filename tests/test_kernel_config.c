@@ -156,7 +156,7 @@ static int test_checked_in_kernel_suites(void)
 
     kernel_config_init(&config);
     CHECK(kernel_config_load(
-              "benchmarks/config/kernels", &config, error, sizeof(error)) == 0);
+              "config/kernels", &config, error, sizeof(error)) == 0);
     CHECK(config.case_count == 15);
     CHECK(config.suite_count == 2);
     for (index = 0; index < config.case_count; ++index) {
