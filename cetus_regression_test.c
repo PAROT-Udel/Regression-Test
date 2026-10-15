@@ -628,7 +628,7 @@ int run_test_case(const char *category, const char *input_file_base_name,
 
     /* --- 2. Semantic check --- */
     if (snprintf(semantic_check_command, sizeof(semantic_check_command),
-                 "./check_syntax.sh \"%s\"",
+                 "bash ./check_syntax.sh \"%s\"",
                  preprocessed_input_file) >=
         (int)sizeof(semantic_check_command)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
