@@ -1105,6 +1105,7 @@ static int run_benchmarks(const CliOptions *opts,
     bench_opts.generate = opts->generate;
     bench_opts.skip_ground_truth = opts->skip_gt;
     bench_opts.skip_run = opts->skip_run;
+    bench_opts.rehydrate_gt = opts->rehydrate_gt;
 
     for (i = 0; i < selection.length; ++i) {
         BenchmarkSelectionItem *item = &selection.items[i];
@@ -1158,7 +1159,11 @@ static int run_benchmarks(const CliOptions *opts,
         case BENCHMARK_STATUS_PASS:
             if (case_result.stage == BENCHMARK_STAGE_DONE ||
                 case_result.stage == BENCHMARK_STAGE_VERIFY) {
-                if (message[0] != '\0') {
+                if (strstr(message, "ground truth updated") != NULL) {
+                    printf("[%s] \xe2\x9c\x85 SUCCESS: %s/%s (%s) passed. %s\n",
+                           get_current_time(), item->suite->id, case_id,
+                           item->profile->name, message);
+                } else if (message[0] != '\0') {
                     printf("[%s] \xe2\x9c\x85 SUCCESS: %s/%s (%s) passed. "
                            "Ground truth matched; program reported: %s\n",
                            get_current_time(), item->suite->id, case_id,

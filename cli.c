@@ -75,7 +75,7 @@ static int is_option_token(const char *arg)
         "--full", "--run-test", "--run-suite", "-cetus-options",
         "--benchmark-suite", "--benchmark-kernel", "--profile",
         "--dataset", "--class", "--skip-gt", "--skip-run",
-        "--timeout", "--config-dir"
+        "--rehydrate-gt", "--timeout", "--config-dir"
     };
     size_t i;
     if (arg == NULL)
@@ -187,6 +187,8 @@ int cli_parse(int argc, char **argv, CliOptions *options,
             options->skip_gt = 1;
         } else if (strcmp(argv[i], "--skip-run") == 0) {
             options->skip_run = 1;
+        } else if (strcmp(argv[i], "--rehydrate-gt") == 0) {
+            options->rehydrate_gt = 1;
         } else if (strcmp(argv[i], "--timeout") == 0) {
             NEED_VALUE("--timeout");
             if (parse_timeout(argv[++i], &options->timeout_seconds,
@@ -245,13 +247,13 @@ int cli_parse(int argc, char **argv, CliOptions *options,
     /* --- list modes reject execution/filter options that would be ignored --- */
     if (options->mode == CLI_MODE_LIST_SUITES ||
         options->mode == CLI_MODE_LIST_BENCHMARK_SUITES) {
-        if (options->generate ||
+        if (options->generate || options->rehydrate_gt ||
             options->test_identifier != NULL ||
             options->suite_identifier != NULL ||
             options->custom_cetus_options != NULL)
             return fail(error, error_size,
-                        "%s does not accept --generate, --run-test, "
-                        "--run-suite, or -cetus-options",
+                        "%s does not accept --generate, --rehydrate-gt, "
+                        "--run-test, --run-suite, or -cetus-options",
                         options->mode == CLI_MODE_LIST_SUITES
                             ? "--list-suites"
                             : "--list-benchmark-suites");
@@ -264,15 +266,25 @@ int cli_parse(int argc, char **argv, CliOptions *options,
         options->profiles.length > 0 ||
         options->dataset != NULL ||
         options->npb_class != NULL ||
-        options->skip_gt || options->skip_run);
+        options->skip_gt || options->skip_run || options->rehydrate_gt);
 
     if (has_benchmark_filter &&
         options->mode != CLI_MODE_BENCHMARKS &&
         options->mode != CLI_MODE_FULL)
         return fail(error, error_size,
                     "benchmark filters (--benchmark-suite, --benchmark-kernel, "
-                    "--profile, --dataset, --class, --skip-gt, --skip-run) "
-                    "require --benchmarks or --full");
+                    "--profile, --dataset, --class, --skip-gt, --skip-run, "
+                    "--rehydrate-gt) require --benchmarks or --full");
+
+    if (options->rehydrate_gt && options->generate)
+        return fail(error, error_size,
+                    "--rehydrate-gt cannot be combined with --generate");
+    if (options->rehydrate_gt && options->skip_gt)
+        return fail(error, error_size,
+                    "--rehydrate-gt cannot be combined with --skip-gt");
+    if (options->rehydrate_gt && options->skip_run)
+        return fail(error, error_size,
+                    "--rehydrate-gt cannot be combined with --skip-run");
 
     return 0;
 }
@@ -309,6 +321,9 @@ void cli_print_usage(const char *program_name)
         "  --class <value>          Override class for NPB suites\n"
         "  --skip-gt                Skip ground-truth comparison\n"
         "  --skip-run               Skip build/run/verify after transform\n"
+        "  --rehydrate-gt           Run and verify, then replace ground truth\n"
+        "                           when verification passes. A diff disagreement\n"
+        "                           is reported and the files are updated.\n"
         "  --timeout <seconds>      Benchmark tool timeout (default: 600)\n"
         "  --config-dir <path>      Benchmark config directory "
         "(default: config)\n",

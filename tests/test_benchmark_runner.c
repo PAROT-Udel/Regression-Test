@@ -942,6 +942,99 @@ static int test_stage_and_tool_failure_mapping(void)
     return 0;
 }
 
+static int read_text(const char *path, char *buffer, size_t size)
+{
+    FILE *file = fopen(path, "r");
+    size_t nread;
+    if (file == NULL || size == 0)
+        return -1;
+    nread = fread(buffer, 1, size - 1, file);
+    buffer[nread] = '\0';
+    if (ferror(file)) {
+        fclose(file);
+        return -1;
+    }
+    fclose(file);
+    return 0;
+}
+
+static int test_rehydrate_updates_only_after_verify(void)
+{
+    char root[] = "/tmp/cetus-benchmark-rehydrate-XXXXXX";
+    BenchmarkConfig config;
+    BenchmarkSuite suite;
+    BenchmarkKernel kernel;
+    BenchmarkProfile profile;
+    BenchmarkCase test_case;
+    BenchmarkCaseResult result;
+    BenchmarkRunnerOptions options;
+    BenchmarkAdapterInstance adapter;
+    FakeAdapter fake = {0};
+    FakeProcess process = {0};
+    char *gt_dir;
+    char *gt_file;
+    char body[64];
+    char error[256];
+
+    CHECK(mkdtemp(root) != NULL);
+    init_config(&config, &suite, &kernel, &profile, root);
+    fake.output_text = "generated\n";
+    runner_string_vector_init(&fake.seen_flags);
+    adapter.vtable = &fake_vtable;
+    adapter.context = &fake;
+    options = make_options(root, &process);
+    options.rehydrate_gt = 1;
+    test_case.suite = &suite;
+    test_case.kernel = &kernel;
+    test_case.profile = &profile;
+    gt_dir = runner_path_join(root,
+        "ground_truth/benchmarks/suite/parallel/demo");
+    gt_file = runner_path_join(gt_dir, "demo.c");
+    CHECK(gt_dir && gt_file && runner_mkdir_recursive(gt_dir, 0755) == 0);
+    CHECK(write_text(gt_file, "old\n") == 0);
+
+    process.diff_code = 1;
+    fake.verify_outcome = BENCHMARK_ADAPTER_FUNCTIONAL_FAILURE;
+    CHECK(benchmark_runner_run_case(&config, &test_case, &adapter, &options,
+                                    &result, error, sizeof(error)) == 0);
+    CHECK(result.status == BENCHMARK_STATUS_FAIL);
+    CHECK(result.stage == BENCHMARK_STAGE_VERIFY);
+    CHECK(fake.verify_calls == 1);
+    CHECK(strstr(result.message, "left unchanged") != NULL);
+    CHECK(read_text(gt_file, body, sizeof(body)) == 0);
+    CHECK(strcmp(body, "old\n") == 0);
+    benchmark_case_result_free(&result);
+
+    fake.verify_outcome = BENCHMARK_ADAPTER_OK;
+    fake.verify_calls = 0;
+    CHECK(benchmark_runner_run_case(&config, &test_case, &adapter, &options,
+                                    &result, error, sizeof(error)) == 0);
+    CHECK(result.status == BENCHMARK_STATUS_PASS);
+    CHECK(strstr(result.message, "diff disagreed") != NULL);
+    CHECK(strstr(result.message, "ground truth updated") != NULL);
+    CHECK(read_text(gt_file, body, sizeof(body)) == 0);
+    CHECK(strcmp(body, "generated\n") == 0);
+    benchmark_case_result_free(&result);
+
+    CHECK(write_text(gt_file, "old\n") == 0);
+    process.diff_code = 0;
+    CHECK(benchmark_runner_run_case(&config, &test_case, &adapter, &options,
+                                    &result, error, sizeof(error)) == 0);
+    CHECK(result.status == BENCHMARK_STATUS_PASS);
+    CHECK(result.message == NULL ||
+          strstr(result.message, "ground truth updated") == NULL);
+    CHECK(read_text(gt_file, body, sizeof(body)) == 0);
+    CHECK(strcmp(body, "old\n") == 0);
+    benchmark_case_result_free(&result);
+
+    runner_string_vector_free(&fake.seen_flags);
+    runner_key_value_map_free(&config.paths);
+    CHECK(runner_remove_recursive(root) == 0);
+    free(gt_file);
+    free(gt_dir);
+    return 0;
+}
+
 static int test_log_initialization_failure(void)
 {
     BenchmarkConfig config;
@@ -1002,6 +1095,7 @@ int main(void)
     CHECK(test_rejects_unsafe_identifiers_before_delete() == 0);
     CHECK(test_timeout_override_hooks_and_unique_logs() == 0);
     CHECK(test_stage_and_tool_failure_mapping() == 0);
+    CHECK(test_rehydrate_updates_only_after_verify() == 0);
     CHECK(test_log_initialization_failure() == 0);
     CHECK(test_timeout_parser_rejects_nonpositive() == 0);
     puts("all benchmark runner tests passed");

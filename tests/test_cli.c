@@ -348,6 +348,44 @@ static int test_skip_run(void)
     return 0;
 }
 
+static int test_rehydrate_gt(void)
+{
+    char *argv[] = {"prog", "--benchmarks", "--rehydrate-gt", NULL};
+    CliOptions opts;
+    char error[256];
+    CHECK(cli_parse(3, argv, &opts, error, sizeof(error)) == 0);
+    CHECK(opts.rehydrate_gt == 1);
+    CHECK(opts.mode == CLI_MODE_BENCHMARKS);
+    cli_options_free(&opts);
+    return 0;
+}
+
+static int test_rehydrate_gt_rejects_conflicts(void)
+{
+    char *alone[] = {"prog", "--rehydrate-gt", NULL};
+    char *with_generate[] = {"prog", "--benchmarks", "--rehydrate-gt",
+                             "--generate", NULL};
+    char *with_skip_gt[] = {"prog", "--benchmarks", "--rehydrate-gt",
+                            "--skip-gt", NULL};
+    char *with_skip_run[] = {"prog", "--benchmarks", "--rehydrate-gt",
+                             "--skip-run", NULL};
+    CliOptions opts;
+    char error[256];
+    CHECK(cli_parse(2, alone, &opts, error, sizeof(error)) != 0);
+    CHECK(strstr(error, "--benchmarks") != NULL);
+    cli_options_free(&opts);
+    CHECK(cli_parse(4, with_generate, &opts, error, sizeof(error)) != 0);
+    CHECK(strstr(error, "--generate") != NULL);
+    cli_options_free(&opts);
+    CHECK(cli_parse(4, with_skip_gt, &opts, error, sizeof(error)) != 0);
+    CHECK(strstr(error, "--skip-gt") != NULL);
+    cli_options_free(&opts);
+    CHECK(cli_parse(4, with_skip_run, &opts, error, sizeof(error)) != 0);
+    CHECK(strstr(error, "--skip-run") != NULL);
+    cli_options_free(&opts);
+    return 0;
+}
+
 static int test_timeout(void)
 {
     char *argv[] = {"prog", "--benchmarks", "--timeout", "300", NULL};
@@ -891,6 +929,8 @@ int main(void)
     CHECK(test_class() == 0);
     CHECK(test_skip_gt() == 0);
     CHECK(test_skip_run() == 0);
+    CHECK(test_rehydrate_gt() == 0);
+    CHECK(test_rehydrate_gt_rejects_conflicts() == 0);
     CHECK(test_timeout() == 0);
     CHECK(test_config_dir() == 0);
     CHECK(test_generate_applies_to_benchmarks() == 0);

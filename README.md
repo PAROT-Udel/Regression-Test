@@ -118,13 +118,16 @@ Other useful flags:
 ```bash
 ./cetus_regression_test --benchmarks --skip-run          # diff only
 ./cetus_regression_test --benchmarks --skip-gt           # build and run only
+./cetus_regression_test --benchmarks --rehydrate-gt      # verify, then replace ground truth when the program passes
 ./cetus_regression_test --benchmarks --profile paw_tiling_lrw --generate --skip-run
 ./cetus_regression_test --benchmarks --benchmark-suite npb-ser --class W
 ./cetus_regression_test --benchmarks --timeout 1200
 ./cetus_regression_test --run-suite tiling --verbose
 ```
 
-`--generate` rewrites ground truth. Use it after an intentional Cetus change, then run again without it and commit `ground_truth/`.
+`--generate` rewrites ground truth before the program runs. Use it after an intentional Cetus change, then run again without it and commit `ground_truth/`.
+
+`--rehydrate-gt` runs the transformed program first. It replaces that case's ground truth only when verification passes. If the diff disagreed, the success line says so and names the file that changed. A failed verification leaves the checked-in ground truth as it was.
 
 A clean kernel run prints `Test Summary: 15/15 tests passed.` The process exits nonzero when any case is `FAIL` or `XPASS`. `XFAIL` is a failure that the JSON already documents; the checked-in PolyBench and NPB suites do not use it.
 

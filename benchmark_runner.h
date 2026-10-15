@@ -103,6 +103,8 @@ typedef struct {
     int generate;
     int skip_ground_truth;
     int skip_run;
+    /* Compare, run, and verify. Replace ground truth only if verification passes. */
+    int rehydrate_gt;
     BenchmarkProcessRun process_run;
     void *process_context;
 } BenchmarkRunnerOptions;

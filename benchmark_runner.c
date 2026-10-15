@@ -777,7 +777,9 @@ int benchmark_runner_run_case(const BenchmarkConfig *config,
     char *all_log = NULL;
     char *failed_log = NULL;
     char message[2048] = "";
+    char gt_note[2048] = "";
     int mismatch = 0;
+    int gt_differs = 0;
     int final = 0;
 
     memset(&context, 0, sizeof(context));
@@ -869,6 +871,7 @@ int benchmark_runner_run_case(const BenchmarkConfig *config,
         goto finish;
     }
     if (!options->generate && !options->skip_ground_truth &&
+        !options->rehydrate_gt &&
         xfail == NULL &&
         missing_ground_truth(&expected_names, context.ground_truth_dir,
                              message, sizeof(message))) {
@@ -924,6 +927,22 @@ int benchmark_runner_run_case(const BenchmarkConfig *config,
                        BENCHMARK_STAGE_GROUND_TRUTH, message, xfail, 0);
             goto finish;
         }
+    } else if (options->rehydrate_gt) {
+        if (missing_ground_truth(&expected_names, context.ground_truth_dir,
+                                 message, sizeof(message))) {
+            gt_differs = 1;
+            memcpy(gt_note, message, sizeof(gt_note) - 1);
+            gt_note[sizeof(gt_note) - 1] = '\0';
+        } else if (compare_outputs(config, options, &context, &outputs, message,
+                                   sizeof(message), &mismatch) != 0) {
+            set_result(result, BENCHMARK_STATUS_FAIL,
+                       BENCHMARK_STAGE_GROUND_TRUTH, message, xfail, 0);
+            goto finish;
+        } else if (mismatch) {
+            gt_differs = 1;
+            memcpy(gt_note, message, sizeof(gt_note) - 1);
+            gt_note[sizeof(gt_note) - 1] = '\0';
+        }
     } else if (!options->skip_ground_truth) {
         if (compare_outputs(config, options, &context, &outputs, message,
                             sizeof(message), &mismatch) != 0) {
@@ -966,14 +985,41 @@ int benchmark_runner_run_case(const BenchmarkConfig *config,
         (adapter_result = adapter->vtable->verify(
              adapter->context, &context, message, sizeof(message))) !=
             BENCHMARK_ADAPTER_OK) {
-        set_result(result, outcome_status(adapter_result),
-                   BENCHMARK_STAGE_VERIFY,
-                   message[0] ? message : "verification failed", xfail,
-                   adapter_result == BENCHMARK_ADAPTER_FUNCTIONAL_FAILURE);
+        if (options->rehydrate_gt && gt_differs) {
+            char combined[4608];
+            snprintf(combined, sizeof(combined),
+                     "verification failed; ground truth left unchanged (%s). %s",
+                     gt_note, message[0] ? message : "verification failed");
+            set_result(result, outcome_status(adapter_result),
+                       BENCHMARK_STAGE_VERIFY, combined, xfail,
+                       adapter_result == BENCHMARK_ADAPTER_FUNCTIONAL_FAILURE);
+        } else {
+            set_result(result, outcome_status(adapter_result),
+                       BENCHMARK_STAGE_VERIFY,
+                       message[0] ? message : "verification failed", xfail,
+                       adapter_result == BENCHMARK_ADAPTER_FUNCTIONAL_FAILURE);
+        }
         goto finish;
     }
-    set_result(result, BENCHMARK_STATUS_PASS, BENCHMARK_STAGE_DONE,
-               message[0] ? message : "", xfail, 0);
+    if (options->rehydrate_gt && gt_differs) {
+        char combined[4608];
+        const char *reported = message;
+        if (generate_outputs(&outputs, context.ground_truth_dir, message,
+                             sizeof(message)) != 0) {
+            set_result(result, BENCHMARK_STATUS_FAIL,
+                       BENCHMARK_STAGE_GROUND_TRUTH, message, xfail, 0);
+            goto finish;
+        }
+        snprintf(combined, sizeof(combined),
+                 "diff disagreed (%s) but verification passed; "
+                 "ground truth updated%s%s",
+                 gt_note, reported[0] ? ": " : "", reported);
+        set_result(result, BENCHMARK_STATUS_PASS, BENCHMARK_STAGE_DONE,
+                   combined, xfail, 0);
+    } else {
+        set_result(result, BENCHMARK_STATUS_PASS, BENCHMARK_STAGE_DONE,
+                   message[0] ? message : "", xfail, 0);
+    }
 
 finish:
     if (adapter->vtable->cleanup != NULL) {

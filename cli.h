@@ -31,6 +31,7 @@ typedef struct {
     const char *npb_class;
     int skip_gt;
     int skip_run;
+    int rehydrate_gt;
     int timeout_seconds;
     const char *config_dir;
 } CliOptions;

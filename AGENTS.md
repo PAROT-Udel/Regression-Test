@@ -142,6 +142,7 @@ Expected for `--all`: `Test Summary: 15/15 tests passed.`
 # GT only / verify only / regenerate GT
 ./cetus_regression_test --benchmarks --skip-run
 ./cetus_regression_test --benchmarks --skip-gt
+./cetus_regression_test --benchmarks --rehydrate-gt
 ./cetus_regression_test --benchmarks --generate --benchmark-suite polybench --benchmark-kernel gemm
 
 # Dataset / class overrides
