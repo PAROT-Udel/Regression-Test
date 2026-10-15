@@ -132,6 +132,41 @@ static int run_tool(const BenchmarkCaseContext *ctx,
     return rc;
 }
 
+/* The vendored sys/setparams is a macOS binary, and the helper scripts
+ * are not executable. Rebuild setparams from setparams.c on this host
+ * before make writes npbparams.h. */
+static void npb_rebuild_setparams(const BenchmarkCaseContext *ctx,
+                                  const char *sandbox)
+{
+    char *sys_dir = runner_path_join(sandbox, "sys");
+    char *header = NULL;
+    char *instructions = NULL;
+    char *setparams = NULL;
+    const char *argv[2];
+    ProcessResult result;
+
+    if (sys_dir == NULL)
+        return;
+    header = runner_path_join(sys_dir, "print_header");
+    instructions = runner_path_join(sys_dir, "print_instructions");
+    setparams = runner_path_join(sys_dir, "setparams");
+    if (header != NULL && runner_file_exists(header))
+        chmod(header, 0755);
+    if (instructions != NULL && runner_file_exists(instructions))
+        chmod(instructions, 0755);
+    if (setparams != NULL)
+        unlink(setparams);
+    argv[0] = "make";
+    argv[1] = NULL;
+    memset(&result, 0, sizeof(result));
+    run_tool(ctx, "make-setparams", argv, sys_dir, NULL, 0, &result);
+    process_result_free(&result);
+    free(setparams);
+    free(instructions);
+    free(header);
+    free(sys_dir);
+}
+
 static int contains_ci(const char *haystack, const char *needle)
 {
     size_t hlen = strlen(haystack);
@@ -553,7 +588,9 @@ static BenchmarkAdapterOutcome npb_prepare(
         free(dst);
     }
 
-    /* generate npbparams.h via make (allow failure) */
+    /* Build setparams for this machine, then generate npbparams.h.
+     * The benchmark make is allowed to fail; Cetus still needs the header. */
+    npb_rebuild_setparams(ctx, sandbox);
     {
         const char *argv[5];
         ProcessResult result;
