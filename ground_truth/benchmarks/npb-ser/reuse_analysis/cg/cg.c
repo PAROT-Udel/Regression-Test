@@ -1,5 +1,5 @@
 /*
-Copyright (C) 1991-2024 Free Software Foundation, Inc.
+Copyright (C) 1991-2012 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it andor
@@ -14,7 +14,7 @@ Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
-   <https:www.gnu.org/licenses/>.
+   <http:www.gnu.org/licenses/>.
 */
 /*
 This header is separate from features.h so that the compiler can
@@ -25,22 +25,12 @@ This header is separate from features.h so that the compiler can
    explicitly includes a system header.  GCC knows the name of this
    header in order to preinclude it.
 */
+/* We do support the IEC 559 math functionality, real and complex.  */
 /*
-glibc's intent is to support the IEC 559 math functionality, real
-   and complex.  If the GCC (4.9 and later) predefined macros
-   specifying compiler intent are available, use them to determine
-   whether the overall intent is to support these features; otherwise,
-   presume an older compiler has intent to support these features and
-   define these macros by default.
+wchar_t uses ISOIEC 10646 (2nd ed., published 2011-03-15) /
+   Unicode 6.0.
 */
-/*
-wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
-   synchronized with ISOIEC 10646:2017, fifth edition, plus
-   the following additions from Amendment 1 to the fifth edition:
-   - 56 emoji characters
-   - 285 hentaigana
-   - 3 additional Zanabazar Square characters
-*/
+/* We do not support C11 <threads.h>.  */
 /* ------------------------------------------------------------------------- */
 /*                                                                          */
 /*  This benchmark is a serial C version of the NPB CG code. This C         */
@@ -75,10 +65,10 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* --------------------------------------------------------------------- */
 /* NPB CG serial version       */
 /* --------------------------------------------------------------------- */
-#include "../common/print_results.h"
-#include "../common/randdp.h"
-#include "../common/timers.h"
 #include "globals.h"
+#include "print_results.h"
+#include "randdp.h"
+#include "timers.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -300,7 +290,6 @@ int main(int argc, char *argv[]) {
     if (timeron) {
       timer_start(2);
     }
-    /* CARV-FIX  */
     conj_grad(colidx, rowstr, x, z, a, p, q, r, &rnorm);
     if (timeron) {
       timer_stop(2);
@@ -413,12 +402,10 @@ int main(int argc, char *argv[]) {
 static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
                       double a[], double p[], double q[], double r[],
                       double *rnorm) {
-#pragma scop
   int j, k;
   int cgit, cgitmax = 25;
   double d, sum, rho, rho0, alpha, beta;
   rho = 0.0;
-#pragma experimental section start
 /* --------------------------------------------------------------------- */
 /* Initialize the CG algorithm: */
 /* --------------------------------------------------------------------- */
@@ -476,6 +463,46 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
       }
       q[j] = sum;
     }
+    /*
+
+        for (j = 0; j < lastrow - firstrow + 1; j++) {
+                  int i = rowstr[j];
+                  int iresidue = (rowstr[j+1] - i) % 2;
+                  double sum1 = 0.0;
+                  double sum2 = 0.0;
+                  if (iresidue == 1)
+                    sum1 = sum1 + a[i]p[colidx[i]];
+                  for (k = i + iresidue; k <= rowstr[j+1] - 2; k += 2) {
+                            sum1 = sum1 + a[k]  *p[colidx[k]];
+                            sum2 = sum2 + a[k+1]*p[colidx[k+1]];
+                  }
+                  q[j] = sum1 + sum2;
+        }
+
+    */
+    /*
+
+        for (j = 0; j < lastrow - firstrow + 1; j++) {
+                  int i = rowstr[j];
+                  int iresidue = (rowstr[j+1] - i) % 8;
+                  double sum = 0.0;
+                  for (k = i; k <= i + iresidue - 1; k++) {
+                            sum = sum + a[k]p[colidx[k]];
+                  }
+                  for (k = i + iresidue; k <= rowstr[j+1] - 8; k += 8) {
+                            sum = sum + a[k  ]*p[colidx[k  ]]
+                                      + a[k+1]*p[colidx[k+1]]
+                                      + a[k+2]*p[colidx[k+2]]
+                                      + a[k+3]*p[colidx[k+3]]
+                                      + a[k+4]*p[colidx[k+4]]
+                                      + a[k+5]*p[colidx[k+5]]
+                                      + a[k+6]*p[colidx[k+6]]
+                                      + a[k+7]*p[colidx[k+7]];
+                  }
+                  q[j] = sum;
+        }
+
+    */
     /* --------------------------------------------------------------------- */
     /* Obtain p.q */
     /* --------------------------------------------------------------------- */
@@ -565,8 +592,6 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
     d = (x[j] - r[j]);
     sum = (sum + (d * d));
   }
-#pragma endscop
-#pragma experimental section stop
   (*rnorm) = sqrt(sum);
 }
 

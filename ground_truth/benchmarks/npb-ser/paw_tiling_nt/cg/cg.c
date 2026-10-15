@@ -2,11 +2,11 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #define CEIL(x) ((int)((x) + 0.5))
-#define FLOOR(x) ((int)((x) - 0.5))
+#define FLOOR(x) ((int)((x)-0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
 /*
-Copyright (C) 1991-2024 Free Software Foundation, Inc.
+Copyright (C) 1991-2012 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it andor
@@ -21,7 +21,7 @@ Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
-   <https:www.gnu.org/licenses/>.
+   <http:www.gnu.org/licenses/>.
 */
 /*
 This header is separate from features.h so that the compiler can
@@ -32,22 +32,12 @@ This header is separate from features.h so that the compiler can
    explicitly includes a system header.  GCC knows the name of this
    header in order to preinclude it.
 */
+/* We do support the IEC 559 math functionality, real and complex.  */
 /*
-glibc's intent is to support the IEC 559 math functionality, real
-   and complex.  If the GCC (4.9 and later) predefined macros
-   specifying compiler intent are available, use them to determine
-   whether the overall intent is to support these features; otherwise,
-   presume an older compiler has intent to support these features and
-   define these macros by default.
+wchar_t uses ISOIEC 10646 (2nd ed., published 2011-03-15) /
+   Unicode 6.0.
 */
-/*
-wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
-   synchronized with ISOIEC 10646:2017, fifth edition, plus
-   the following additions from Amendment 1 to the fifth edition:
-   - 56 emoji characters
-   - 285 hentaigana
-   - 3 additional Zanabazar Square characters
-*/
+/* We do not support C11 <threads.h>.  */
 /* ------------------------------------------------------------------------- */
 /*                                                                          */
 /*  This benchmark is a serial C version of the NPB CG code. This C         */
@@ -82,10 +72,10 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* --------------------------------------------------------------------- */
 /* NPB CG serial version       */
 /* --------------------------------------------------------------------- */
-#include "../common/print_results.h"
-#include "../common/randdp.h"
-#include "../common/timers.h"
 #include "globals.h"
+#include "print_results.h"
+#include "randdp.h"
+#include "timers.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -145,6 +135,7 @@ int main(int argc, char *argv[]) {
   char *t_names[3];
   FILE *fp;
 #pragma loop name main #0
+#pragma cetus private(i)
   for (i = 0; i < 3; i++) {
     timer_clear(i);
   }
@@ -196,15 +187,19 @@ int main(int argc, char *argv[]) {
   {
     int *reduce = (int *)malloc(((1400 * (7 + 1)) * (7 + 1)) * sizeof(int));
     int reduce_span_0;
+#pragma cetus private(reduce_span_0)
     for (reduce_span_0 = 0; reduce_span_0 < ((1400 * (7 + 1)) * (7 + 1));
          reduce_span_0++) {
       reduce[reduce_span_0] = 0;
     }
 #pragma loop name main #1
 #pragma cetus for
-#pragma omp for
+#pragma cetus private(k)
+#pragma cetus
+#pragma omp for private(k)
     for (j = 0; j < ((lastrow - firstrow) + 1); j++) {
 #pragma loop name main #1 #0
+#pragma cetus private(k)
       for (k = rowstr[j]; k < rowstr[j + 1]; k++) {
         reduce[k] = (reduce[k] - firstcol);
       }
@@ -212,6 +207,7 @@ int main(int argc, char *argv[]) {
 #pragma cetus critical
 #pragma omp critical
     {
+#pragma cetus private(reduce_span_0)
       for (reduce_span_0 = 0; reduce_span_0 < ((1400 * (7 + 1)) * (7 + 1));
            reduce_span_0++) {
         colidx[reduce_span_0] += reduce[reduce_span_0];
@@ -244,6 +240,7 @@ int main(int argc, char *argv[]) {
 /* --------------------------------------------------------------------- */
 #pragma cetus private(it, j, norm_temp1, norm_temp2)
 #pragma loop name main #4
+#pragma cetus private(it, j, norm_temp1, norm_temp2)
   for (it = 1; it <= 1; it++) {
     /* --------------------------------------------------------------------- */
     /* The call to the conjugate gradient routine: */
@@ -260,6 +257,7 @@ int main(int argc, char *argv[]) {
 #pragma loop name main #4 #0
 #pragma cetus reduction(+ : norm_temp1, norm_temp2)
 #pragma cetus parallel
+#pragma cetus reduction(+ : norm_temp1, norm_temp2)
 #pragma omp parallel for reduction(+ : norm_temp1, norm_temp2)
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       norm_temp1 = (norm_temp1 + (x[j] * z[j]));
@@ -298,6 +296,8 @@ int main(int argc, char *argv[]) {
 #pragma cetus private(it, j, norm_temp1, norm_temp2)
 #pragma cetus lastprivate(zeta)
 #pragma loop name main #6
+#pragma cetus private(it, j, norm_temp1, norm_temp2)
+#pragma cetus lastprivate(zeta)
   for (it = 1; it <= 15; it++) {
     /* --------------------------------------------------------------------- */
     /* The call to the conjugate gradient routine: */
@@ -305,7 +305,6 @@ int main(int argc, char *argv[]) {
     if (timeron) {
       timer_start(2);
     }
-    /* CARV-FIX  */
     conj_grad(colidx, rowstr, x, z, a, p, q, r, &rnorm);
     if (timeron) {
       timer_stop(2);
@@ -321,6 +320,7 @@ int main(int argc, char *argv[]) {
 #pragma loop name main #6 #0
 #pragma cetus reduction(+ : norm_temp1, norm_temp2)
 #pragma cetus parallel
+#pragma cetus reduction(+ : norm_temp1, norm_temp2)
 #pragma omp parallel for reduction(+ : norm_temp1, norm_temp2)
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       norm_temp1 = (norm_temp1 + (x[j] * z[j]));
@@ -394,6 +394,7 @@ int main(int argc, char *argv[]) {
     printf("  SECTION   Time (secs)\n");
 #pragma cetus private(i, t)
 #pragma loop name main #7
+#pragma cetus private(i, t)
     for (i = 0; i < 3; i++) {
       t = timer_read(i);
       if (i == 0) {
@@ -418,12 +419,10 @@ int main(int argc, char *argv[]) {
 static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
                       double a[], double p[], double q[], double r[],
                       double *rnorm) {
-#pragma scop
   int j, k;
   int cgit, cgitmax = 25;
   double d, sum, rho, rho0, alpha, beta;
   rho = 0.0;
-#pragma experimental section start
 /* --------------------------------------------------------------------- */
 /* Initialize the CG algorithm: */
 /* --------------------------------------------------------------------- */
@@ -443,6 +442,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 #pragma loop name conj_grad #1
 #pragma cetus reduction(+ : rho)
 #pragma cetus parallel
+#pragma cetus reduction(+ : rho)
 #pragma omp parallel for reduction(+ : rho)
   for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
     rho = (rho + (r[j] * r[j]));
@@ -454,7 +454,9 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 /* --------------------------------------------------------------------- */
 #pragma cetus private(alpha, beta, cgit, d, j, k, rho0, sum)
 #pragma loop name conj_grad #2
-  /* #pragma cetus reduction(+: z[j])  */
+/* #pragma cetus reduction(+: z[j])  */
+#pragma cetus private(alpha, beta, cgit, d, j, k, rho0, sum)
+#pragma cetus reduction(+ : z[j])
   for (cgit = 1; cgit <= cgitmax; cgit++) {
 /* --------------------------------------------------------------------- */
 /* q = A.p */
@@ -470,17 +472,60 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 #pragma cetus private(k, sum)
 #pragma loop name conj_grad #2 #0
 #pragma cetus parallel
-#pragma omp parallel for private(k, sum)
+#pragma cetus private(j, k, sum)
+#pragma omp parallel for private(j, k, sum)
     for (j = 0; j < ((lastrow - firstrow) + 1); j++) {
       sum = 0.0;
 #pragma cetus private(k)
 #pragma loop name conj_grad #2 #0 #0
-      /* #pragma cetus reduction(+: sum)  */
+/* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(k)
+#pragma cetus reduction(+ : sum)
       for (k = rowstr[j]; k < rowstr[j + 1]; k++) {
         sum = (sum + (a[k] * p[colidx[k]]));
       }
       q[j] = sum;
     }
+    /*
+
+        for (j = 0; j < lastrow - firstrow + 1; j++) {
+                  int i = rowstr[j];
+                  int iresidue = (rowstr[j+1] - i) % 2;
+                  double sum1 = 0.0;
+                  double sum2 = 0.0;
+                  if (iresidue == 1)
+                    sum1 = sum1 + a[i]p[colidx[i]];
+                  for (k = i + iresidue; k <= rowstr[j+1] - 2; k += 2) {
+                            sum1 = sum1 + a[k]  *p[colidx[k]];
+                            sum2 = sum2 + a[k+1]*p[colidx[k+1]];
+                  }
+                  q[j] = sum1 + sum2;
+        }
+
+    */
+    /*
+
+        for (j = 0; j < lastrow - firstrow + 1; j++) {
+                  int i = rowstr[j];
+                  int iresidue = (rowstr[j+1] - i) % 8;
+                  double sum = 0.0;
+                  for (k = i; k <= i + iresidue - 1; k++) {
+                            sum = sum + a[k]p[colidx[k]];
+                  }
+                  for (k = i + iresidue; k <= rowstr[j+1] - 8; k += 8) {
+                            sum = sum + a[k  ]*p[colidx[k  ]]
+                                      + a[k+1]*p[colidx[k+1]]
+                                      + a[k+2]*p[colidx[k+2]]
+                                      + a[k+3]*p[colidx[k+3]]
+                                      + a[k+4]*p[colidx[k+4]]
+                                      + a[k+5]*p[colidx[k+5]]
+                                      + a[k+6]*p[colidx[k+6]]
+                                      + a[k+7]*p[colidx[k+7]];
+                  }
+                  q[j] = sum;
+        }
+
+    */
     /* --------------------------------------------------------------------- */
     /* Obtain p.q */
     /* --------------------------------------------------------------------- */
@@ -488,6 +533,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 #pragma loop name conj_grad #2 #1
 #pragma cetus reduction(+ : d)
 #pragma cetus parallel
+#pragma cetus reduction(+ : d)
 #pragma omp parallel for reduction(+ : d)
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       d = (d + (p[j] * q[j]));
@@ -519,6 +565,7 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 #pragma loop name conj_grad #2 #3
 #pragma cetus reduction(+ : rho)
 #pragma cetus parallel
+#pragma cetus reduction(+ : rho)
 #pragma omp parallel for reduction(+ : rho)
     for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
       rho = (rho + (r[j] * r[j]));
@@ -547,12 +594,15 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 #pragma cetus private(d, k)
 #pragma loop name conj_grad #3
 #pragma cetus parallel
-#pragma omp parallel for private(d, k)
+#pragma cetus private(d, j, k)
+#pragma omp parallel for private(d, j, k)
   for (j = 0; j < ((lastrow - firstrow) + 1); j++) {
     d = 0.0;
 #pragma cetus private(k)
 #pragma loop name conj_grad #3 #0
-    /* #pragma cetus reduction(+: d)  */
+/* #pragma cetus reduction(+: d)  */
+#pragma cetus private(k)
+#pragma cetus reduction(+ : d)
     for (k = rowstr[j]; k < rowstr[j + 1]; k++) {
       d = (d + (a[k] * z[colidx[k]]));
     }
@@ -565,13 +615,13 @@ static void conj_grad(int colidx[], int rowstr[], double x[], double z[],
 #pragma loop name conj_grad #4
 #pragma cetus reduction(+ : sum)
 #pragma cetus parallel
-#pragma omp parallel for private(d) reduction(+ : sum)
+#pragma cetus private(d, j)
+#pragma cetus reduction(+ : sum)
+#pragma omp parallel for private(d, j) reduction(+ : sum)
   for (j = 0; j < ((lastcol - firstcol) + 1); j++) {
     d = (x[j] - r[j]);
     sum = (sum + (d * d));
   }
-#pragma endscop
-#pragma experimental section stop
   (*rnorm) = sqrt(sum);
 }
 
@@ -623,6 +673,7 @@ static void makea(int n, int nz, double a[], int colidx[], int rowstr[],
 /* --------------------------------------------------------------------- */
 #pragma cetus private(iouter, ivelt)
 #pragma loop name makea #0
+#pragma cetus private(iouter, ivelt)
   for (iouter = 0; iouter < n; iouter++) {
     nzv = 7;
     sprnvc(n, nzv, nn1, vc, ivc);
@@ -675,11 +726,15 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
   }
 #pragma cetus private(j, nza)
 #pragma loop name sparse #1
-  /* #pragma cetus reduction(+: )  */
+/* #pragma cetus reduction(+: )  */
+#pragma cetus private(i, j, nza)
+#pragma cetus reduction(+ : rowstr[j])
   for (i = 0; i < n; i++) {
 #pragma cetus private(j, nza)
 #pragma loop name sparse #1 #0
-    /* #pragma cetus reduction(+: rowstr[j])  */
+/* #pragma cetus reduction(+: rowstr[j])  */
+#pragma cetus private(j, nza)
+#pragma cetus reduction(+ : rowstr[j])
     for (nza = 0; nza < arow[i]; nza++) {
       j = (acol[i][nza] + 1);
       rowstr[j] = (rowstr[j] + arow[i]);
@@ -688,6 +743,7 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
   rowstr[0] = 0;
 #pragma cetus private(j)
 #pragma loop name sparse #2
+#pragma cetus private(j)
   for (j = 1; j < (nrows + 1); j++) {
     rowstr[j] = (rowstr[j] + rowstr[j - 1]);
   }
@@ -706,6 +762,7 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
 /* --------------------------------------------------------------------- */
 #pragma cetus private(j, k)
 #pragma loop name sparse #3
+#pragma cetus private(j, k)
   for (j = 0; j < nrows; j++) {
 #pragma loop name sparse #3 #0
 #pragma cetus parallel
@@ -723,17 +780,23 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
   ratio = pow(rcond, 1.0 / ((double)n));
 #pragma cetus private(i, j, jcol, k, kk, nza, nzrow, scale, va)
 #pragma loop name sparse #4
-  /* #pragma cetus reduction(+: nzloc[j])  */
+/* #pragma cetus reduction(+: nzloc[j])  */
+#pragma cetus private(i, j, jcol, k, kk, nza, nzrow, scale, va)
+#pragma cetus reduction(+ : nzloc[j])
   for (i = 0; i < n; i++) {
 #pragma cetus private(j, jcol, k, kk, nza, nzrow, scale, va)
 #pragma loop name sparse #4 #0
-    /* #pragma cetus reduction(+: nzloc[j])  */
+/* #pragma cetus reduction(+: nzloc[j])  */
+#pragma cetus private(j, jcol, k, kk, nza, nzrow, scale, va)
+#pragma cetus reduction(+ : nzloc[j])
     for (nza = 0; nza < arow[i]; nza++) {
       j = acol[i][nza];
       scale = (size * aelt[i][nza]);
 #pragma cetus private(jcol, k, kk, nzrow, va)
 #pragma loop name sparse #4 #0 #0
-      /* #pragma cetus reduction(+: nzloc[j])  */
+/* #pragma cetus reduction(+: nzloc[j])  */
+#pragma cetus private(jcol, k, kk, nzrow, va)
+#pragma cetus reduction(+ : nzloc[j])
       for (nzrow = 0; nzrow < arow[i]; nzrow++) {
         jcol = acol[i][nzrow];
         va = (aelt[i][nzrow] * scale);
@@ -749,7 +812,9 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
         cont40 = false;
 #pragma cetus private(kk)
 #pragma loop name sparse #4 #0 #0 #0
-        /* #pragma cetus reduction(+: nzloc[j])  */
+/* #pragma cetus reduction(+: nzloc[j])  */
+#pragma cetus private(kk)
+#pragma cetus reduction(+ : nzloc[j])
         for (k = rowstr[j]; k < rowstr[j + 1]; k++) {
           if (colidx[k] > jcol) {
 /* ---------------------------------------------------------------- */
@@ -757,6 +822,7 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
 /* ---------------------------------------------------------------- */
 #pragma cetus private(kk)
 #pragma loop name sparse #4 #0 #0 #0 #0
+#pragma cetus private(kk)
             for (kk = (rowstr[j + 1] - 2); kk >= k; kk--) {
               if (colidx[kk] > (-1)) {
                 a[kk + 1] = a[kk];
@@ -800,11 +866,13 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
 /* --------------------------------------------------------------------- */
 #pragma cetus private(j)
 #pragma loop name sparse #5
+#pragma cetus private(j)
   for (j = 1; j < nrows; j++) {
     nzloc[j] = (nzloc[j] + nzloc[j - 1]);
   }
 #pragma cetus private(j, j1, j2, k, nza)
 #pragma loop name sparse #6
+#pragma cetus private(j, j1, j2, k, nza)
   for (j = 0; j < nrows; j++) {
     if (j > 0) {
       j1 = (rowstr[j] - nzloc[j - 1]);
@@ -815,6 +883,7 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
     nza = rowstr[j];
 #pragma cetus private(k)
 #pragma loop name sparse #6 #0
+#pragma cetus private(k)
     for (k = j1; k < j2; k++) {
       a[k] = a[((-1 * j1) + k) + rowstr[j]];
       colidx[k] = colidx[((-1 * j1) + k) + rowstr[j]];
@@ -890,6 +959,7 @@ static void vecset(int n, double v[], int iv[], int *nzv, int i, double val) {
   set = false;
 #pragma cetus private(k)
 #pragma loop name vecset #0
+#pragma cetus private(k)
   for (k = 0; k < (*nzv); k++) {
     if (iv[k] == i) {
       v[k] = val;

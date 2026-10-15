@@ -2,11 +2,11 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #define CEIL(x) ((int)((x) + 0.5))
-#define FLOOR(x) ((int)((x) - 0.5))
+#define FLOOR(x) ((int)((x)-0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
 /*
-Copyright (C) 1991-2024 Free Software Foundation, Inc.
+Copyright (C) 1991-2012 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it andor
@@ -21,7 +21,7 @@ Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
-   <https:www.gnu.org/licenses/>.
+   <http:www.gnu.org/licenses/>.
 */
 /*
 This header is separate from features.h so that the compiler can
@@ -32,22 +32,12 @@ This header is separate from features.h so that the compiler can
    explicitly includes a system header.  GCC knows the name of this
    header in order to preinclude it.
 */
+/* We do support the IEC 559 math functionality, real and complex.  */
 /*
-glibc's intent is to support the IEC 559 math functionality, real
-   and complex.  If the GCC (4.9 and later) predefined macros
-   specifying compiler intent are available, use them to determine
-   whether the overall intent is to support these features; otherwise,
-   presume an older compiler has intent to support these features and
-   define these macros by default.
+wchar_t uses ISOIEC 10646 (2nd ed., published 2011-03-15) /
+   Unicode 6.0.
 */
-/*
-wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
-   synchronized with ISOIEC 10646:2017, fifth edition, plus
-   the following additions from Amendment 1 to the fifth edition:
-   - 56 emoji characters
-   - 285 hentaigana
-   - 3 additional Zanabazar Square characters
-*/
+/* We do not support C11 <threads.h>.  */
 /* ------------------------------------------------------------------------- */
 /*                                                                          */
 /*  This benchmark is a serial C version of the NPB BT code. This C         */
@@ -81,19 +71,18 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* ------------------------------------------------------------------------- */
 #include "header.h"
 /* --------------------------------------------------------------------- */
-/* This subroutine initializes the field variable u using */
-/* tri-linear transfinite interpolation of the boundary values */
+/* This subroutine initializes the field variable u using  */
+/* tri-linear transfinite interpolation of the boundary values      */
 /* --------------------------------------------------------------------- */
 void initialize() {
   int i, j, k, m, ix, iy, iz;
   double xi, eta, zeta, Pface[2][3][5], Pxi, Peta, Pzeta, temp[5];
 /* --------------------------------------------------------------------- */
-/* Later (in compute_rhs) we compute 1u for every element. A few of */
-/* the corner elements are not used, but it convenient (and faster) */
-/* to compute the whole thing with a simple loop. Make sure those */
-/* values are nonzero by initializing the whole thing here. */
+/* Later (in compute_rhs) we compute 1u for every element. A few of  */
+/* the corner elements are not used, but it convenient (and faster)  */
+/* to compute the whole thing with a simple loop. Make sure those  */
+/* values are nonzero by initializing the whole thing here.  */
 /* --------------------------------------------------------------------- */
-#pragma experimental section start
 #pragma loop name initialize #0
 #pragma cetus parallel
 #pragma cetus private(i, j, m)
@@ -118,7 +107,7 @@ void initialize() {
     }
   }
 /* --------------------------------------------------------------------- */
-/* first store the "interpolated" values everywhere on the grid */
+/* first store the "interpolated" values everywhere on the grid     */
 /* --------------------------------------------------------------------- */
 #pragma loop name initialize #1
 #pragma cetus private(Peta, Pxi, Pzeta, eta, i, ix, iy, iz, j, k, m, xi, zeta)
@@ -171,10 +160,10 @@ void initialize() {
     }
   }
   /* --------------------------------------------------------------------- */
-  /* now store the exact values on the boundaries */
+  /* now store the exact values on the boundaries         */
   /* --------------------------------------------------------------------- */
   /* --------------------------------------------------------------------- */
-  /* west face */
+  /* west face                                                   */
   /* --------------------------------------------------------------------- */
   i = 0;
   xi = 0.0;
@@ -199,7 +188,7 @@ void initialize() {
     }
   }
   /* --------------------------------------------------------------------- */
-  /* east face */
+  /* east face                                                       */
   /* --------------------------------------------------------------------- */
   i = (grid_points[0] - 1);
   xi = 1.0;
@@ -224,7 +213,7 @@ void initialize() {
     }
   }
   /* --------------------------------------------------------------------- */
-  /* south face */
+  /* south face                                                  */
   /* --------------------------------------------------------------------- */
   j = 0;
   eta = 0.0;
@@ -249,7 +238,7 @@ void initialize() {
     }
   }
   /* --------------------------------------------------------------------- */
-  /* north face */
+  /* north face                                     */
   /* --------------------------------------------------------------------- */
   j = (grid_points[1] - 1);
   eta = 1.0;
@@ -274,7 +263,7 @@ void initialize() {
     }
   }
   /* --------------------------------------------------------------------- */
-  /* bottom face */
+  /* bottom face                                        */
   /* --------------------------------------------------------------------- */
   k = 0;
   zeta = 0.0;
@@ -299,7 +288,7 @@ void initialize() {
     }
   }
   /* --------------------------------------------------------------------- */
-  /* top face */
+  /* top face      */
   /* --------------------------------------------------------------------- */
   k = (grid_points[2] - 1);
   zeta = 1.0;
@@ -323,10 +312,8 @@ void initialize() {
       }
     }
   }
-#pragma experimental section stop
 }
 
-/* ##llm-optimization start */
 void lhsinit(double lhs[][3][5][5], int size) {
   int i, m, n;
   i = size;

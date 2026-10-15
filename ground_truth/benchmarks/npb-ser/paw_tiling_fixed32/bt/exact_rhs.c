@@ -2,11 +2,11 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #define CEIL(x) ((int)((x) + 0.5))
-#define FLOOR(x) ((int)((x) - 0.5))
+#define FLOOR(x) ((int)((x)-0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
 /*
-Copyright (C) 1991-2024 Free Software Foundation, Inc.
+Copyright (C) 1991-2012 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it andor
@@ -21,7 +21,7 @@ Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
-   <https:www.gnu.org/licenses/>.
+   <http:www.gnu.org/licenses/>.
 */
 /*
 This header is separate from features.h so that the compiler can
@@ -32,22 +32,12 @@ This header is separate from features.h so that the compiler can
    explicitly includes a system header.  GCC knows the name of this
    header in order to preinclude it.
 */
+/* We do support the IEC 559 math functionality, real and complex.  */
 /*
-glibc's intent is to support the IEC 559 math functionality, real
-   and complex.  If the GCC (4.9 and later) predefined macros
-   specifying compiler intent are available, use them to determine
-   whether the overall intent is to support these features; otherwise,
-   presume an older compiler has intent to support these features and
-   define these macros by default.
+wchar_t uses ISOIEC 10646 (2nd ed., published 2011-03-15) /
+   Unicode 6.0.
 */
-/*
-wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
-   synchronized with ISOIEC 10646:2017, fifth edition, plus
-   the following additions from Amendment 1 to the fifth edition:
-   - 56 emoji characters
-   - 285 hentaigana
-   - 3 additional Zanabazar Square characters
-*/
+/* We do not support C11 <threads.h>.  */
 /* ------------------------------------------------------------------------- */
 /*                                                                          */
 /*  This benchmark is a serial C version of the NPB BT code. This C         */
@@ -84,7 +74,6 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* compute the right hand side based on exact solution */
 /* --------------------------------------------------------------------- */
 void exact_rhs() {
-#pragma experimental section start
   double dtemp[5], xi, eta, zeta, dtpp;
   int m, i, j, k, ip1, im1, jp1, jm1, km1, kp1;
 /* --------------------------------------------------------------------- */
@@ -550,5 +539,4 @@ void exact_rhs() {
       }
     }
   }
-#pragma experimental section stop
 }

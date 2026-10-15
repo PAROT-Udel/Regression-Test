@@ -1,5 +1,5 @@
 /*
-Copyright (C) 1991-2024 Free Software Foundation, Inc.
+Copyright (C) 1991-2012 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it andor
@@ -14,7 +14,7 @@ Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
-   <https:www.gnu.org/licenses/>.
+   <http:www.gnu.org/licenses/>.
 */
 /*
 This header is separate from features.h so that the compiler can
@@ -25,22 +25,12 @@ This header is separate from features.h so that the compiler can
    explicitly includes a system header.  GCC knows the name of this
    header in order to preinclude it.
 */
+/* We do support the IEC 559 math functionality, real and complex.  */
 /*
-glibc's intent is to support the IEC 559 math functionality, real
-   and complex.  If the GCC (4.9 and later) predefined macros
-   specifying compiler intent are available, use them to determine
-   whether the overall intent is to support these features; otherwise,
-   presume an older compiler has intent to support these features and
-   define these macros by default.
+wchar_t uses ISOIEC 10646 (2nd ed., published 2011-03-15) /
+   Unicode 6.0.
 */
-/*
-wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
-   synchronized with ISOIEC 10646:2017, fifth edition, plus
-   the following additions from Amendment 1 to the fifth edition:
-   - 56 emoji characters
-   - 285 hentaigana
-   - 3 additional Zanabazar Square characters
-*/
+/* We do not support C11 <threads.h>.  */
 /*
 
  * This version is stamped on May 10, 2016
@@ -114,7 +104,6 @@ static void kernel_correlation(int m, int n, double float_n,
   int i, j, k;
   double eps = 0.1;
 #pragma scop
-#pragma experimental section start
 #pragma cetus private(i)
 #pragma loop name kernel_correlation #0
 #pragma cetus parallel
@@ -185,7 +174,6 @@ static void kernel_correlation(int m, int n, double float_n,
       corr[j][i] = corr[i][j];
     }
   }
-#pragma experimental section stop
   corr[m - 1][m - 1] = 1.0;
 #pragma endscop
 }

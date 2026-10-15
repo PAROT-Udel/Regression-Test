@@ -2,11 +2,11 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #define CEIL(x) ((int)((x) + 0.5))
-#define FLOOR(x) ((int)((x) - 0.5))
+#define FLOOR(x) ((int)((x)-0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
 /*
-Copyright (C) 1991-2024 Free Software Foundation, Inc.
+Copyright (C) 1991-2012 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it andor
@@ -21,7 +21,7 @@ Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
-   <https:www.gnu.org/licenses/>.
+   <http:www.gnu.org/licenses/>.
 */
 /*
 This header is separate from features.h so that the compiler can
@@ -32,22 +32,12 @@ This header is separate from features.h so that the compiler can
    explicitly includes a system header.  GCC knows the name of this
    header in order to preinclude it.
 */
+/* We do support the IEC 559 math functionality, real and complex.  */
 /*
-glibc's intent is to support the IEC 559 math functionality, real
-   and complex.  If the GCC (4.9 and later) predefined macros
-   specifying compiler intent are available, use them to determine
-   whether the overall intent is to support these features; otherwise,
-   presume an older compiler has intent to support these features and
-   define these macros by default.
+wchar_t uses ISOIEC 10646 (2nd ed., published 2011-03-15) /
+   Unicode 6.0.
 */
-/*
-wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
-   synchronized with ISOIEC 10646:2017, fifth edition, plus
-   the following additions from Amendment 1 to the fifth edition:
-   - 56 emoji characters
-   - 285 hentaigana
-   - 3 additional Zanabazar Square characters
-*/
+/* We do not support C11 <threads.h>.  */
 /* ------------------------------------------------------------------------- */
 /*                                                                          */
 /*  This benchmark is a serial C version of the NPB MG code. This C         */
@@ -733,7 +723,6 @@ static void resid(void *ou, void *ov, void * or, int n1, int n2, int n3,
 /* --------------------------------------------------------------------- */
 static void rprj3(void * or, int m1k, int m2k, int m3k, void *os, int m1j,
                   int m2j, int m3j, int k) {
-#pragma experimental section start
   double(*r)[m2k][m1k] = (double(*)[m2k][m1k]) or ;
   double(*s)[m2j][m1j] = (double(*)[m2j][m1j])os;
   int j3, j2, j1, i3, i2, i1, d1, d2, d3, j;
@@ -810,7 +799,6 @@ static void rprj3(void * or, int m1k, int m2k, int m3k, void *os, int m1j,
   if (debug_vec[4] >= k) {
     showall(s, m1j, m2j, m3j);
   }
-#pragma experimental section stop
 }
 
 /* --------------------------------------------------------------------- */
@@ -1094,7 +1082,6 @@ static void norm2u3(void * or, int n1, int n2, int n3, double *rnm2,
     }
   }
   (*rnm2) = sqrt(s / dn);
-#pragma endscop
   if (timeron) {
     timer_stop(8);
   }
@@ -1118,7 +1105,6 @@ static void comm3(void *ou, int n1, int n2, int n3, int kk) {
   if (timeron) {
     timer_start(9);
   }
-#pragma experimental section start
 #pragma loop name comm3 #0
 #pragma cetus parallel
 #pragma cetus private(i2)
@@ -1161,7 +1147,6 @@ static void comm3(void *ou, int n1, int n2, int n3, int kk) {
       u[n3 - 1][i2][i1] = u[1][i2][i1];
     }
   }
-#pragma experimental section stop
   if (timeron) {
     timer_stop(9);
   }
@@ -1173,7 +1158,6 @@ static void comm3(void *ou, int n1, int n2, int n3, int kk) {
 /* and zero elsewhere. */
 /* --------------------------------------------------------------------- */
 static void zran3(void *oz, int n1, int n2, int n3, int nx, int ny, int k) {
-#pragma scop
   double(*z)[n2][n1] = (double(*)[n2][n1])oz;
   int i0, m0, m1;
   int i1, i2, i3, d1, e1, e2, e3;
@@ -1196,7 +1180,6 @@ static void zran3(void *oz, int n1, int n2, int n3, int nx, int ny, int k) {
   e3 = ((ie3 - is3) + 2);
   x0 = x;
   rdummy = randlc(&x0, ai);
-#pragma experimental section start
 #pragma loop name zran3 #0
 #pragma cetus private(i2, i3, rdummy)
 #pragma cetus private(i2, i3, rdummy)
@@ -1380,12 +1363,10 @@ static void zran3(void *oz, int n1, int n2, int n3, int nx, int ny, int k) {
   for (i = (mm - 1); i >= m1; i--) {
     z[jg[3][i][1]][jg[2][i][1]][jg[1][i][1]] = (+1.0);
   }
-#pragma experimental section stop
   comm3(z, n1, n2, n3, k);
-/* --------------------------------------------------------------------- */
-/* showall(z,n1,n2,n3); */
-/* --------------------------------------------------------------------- */
-#pragma endscop
+  /* --------------------------------------------------------------------- */
+  /* showall(z,n1,n2,n3); */
+  /* --------------------------------------------------------------------- */
 }
 
 static void showall(void *oz, int n1, int n2, int n3) {
