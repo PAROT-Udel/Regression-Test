@@ -2,12 +2,11 @@
 
 #include "cli.h"
 #include "helper_tests.h"
-#include "master_test_cases.h"
+#include "kernel_config.h"
 #include "benchmark_adapters.h"
 #include "benchmark_config.h"
 #include "benchmark_runner.h"
 
-#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -214,63 +213,52 @@ static const char *path_basename(const char *path)
     return slash ? slash + 1 : path;
 }
 
-static int str_eq_ci(const char *a, const char *b)
+static int load_kernels(const char *config_dir,
+                        KernelConfig *config,
+                        char *error,
+                        size_t error_size)
 {
-    if (!a || !b)
-        return 0;
-    while (*a && *b) {
-        if (tolower((unsigned char)*a) != tolower((unsigned char)*b))
-            return 0;
-        a++;
-        b++;
+    char *directory = runner_path_join(config_dir, "kernels");
+    int result;
+    if (directory == NULL) {
+        snprintf(error, error_size, "out of memory");
+        return -1;
     }
-    return *a == *b;
-}
-
-static int test_in_suite(const TestCase *t, const char *suite)
-{
-    if (!t || !t->suite || !suite)
-        return 0;
-    if (str_eq_ci(t->suite, suite))
-        return 1;
-    if ((str_eq_ci(suite, "paw") || str_eq_ci(suite, "paw_tiling")) &&
-        str_eq_ci(t->suite, "tiling"))
-        return 1;
-    if ((str_eq_ci(suite, "subsub_analysis") ||
-         str_eq_ci(suite, "subscripted-subscript")) &&
-        str_eq_ci(t->suite, "subsub"))
-        return 1;
-    return 0;
+    result = kernel_config_load(directory, config, error, error_size);
+    free(directory);
+    return result;
 }
 
 /* --------------------------------------------------------------------- */
-/*  list_suites (kernel suites from master_test_cases.h)                 */
+/*  list_suites (kernel suites from benchmarks/config/kernels)           */
 /* --------------------------------------------------------------------- */
 
-static void list_suites(void)
+static int list_suites(const char *config_dir)
 {
+    KernelConfig config;
+    char error[2048];
+    size_t suite_index;
+
+    kernel_config_init(&config);
+    if (load_kernels(config_dir, &config, error, sizeof(error)) != 0) {
+        fprintf(stderr, "ERROR: Failed to load kernel config: %s\n", error);
+        kernel_config_free(&config);
+        return 1;
+    }
     printf("Defined suites:\n");
-    for (int i = 0; i < NUM_MASTER_TEST_CASES; ++i) {
-        const char *name = master_test_cases[i].suite;
-        if (!name)
-            continue;
-        int seen = 0;
-        for (int j = 0; j < i; ++j) {
-            if (master_test_cases[j].suite &&
-                str_eq_ci(master_test_cases[j].suite, name)) {
-                seen = 1;
-                break;
-            }
-        }
-        if (seen)
-            continue;
-        int count = 0;
-        for (int k = 0; k < NUM_MASTER_TEST_CASES; ++k) {
-            if (test_in_suite(&master_test_cases[k], name))
+    for (suite_index = 0; suite_index < config.suite_count; ++suite_index) {
+        size_t count = 0;
+        size_t case_index;
+        const char *name = config.suites[suite_index].id;
+        for (case_index = 0; case_index < config.case_count; ++case_index) {
+            if (kernel_config_matches_suite(
+                    &config, &config.cases[case_index], name))
                 count++;
         }
-        printf("  %-12s  %d test(s)   --run-suite %s\n", name, count, name);
+        printf("  %-12s  %zu test(s)   --run-suite %s\n", name, count, name);
     }
+    kernel_config_free(&config);
+    return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -1297,9 +1285,9 @@ int main(int argc, char *argv[])
         return 0;
     }
     if (opts.mode == CLI_MODE_LIST_SUITES) {
-        list_suites();
+        int rc = list_suites(opts.config_dir);
         cli_options_free(&opts);
-        return 0;
+        return rc;
     }
     if (opts.mode == CLI_MODE_LIST_BENCHMARK_SUITES) {
         int rc = list_benchmark_suites(opts.config_dir);
@@ -1343,42 +1331,45 @@ int main(int argc, char *argv[])
     /*  KERNEL TESTS                                                     */
     /* ================================================================= */
     if (do_kernels) {
+        KernelConfig kernels;
+        char kernel_error[2048];
         TestMode current_mode =
             opts.generate ? GENERATE_MODE : COMPARE_MODE;
 
-        if (opts.test_identifier != NULL) {
-            /* --- Run one specific kernel test --- */
-            TestCase *found_test = NULL;
-            for (int i = 0; i < NUM_MASTER_TEST_CASES; ++i) {
-                const char *basename =
-                    path_basename(master_test_cases[i].input_file_base_name);
-                if (strcmp(master_test_cases[i].category,
-                          opts.test_identifier) == 0 ||
-                    strcmp(master_test_cases[i].input_file_base_name,
-                          opts.test_identifier) == 0 ||
+        kernel_config_init(&kernels);
+        if (load_kernels(opts.config_dir, &kernels, kernel_error,
+                         sizeof(kernel_error)) != 0) {
+            fprintf(stderr,
+                    "[%s] ERROR: Failed to load kernel config: %s\n",
+                    get_current_time(), kernel_error);
+            overall_exit_status = 1;
+        } else if (opts.test_identifier != NULL) {
+            KernelCase *found_test = NULL;
+            size_t i;
+            for (i = 0; i < kernels.case_count; ++i) {
+                const char *basename = path_basename(kernels.cases[i].input);
+                if (strcmp(kernels.cases[i].name, opts.test_identifier) == 0 ||
+                    strcmp(kernels.cases[i].input, opts.test_identifier) == 0 ||
                     strcmp(basename, opts.test_identifier) == 0) {
-                    found_test = &master_test_cases[i];
+                    found_test = &kernels.cases[i];
                     break;
                 }
             }
             if (found_test == NULL) {
                 fprintf(stderr,
                         "[%s] ERROR: Test with identifier '%s' not "
-                        "found in master_test_cases.h.\n",
+                        "found in kernel JSON.\n",
                         get_current_time(), opts.test_identifier);
                 overall_exit_status = 1;
             } else {
                 printf("\n--- Running Specific Test: %s/%s ---\n",
-                       found_test->category,
-                       found_test->input_file_base_name);
+                       found_test->name, found_test->input);
                 if (run_test_case(
-                        found_test->category,
-                        found_test->input_file_base_name, current_mode,
-                        found_test->transform_type,
-                        found_test->expected_outcome,
+                        found_test->name, found_test->input, current_mode,
+                        found_test->transform, found_test->expected,
                         opts.custom_cetus_options != NULL
                             ? opts.custom_cetus_options
-                            : found_test->cetus_flags)) {
+                            : found_test->flags)) {
                     passed_tests++;
                 } else {
                     overall_exit_status = 1;
@@ -1386,60 +1377,65 @@ int main(int argc, char *argv[])
                 total_tests++;
             }
         } else {
-            /* --- Run all or suite-filtered kernel tests --- */
-            int selected[NUM_MASTER_TEST_CASES];
-            int selected_count = 0;
-            for (int i = 0; i < NUM_MASTER_TEST_CASES; ++i) {
-                if (opts.suite_identifier == NULL ||
-                    test_in_suite(&master_test_cases[i],
-                                  opts.suite_identifier)) {
-                    selected[selected_count++] = i;
-                }
-            }
-
-            if (opts.suite_identifier != NULL && selected_count == 0) {
-                fprintf(stderr,
-                        "[%s] ERROR: Suite '%s' not found. "
-                        "Use --list-suites.\n",
-                        get_current_time(), opts.suite_identifier);
+            size_t *selected = calloc(kernels.case_count, sizeof(*selected));
+            size_t selected_count = 0;
+            size_t i;
+            if (selected == NULL && kernels.case_count > 0) {
+                fprintf(stderr, "[%s] ERROR: out of memory\n",
+                        get_current_time());
                 overall_exit_status = 1;
             } else {
-                if (opts.suite_identifier != NULL) {
-                    printf("[%s] Running suite '%s' (%d test(s))...\n",
-                           get_current_time(), opts.suite_identifier,
-                           selected_count);
+                for (i = 0; i < kernels.case_count; ++i) {
+                    if (opts.suite_identifier == NULL ||
+                        kernel_config_matches_suite(
+                            &kernels, &kernels.cases[i],
+                            opts.suite_identifier))
+                        selected[selected_count++] = i;
+                }
+                if (opts.suite_identifier != NULL && selected_count == 0) {
+                    fprintf(stderr,
+                            "[%s] ERROR: Suite '%s' not found. "
+                            "Use --list-suites.\n",
+                            get_current_time(), opts.suite_identifier);
+                    overall_exit_status = 1;
                 } else {
-                    printf("[%s] Running ALL kernel tests...\n",
-                           get_current_time());
-                }
-                printf("-----------------------------------------------"
-                       "---\n");
-                for (int s = 0; s < selected_count; ++s) {
-                    TestCase *current_test =
-                        &master_test_cases[selected[s]];
-                    printf("\n--- Running Test [%d/%d]: %s/%s ---\n",
-                           s + 1, selected_count,
-                           current_test->category,
-                           current_test->input_file_base_name);
-                    if (run_test_case(
-                            current_test->category,
-                            current_test->input_file_base_name,
-                            current_mode, current_test->transform_type,
-                            current_test->expected_outcome,
-                            opts.custom_cetus_options != NULL
-                                ? opts.custom_cetus_options
-                                : current_test->cetus_flags)) {
-                        passed_tests++;
+                    if (opts.suite_identifier != NULL) {
+                        printf("[%s] Running suite '%s' (%zu test(s))...\n",
+                               get_current_time(), opts.suite_identifier,
+                               selected_count);
                     } else {
-                        overall_exit_status = 1;
+                        printf("[%s] Running ALL kernel tests...\n",
+                               get_current_time());
                     }
-                    total_tests++;
+                    printf("-----------------------------------------------"
+                           "---\n");
+                    for (i = 0; i < selected_count; ++i) {
+                        KernelCase *current_test =
+                            &kernels.cases[selected[i]];
+                        printf("\n--- Running Test [%zu/%zu]: %s/%s ---\n",
+                               i + 1, selected_count, current_test->name,
+                               current_test->input);
+                        if (run_test_case(
+                                current_test->name, current_test->input,
+                                current_mode, current_test->transform,
+                                current_test->expected,
+                                opts.custom_cetus_options != NULL
+                                    ? opts.custom_cetus_options
+                                    : current_test->flags)) {
+                            passed_tests++;
+                        } else {
+                            overall_exit_status = 1;
+                        }
+                        total_tests++;
+                    }
+                    printf("\n---------------------------------------------"
+                           "-----\n");
                 }
-                printf("\n---------------------------------------------"
-                       "-----\n");
             }
+            free(selected);
         }
 
+        kernel_config_free(&kernels);
         printf("[%s] Kernel Summary: %d/%d tests passed.\n",
                get_current_time(), passed_tests, total_tests);
         if (log_all_fp)

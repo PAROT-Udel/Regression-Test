@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
-# Sync this tree to Caviness and submit the generate-then-run job.
-# Prints the Slurm job id and returns. It does not wait for the job.
+# Copy this project to Caviness, or update the copy already there, then
+# submit the full-regression Slurm job. Prints the job id and returns.
+# It does not wait for the job.
 #
 #   ./queue_caviness.sh
-#   ./queue_caviness.sh --no-sync
+#   ./queue_caviness.sh --no-sync    # submit only
 #
-# Logs: /work/parot/mgltorsa/cetus_regression_test_suite/logs/slurm-<jobid>.out
+# If a cetus-reg job is already queued or running, the script asks before
+# submitting another one.
+#
+# Connection is OpenSSH to the host alias "caviness" (override with
+# CAVINESS_SSH_HOST). BatchMode is on, so a password prompt is not possible.
+# ~/.ssh/config must name that host, and IdentityFile must be a key Caviness
+# accepts. See AGENTS.md, section Caviness.
+#
+# Remote tree: /work/parot/mgltorsa/cetus_regression_test_suite
+# Log:         logs/slurm-<jobid>.out on that tree
 set -euo pipefail
 
 HOST="${CAVINESS_SSH_HOST:-caviness}"
@@ -17,7 +27,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --no-sync) SYNC=0; shift ;;
         -h|--help)
-            sed -n '2,8p' "$0"
+            sed -n '2,18p' "$0"
             exit 0
             ;;
         *)
@@ -27,8 +37,26 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+existing="$(ssh -o BatchMode=yes -o ConnectTimeout=20 "$HOST" \
+    "squeue -h -u \"\$USER\" -n cetus-reg -o '%i %T %M'")"
+if [[ -n "$existing" ]]; then
+    echo "A regression job is already queued or running:"
+    echo "$existing"
+    read -r -p "Submit another one? [y/N] " answer
+    case "$answer" in
+        y|Y|yes|YES) ;;
+        *)
+            echo "Not submitted."
+            exit 0
+            ;;
+    esac
+fi
+
 if [[ "$SYNC" -eq 1 ]]; then
-    rsync -a \
+    echo "Updating ${HOST}:${REMOTE}"
+    # --delete makes a later run match this tree. Excluded paths are left
+    # alone on the cluster (logs, sandboxes, the binary rebuilt by the job).
+    rsync -a --delete \
         --exclude work/ \
         --exclude logs/ \
         --exclude cetus_intermediate_i_files/ \
@@ -50,5 +78,6 @@ if [[ "$SYNC" -eq 1 ]]; then
         "${ROOT}/" "${HOST}:${REMOTE}/"
 fi
 
+echo "Submitting full regression"
 ssh -o BatchMode=yes -o ConnectTimeout=20 "$HOST" \
     "mkdir -p '${REMOTE}/logs' && sbatch --parsable '${REMOTE}/cetus_regression.slurm'"

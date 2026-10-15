@@ -1,452 +1,184 @@
 # Cetus Regression Test Suite
 
-This project validates the [Cetus](https://github.com/PAROT-Udel/The-Cetus-Project) source-to-source compiler by comparing its output against checked-in **ground truth** files, then (for benchmarks) rebuilding and running the transformed code to confirm it still behaves correctly.
+This project checks that the [Cetus](https://github.com/PAROT-Udel/The-Cetus-Project) source-to-source compiler still produces the expected C and that the transformed benchmarks still run correctly.
 
-The suite is **independent of the Cetus source tree**: you build Cetus separately, point the runner at it, and run everything from **Linux or WSL**.
+It is separate from the Cetus source tree. Build Cetus yourself, point this suite at it, and run the harness from Linux or WSL. The harness is native C. Benchmark settings live in JSON and are read at runtime, so changing a suite does not require a rebuild.
 
-## What is being tested
+A short picture of the same flow is in [`docs/cetus_regression_test_slides.pdf`](docs/cetus_regression_test_slides.pdf).
 
-### 1. Kernel tests (15 cases)
+## Terms
 
-Small, focused C kernels grouped into two suites:
+| Word | Meaning |
+|------|---------|
+| **Kernel snippet** | One small C file in this repo (`input_files/tiling/` or `input_files/subsub/`). There are 15, listed in `benchmarks/config/kernels/*.json`. |
+| **Benchmark kernel** | One program taken from PolyBench or NPB, such as `gemm` or `bt`. |
+| **Profile** | One named list of Cetus flags, such as `parallel` or `paw_tiling_nt`. |
+| **Benchmark case** | One combination of suite + kernel + profile. |
 
-| Suite | Folder | Count | What it exercises |
-|-------|--------|-------|-------------------|
-| **tiling** | `input_files/tiling/` | 6 | PAW parallel-aware tiling (`-paw_tiling=1`) on GEMM, 2MM, 3MM, and related kernels |
-| **subsub** | `input_files/subsub/` | 9 | Subscripted-subscript analysis (`-subsub_analysis`) on AMG-style and related patterns |
+A default benchmark run is 165 cases: PolyBench has 30 kernels and 4 profiles (120), and NPB serial has 9 kernels and 5 profiles (45). Kernel mode is 15 source diffs. With no arguments, the harness runs the 15 kernel snippets only.
 
-Each kernel test:
+## What is checked
 
-1. Preprocesses the input `.c` with `clang -E` to a `.i` file
-2. Syntax-checks the preprocessed file (`check_syntax.sh`)
-3. Runs Cetus with suite-specific flags from `master_test_cases.h`
-4. Formats Cetus output and ground truth with `clang-format`
-5. Diffs formatted output against `ground_truth/<suite>/*_gt.c`
+Kernel snippets stop after a source diff. They are not compiled or run.
 
-Expected result for a clean run: **`Test Summary: 15/15 tests passed.`**
+Each benchmark case:
 
-### 2. Benchmark tests (PolyBench / NPB)
+1. Copies the kernel into a sandbox under `work/benchmarks/`. The PolyBench and NPB trees are not modified.
+2. Runs Cetus with that profile's flags.
+3. Formats the output and diffs it against checked-in ground truth.
+4. Compiles the transformed program and runs it.
 
-Full application kernels from external benchmark trees, driven by JSON configuration under `benchmarks/config/`. Default runs include:
+Correctness has two parts:
 
-| Suite | Source tree | Profiles | Kernels |
-|-------|-------------|----------|---------|
-| **polybench** | PolyBench/C 4.2 (`POLYBENCH_ROOT`) | `parallel`, `paw_tiling_nt`, `paw_tiling_lrw`, `paw_tiling_fixed32` | 30 kernels (GEMM, 2MM, heat-3d, …) |
-| **npb-ser** | NPB 3.3 serial C (`NPB_SER_ROOT`) | `parallel`, the three `paw_tiling_*` profiles, `reuse_analysis` | 9 kernels (CG, EP, MG, BT, …) at CLASS=S |
+- **Source.** The diff against `ground_truth/` is empty. Benchmark ground truth is `ground_truth/benchmarks/<suite>/<profile>/<kernel>/`.
+- **Run.** NPB must print `Verification Successful` (4 threads, passive wait). PolyBench runs the original and the transformed binary with 1 thread and diffs their dumped arrays.
 
-Each benchmark case runs a multi-stage pipeline:
+`parallel` enables OpenMP. It uses `-alias=3` and `-profitable-omp=0`. Stock Cetus uses alias 1 and leaves profitable-omp on.
 
-1. **Sandbox** — copy only the files needed into `work/benchmarks/` (never modify your benchmark trees)
-2. **Transform** — run Cetus with a suite-specific preprocessor (`cpp -C -I…`) and profile flags
-3. **Ground truth** — format transformed `.c` output and diff against `ground_truth/benchmarks/<suite>/<profile>/<kernel>/`
-4. **Inject** — copy transformed sources back into the sandbox build tree
-5. **Build & verify**
-   - **PolyBench**: compile baseline and transformed binaries, run both with `OMP_NUM_THREADS=1`, compare `POLYBENCH_DUMP_ARRAYS` stderr output
-   - **NPB**: `make` the benchmark, run the binary with `OMP_NUM_THREADS=4`, `OMP_WAIT_POLICY=PASSIVE`, and `OMP_DYNAMIC=false`, and grep for `Verification Successful`
+The three PAW profiles turn tiling on for 4 cores, a 25,600 KiB shared cache, and 64-byte lines. They differ only in how the tile size is chosen:
 
-The checked-in PolyBench and NPB suites have no `xfail` entries. A default `--benchmarks` run is expected to pass.
-
-### 3. Unit tests (developer)
-
-Native C tests under `tests/` validate the runner infrastructure (process execution, JSON config parsing, benchmark lifecycle, adapters, CLI). Run with `make test`.
-
----
-
-## How it works
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    cetus_regression_test                        │
-│                 (single native C executable)                    │
-├────────────────────────────┬────────────────────────────────────┤
-│  Kernel mode               │  Benchmark mode                    │
-│  master_test_cases.h       │  benchmarks/config/*.json          │
-│  helper_tests.h (paths)    │  paths.env (tool + root paths)     │
-├────────────────────────────┼────────────────────────────────────┤
-│  clang → .i → Cetus →      │  adapter (polybench/npb/generic)   │
-│  clang-format → diff       │  → Cetus → GT diff → build → verify│
-└────────────────────────────┴────────────────────────────────────┘
-```
-
-**Key design choices:**
-
-- **Ground truth in git** — intentional Cetus output changes require `--generate` and a committed update to `ground_truth/`.
-- **Private sandboxes** — benchmark adapters copy sources into `work/benchmarks/`; your PolyBench/NPB trees are read-only inputs.
-- **JSON-driven benchmarks** — add suites, kernels, profiles, and xfails without recompiling (only editing `benchmarks/config/`).
-- **XFAIL / XPASS** — expected Cetus failures count as `XFAIL` (nonzero exit only for unexpected `XPASS`). When no xfail is configured, missing ground truth is a hard `FAIL`. When an xfail is set, the runner skips the GT pre-check and lets Cetus run so its failure can trigger the xfail.
-
----
+| Profile | Where | Tile size |
+|---------|--------|-----------|
+| `parallel` | PolyBench and NPB | none |
+| `paw_tiling_nt` | PolyBench and NPB serial | NT (shared-cache model) |
+| `paw_tiling_lrw` | PolyBench and NPB serial | LRW (FindB) |
+| `paw_tiling_fixed32` | PolyBench and NPB serial | 32 on every tiled loop |
+| `reuse_analysis` | NPB serial | none; adds reuse-vector analysis |
 
 ## Prerequisites
-
-On Ubuntu / WSL:
 
 ```bash
 sudo apt-get install -y gcc clang clang-format openjdk-21-jdk diffutils make
 ```
 
-You also need:
-
-- **Cetus** built from `parot/release/3.0` (Java 8+ and `javac`)
-- **PolyBench/C 4.2** and **NPB3.3-SER-C** trees (paths configured below)
-- Optional: **NPB3.3-OMP-C** for the opt-in `npb-omp` suite
-
-Run the harness from **Linux or WSL**, not native Windows cmd.
-
----
+You also need Cetus from `parot/release/3.0`, PolyBench/C 4.2, and NPB 3.3 serial C. NPB OpenMP is optional (`npb-omp` is opt-in).
 
 ## Setup
 
-### 1. Build Cetus
-
-Ground truth in this repo targets Cetus from the **`parot` remote, branch `release/3.0`**.
+Build Cetus. `bin/cetus` is a wrapper; do not copy that script without `lib/cetus.jar`.
 
 ```bash
 git clone https://github.com/PAROT-Udel/The-Cetus-Project.git
 cd The-Cetus-Project
-./build.sh bin
-./bin/cetus -version
-```
-
-If you already have the clone:
-
-```bash
-cd /path/to/The-Cetus-Project
-git fetch parot
-git checkout release/3.0   # or: git checkout -B release/3.0 parot/release/3.0
+git checkout release/3.0
 ./build.sh bin
 ```
 
-**Important:** `bin/cetus` is a wrapper script with hard-coded paths to `lib/cetus.jar`. Do not copy `bin/cetus` alone to another directory.
-
-### 2. Configure paths
-
-**Kernel tests** — edit `CETUS_PATH` in [`helper_tests.h`](helper_tests.h):
+Point the kernel tests at that binary in `helper_tests.h`, then rebuild the harness:
 
 ```c
-#define CETUS_PATH "/path/to/cetus/The-Cetus-Project/bin/cetus"
+#define CETUS_PATH "/path/to/The-Cetus-Project/bin/cetus"
 ```
 
-Recompile after changing this (`make`).
-
-**Benchmark tests** — copy and edit the env file:
+Point the benchmark tests at Cetus and the benchmark trees. Environment variables override the file.
 
 ```bash
 cp benchmarks/config/paths.example.env benchmarks/config/paths.env
 ```
 
-Example `paths.env`:
-
 ```bash
-CETUS=/path/to/cetus/bin/cetus
-CLANG_FORMAT=clang-format
-GCC=gcc
-DIFF=diff
-CPP=cpp
-
-POLYBENCH_ROOT=/path/to/benchmarks/polybench-c-4.2
-NPB_SER_ROOT=/path/to/benchmarks/NPB3.3-SER-C
-NPB_OMP_ROOT=/path/to/benchmarks/NPB3.3-OMP-C
+CETUS=/path/to/The-Cetus-Project/bin/cetus
+POLYBENCH_ROOT=/path/to/polybench-c-4.2
+NPB_SER_ROOT=/path/to/NPB3.3-SER-C
+NPB_OMP_ROOT=/path/to/NPB3.3-OMP-C
 ```
 
-Environment variables override `paths.env`. You can point at tiling forks; adapters still use canonical kernel sources from the tree root.
+`paths.env` is gitignored.
 
-### 3. Build the harness
+Build and, if you are changing the harness, run the unit tests:
 
 ```bash
-cd /path/to/cetus_regression_test_suite
-chmod +x check_syntax.sh run_all.sh
 make
-```
-
-This builds `cetus_regression_test` and links all native modules (CLI, JSON config, benchmark adapters, process runner).
-
-Run unit tests:
-
-```bash
 make test
 ```
 
----
+Use `make`. The project is several C files; a single `gcc` of `cetus_regression_test.c` will not build it.
 
-## Running tests
+## Run
 
-All commands assume you are in the suite root and have run `make`.
-
-### Quick reference
+From the suite root:
 
 | Goal | Command |
 |------|---------|
-| All kernel tests | `./cetus_regression_test --all` |
+| 15 kernel snippets | `./cetus_regression_test` |
 | All default benchmarks | `./cetus_regression_test --benchmarks` |
-| Kernels + benchmarks | `./cetus_regression_test --full` or `./run_all.sh` |
-| List kernel suites | `./cetus_regression_test --list-suites` |
-| List benchmark suites | `./cetus_regression_test --list-benchmark-suites` |
-| Help | `./cetus_regression_test --help` |
+| Kernels and benchmarks | `./cetus_regression_test --full` |
+| One kernel suite | `./cetus_regression_test --run-suite tiling` |
+| One kernel snippet | `./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64` |
+| One benchmark suite | `./cetus_regression_test --benchmarks --benchmark-suite polybench` |
+| One profile, every kernel | `./cetus_regression_test --benchmarks --profile paw_tiling_nt` |
+| One kernel, one profile | `./cetus_regression_test --benchmarks --benchmark-kernel gemm --profile paw_tiling_fixed32` |
+| List names | `./cetus_regression_test --list-suites` or `--list-benchmark-suites` |
 
-**Note:** `./cetus_regression_test` with no arguments runs **kernel tests only** (same as `--all`). Benchmarks require `--benchmarks` or `--full`.
+`--benchmark-suite`, `--benchmark-kernel`, and `--profile` each filter one axis. Repeat a flag to include several values. Leave a flag off to keep every value on that axis. Kernel names match as substrings. Profile names must match `profiles.json` exactly.
 
-### Kernel suites and individual tests
+`npb-omp` runs only when you pass `--benchmark-suite npb-omp`.
 
-```bash
-# Suites
-./cetus_regression_test --run-suite tiling      # 6 PAW tiling tests
-./cetus_regression_test --run-suite subsub      # 9 subsub tests
-
-# One test (by category, filename, or path)
-./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64
-./cetus_regression_test --run-test SubSub_Amgmk
-./cetus_regression_test --run-test tiling/tiling_gemm.c
-
-# Override Cetus flags for one kernel run
-./cetus_regression_test --run-test Tiling_PAW_GEMM_Fixed64 \
-  -cetus-options "-paw_tiling=1 -tileSizes=32"
-```
-
-### Benchmark suites and individual tests
+Other useful flags:
 
 ```bash
-# Default: polybench (parallel + three PAW tile-size profiles) + npb-ser
-# (those, plus reuse_analysis) — every kernel, every enabled profile
-./cetus_regression_test --benchmarks
-
-# All kernels, one profile. Suites that do not enable the profile are skipped.
-./cetus_regression_test --benchmarks --profile paw_tiling_nt
-./cetus_regression_test --benchmarks --profile reuse_analysis
-
-# All kernels, several profiles
-./cetus_regression_test --benchmarks --profile parallel --profile paw_tiling_lrw
-
-# One suite, all of its kernels and profiles
-./cetus_regression_test --benchmarks --benchmark-suite polybench
-./cetus_regression_test --benchmarks --benchmark-suite npb-ser
-
-# One suite, all kernels, one profile
-./cetus_regression_test --benchmarks --benchmark-suite polybench --profile parallel
-./cetus_regression_test --benchmarks --benchmark-suite npb-ser --profile reuse_analysis
-
-# One kernel, every profile that suite enables
-./cetus_regression_test --benchmarks --benchmark-suite polybench --benchmark-kernel gemm
-./cetus_regression_test --benchmarks --benchmark-suite npb-ser --benchmark-kernel cg
-
-# One kernel and one profile
-./cetus_regression_test --benchmarks --benchmark-suite polybench \
-  --benchmark-kernel gemm --profile parallel
-./cetus_regression_test --benchmarks --benchmark-suite polybench \
-  --benchmark-kernel gemm --profile paw_tiling_fixed32
-
-# Several kernels, one profile (kernel names are substring matches)
-./cetus_regression_test --benchmarks \
-  --benchmark-kernel gemm --benchmark-kernel atax --profile paw_tiling_nt
-
-# Repeatable suite filter
-./cetus_regression_test --benchmarks --benchmark-suite polybench --benchmark-suite npb-ser
-
-# Opt-in OMP NPB suite
-./cetus_regression_test --benchmarks --benchmark-suite npb-omp
-```
-
-`--benchmark-suite`, `--benchmark-kernel`, and `--profile` are independent. Repeat a flag to include several values. Leave a flag off to run every suite, kernel, or profile on that axis. Default suites are the ones marked `"default": true` (`polybench` and `npb-ser`). `npb-omp` runs only when named with `--benchmark-suite`.
-
-List names with `./cetus_regression_test --list-benchmark-suites`. Profile names must match `profiles.json` exactly. An unknown profile is an error. A known profile that the selected suites do not enable matches no cases and the run fails.
-
-### Benchmark options
-
-```bash
-# Dataset / class overrides (PolyBench / NPB)
-./cetus_regression_test --benchmarks --benchmark-suite polybench --dataset SMALL_DATASET
+./cetus_regression_test --benchmarks --skip-run          # diff only
+./cetus_regression_test --benchmarks --skip-gt           # build and run only
+./cetus_regression_test --benchmarks --profile paw_tiling_lrw --generate --skip-run
 ./cetus_regression_test --benchmarks --benchmark-suite npb-ser --class W
-
-# Skip stages
-./cetus_regression_test --benchmarks --skip-gt      # transform + build/verify only
-./cetus_regression_test --benchmarks --skip-run     # transform + GT compare only
-
-# Timeout (seconds, default 600)
 ./cetus_regression_test --benchmarks --timeout 1200
-
-# Alternate config directory
-./cetus_regression_test --benchmarks --config-dir /path/to/config
-```
-
-### Verbose output and ground truth generation
-
-```bash
-# Show Cetus/tool stdout/stderr (default is quiet)
 ./cetus_regression_test --run-suite tiling --verbose
-./cetus_regression_test --benchmarks --benchmark-kernel gemm --verbose true
-
-# Regenerate ground truth (only after intentional Cetus output change)
-./cetus_regression_test --generate
-./cetus_regression_test --run-suite tiling --generate
-./cetus_regression_test --benchmarks --generate --benchmark-suite polybench --benchmark-kernel gemm
 ```
 
-Then re-run without `--generate` and commit updated files under `ground_truth/`.
+`--generate` rewrites ground truth. Use it after an intentional Cetus change, then run again without it and commit `ground_truth/`.
 
-### Capture logs for debugging
+A clean kernel run prints `Test Summary: 15/15 tests passed.` The process exits nonzero when any case is `FAIL` or `XPASS`. `XFAIL` is a failure that the JSON already documents; the checked-in PolyBench and NPB suites do not use it.
 
-```bash
-mkdir -p logs
-./cetus_regression_test --benchmarks 2>&1 | tee logs/benchmark-run-console.log
-```
-
-Per-case benchmark logs are written under `logs/benchmarks/`. Kernel logs are under `logs/`.
-
----
-
-## Exit codes and result statuses
-
-| Status | Meaning | Counts toward failure exit code? |
-|--------|---------|----------------------------------|
-| **PASS** | Transform matched GT and verify succeeded | No |
-| **FAIL** | Unexpected failure (diff, build, verify, missing GT, infra) | Yes |
-| **XFAIL** | Failed as documented in JSON `xfail` | No |
-| **XPASS** | Documented xfail case passed unexpectedly | Yes |
-| **SKIP** | Adapter declined the case | No |
-
-The process exits **nonzero** if any case is **FAIL** or **XPASS**.
-
----
-
-## Expected results
-
-Default `--benchmarks` is 165 cases: NPB serial class S (9 kernels × `parallel`, `paw_tiling_nt`, `paw_tiling_lrw`, `paw_tiling_fixed32`, `reuse_analysis`) and PolyBench MINI (30 kernels × `parallel` and the three `paw_tiling_*` profiles). Kernel mode is 15 source diffs. None of these cases is marked `xfail`.
-
-NPB binaries run with four OpenMP threads and a passive wait policy. PolyBench binaries run with one thread and compare dumped arrays. The `xfail` / `xpass` statuses remain in the runner for a future suite that needs them; they are not used by the checked-in suites.
-
----
-
-## Configuration reference
-
-### Directory layout
-
-```
-cetus_regression_test_suite/
-├── cetus_regression_test.c   # Main entry + kernel runner
-├── cli.c / cli.h               # Unified CLI parsing
-├── helper_tests.h              # Kernel tool paths, TestCase struct
-├── master_test_cases.h         # 15 kernel test definitions
-├── benchmark_config.c/.h       # JSON + paths.env loader
-├── benchmark_runner.c/.h       # Benchmark lifecycle orchestration
-├── benchmark_adapters.c/.h     # Adapter factory
-├── polybench_adapter.c         # PolyBench sandbox + verify
-├── npb_adapter.c               # NPB sandbox + verify
-├── generic_adapter.c           # Bring-your-own JSON adapter
-├── runner_common.c/.h          # Paths, copy, env parsing
-├── process_runner.c/.h         # Subprocess exec with timeout
-├── Makefile
-├── check_syntax.sh
-├── run_all.sh                  # make && --full
-├── benchmarks/config/
-│   ├── paths.example.env
-│   ├── profiles.json           # Cetus flag profiles
-│   └── suites/                 # polybench.json, npb-ser.json, …
-├── input_files/                # Kernel inputs
-├── ground_truth/               # Expected outputs (kernels + benchmarks)
-├── work/benchmarks/            # Sandboxes (gitignored)
-├── cetus_intermediate_i_files/ # Preprocessed .i (gitignored)
-├── cetus_transformed_output/   # Kernel Cetus output (gitignored)
-└── logs/                       # Run logs (gitignored)
-```
-
-### Profiles (`benchmarks/config/profiles.json`)
-
-| Profile | Used by | Purpose |
-|---------|---------|---------|
-| `parallel` | PolyBench + NPB | OpenMP parallelization. Not stock Cetus (`-alias=3`, `-profitable-omp=0`) |
-| `paw_tiling_nt` | PolyBench + NPB serial | PAW tiling, NT tile sizes |
-| `paw_tiling_lrw` | PolyBench + NPB serial | PAW tiling, LRW tile sizes |
-| `paw_tiling_fixed32` | PolyBench + NPB serial | PAW tiling, fixed tile size 32 |
-| `reuse_analysis` | NPB serial | OpenMP parallelization plus `-reuse-vector-analysis=1` |
-
-Select them with repeatable `--profile`. Examples: every default benchmark under one profile (`--benchmarks --profile paw_tiling_nt`), one kernel under one profile (`--benchmarks --benchmark-kernel gemm --profile parallel`), or every benchmark under every enabled profile (`--benchmarks`). See [Benchmark suites and individual tests](#benchmark-suites-and-individual-tests).
-
-### Bring-your-own benchmarks (generic adapter)
-
-Copy `benchmarks/config/suites/generic-example.json` and set `"adapter": "generic"`. The generic adapter requires:
-
-- **`copy`** — files/dirs to copy into the sandbox (safe relative paths only)
-- **`cetus_inputs`** — sources to transform
-- **`inject_map`** — map from Cetus output basename to sandbox destination
-- **`compile`** — argv array (not shell strings)
-- **`verify`** — one of:
-  - `exit_code` — run command, check exit status
-  - `regex` — POSIX extended regex on combined stdout/stderr
-  - `dump_diff` — run baseline and transformed commands, diff captured output streams
-
-Template placeholders: `{sandbox}`, `{dataset}`, `{class}`, `{cpp}`, `{gcc}`, etc.
-
-Shell command strings in JSON are **rejected** at load time; use argv arrays only.
-
-Mark known Cetus bugs with `"xfail": "reason"` or per-profile `"xfail_profiles": {"paw_tiling_nt": "reason"}`.
-
----
-
-## Adding a new kernel test
-
-1. Add the input `.c` under `input_files/tiling/` or `input_files/subsub/`.
-2. Add a `TestCase` entry to [`master_test_cases.h`](master_test_cases.h) with suite, category, flags, and expected outcome.
-3. Rebuild: `make`
-4. Generate ground truth: `./cetus_regression_test --run-test <category> --generate`
-5. Verify: `./cetus_regression_test --run-test <category>`
-6. Commit the input file and `ground_truth/<suite>/*_gt.c`.
-
-## Adding a new benchmark kernel
-
-1. Edit the appropriate file under `benchmarks/config/suites/`.
-2. No recompile needed — JSON is loaded at runtime.
-3. Generate GT: `./cetus_regression_test --benchmarks --benchmark-suite <id> --benchmark-kernel <name> --generate --skip-run`
-4. Run full pipeline: `./cetus_regression_test --benchmarks --benchmark-suite <id> --benchmark-kernel <name>`
-5. Commit JSON changes and new files under `ground_truth/benchmarks/`.
-
----
-
-## Debugging
-
-### Log files
-
-| File | Contents |
-|------|----------|
-| `logs/all_tests.log` | Full kernel run log |
-| `logs/failed_tests.log` | Kernel failures |
-| `logs/benchmarks/run_*.log` | Per benchmark case |
-| `logs/benchmark-run-console.log` | If you used `tee` (see above) |
-
-### Manual kernel pipeline
-
-```bash
-clang -E -P -x c -std=c11 input_files/tiling/tiling_gemm.c -o /tmp/gemm.i
-./check_syntax.sh /tmp/gemm.i
-/path/to/The-Cetus-Project/bin/cetus -outdir=cetus_transformed_output/tiling <flags> /tmp/gemm.i
-clang-format -i -style=Google cetus_transformed_output/tiling/tiling_gemm.i
-clang-format -i -style=Google ground_truth/tiling/tiling_gemm_gt.c
-diff -wB cetus_transformed_output/tiling/tiling_gemm.i ground_truth/tiling/tiling_gemm_gt.c
-```
-
-### Windows / WSL
+Logs: `logs/failed_tests.log` for kernel failures, and `logs/benchmarks/run_*.log` for each benchmark case. A non-passing benchmark prints its log path.
 
 From PowerShell:
 
 ```powershell
-wsl bash -lc "cd /path/to/The-Cetus-Project/cetus_regression_test_suite && make && ./cetus_regression_test --all"
+wsl bash -lc "cd /mnt/d/workspace/cetus/cetus_regression_test_suite && make && ./cetus_regression_test --all"
 ```
 
----
+## Caviness
 
-## Development
+`./queue_caviness.sh` copies this tree to `/work/parot/mgltorsa/cetus_regression_test_suite` (or updates the copy), then submits `cetus_regression.slurm`. The script prints the job id and returns. It does not wait. If a `cetus-reg` job is already queued or running, it asks before submitting another. `--no-sync` submits without copying.
 
-```bash
-make clean && make          # rebuild harness
-make test                   # run all unit test binaries
-./cetus_regression_test --help
+The job generates ground truth for `paw_tiling_lrw` and `paw_tiling_fixed32`, then runs kernels and benchmarks (`--full`). The log on the cluster is `logs/slurm-<jobid>.out`. `run_profiles.sh` sets the cluster Cetus binary and the vanilla benchmark paths.
+
+The script uses `ssh` and `rsync` with the host alias `caviness` and `BatchMode=yes`, so it will not prompt for a password. `~/.ssh/config` must define that host and a key Caviness accepts:
+
+```
+Host caviness
+    HostName caviness.hpc.udel.edu
+    User mgltorsa
+    IdentityFile ~/.ssh/mgltorsa_caviness
 ```
 
-Unit test binaries (not installed system-wide):
+`CAVINESS_SSH_HOST` overrides the alias. `Host` is the name the script uses. `HostName` is the cluster. `IdentityFile` is the private key.
 
-- `tests/test_runner` — filesystem + process runner
-- `tests/test_benchmark_config` — JSON/env loading
-- `tests/test_benchmark_runner` — lifecycle + xfail semantics
-- `tests/test_benchmark_adapters` — PolyBench/NPB/generic adapters
-- `tests/test_cli` — CLI parsing and validation
+## Adding a test
 
-For agent-oriented notes (adding tests, xfails, layout), see [`AGENTS.md`](AGENTS.md).
+**Kernel snippet.** Put the `.c` file in `input_files/tiling/` or `input_files/subsub/`, and add it to `benchmarks/config/kernels/<suite>.json`. No rebuild. Then `./cetus_regression_test --run-test <name> --generate`. Commit the input, the JSON, and `ground_truth/<suite>/*_gt.c`.
+
+**Benchmark.** Edit `benchmarks/config/suites/<suite>.json`. No rebuild. Generate with `--generate --skip-run`, then run the case without `--generate`. Commit the JSON and `ground_truth/benchmarks/`.
+
+A custom suite can copy `benchmarks/config/suites/generic-example.json` (`"adapter": "generic"`). Commands must be argv arrays. Verify types are `exit_code`, `regex`, and `dump_diff`.
+
+## Layout
+
+```
+cetus_regression_test.c      harness entry and kernel runner
+cli.c                        arguments
+kernel_config.c              loads benchmarks/config/kernels/*.json
+benchmark_runner.c           sandbox, diff, build, verify
+polybench_adapter.c          PolyBench copy and dump compare
+npb_adapter.c                NPB build and verification string
+benchmarks/config/           paths.env example, profiles.json, suites/*.json, kernels/*.json
+input_files/                 kernel snippet sources
+ground_truth/                expected Cetus output
+queue_caviness.sh            copy to Caviness and submit the Slurm job
+run_profiles.sh              cluster paths, then the harness
+cetus_regression.slurm       generate LRW and fixed-32, then --full
+work/                        sandboxes (gitignored)
+logs/                        run logs (gitignored)
+```
+
+Developer checks of the harness itself are `make test` (`tests/test_runner`, `test_benchmark_config`, `test_benchmark_runner`, `test_benchmark_adapters`, `test_cli`, `test_kernel_config`). Notes for changing the harness are in [`AGENTS.md`](AGENTS.md).

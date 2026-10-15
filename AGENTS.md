@@ -163,7 +163,18 @@ Expected for `--all`: `Test Summary: 15/15 tests passed.`
 
 ### Caviness
 
-`./queue_caviness.sh` syncs this tree to `/work/parot/mgltorsa/cetus_regression_test_suite` and submits `cetus_regression.slurm`. The job generates ground truth for `paw_tiling_lrw` and `paw_tiling_fixed32`, then runs `--full`. The script prints the Slurm job id and returns. It does not wait. Log: `logs/slurm-<jobid>.out` on Caviness. `run_profiles.sh` sets the cluster Cetus and vanilla benchmark paths.
+`./queue_caviness.sh` copies this project to `/work/parot/mgltorsa/cetus_regression_test_suite`, or updates that copy, and only then submits `cetus_regression.slurm`. If a `cetus-reg` job is already queued or running, it asks before submitting another. The job generates ground truth for `paw_tiling_lrw` and `paw_tiling_fixed32`, then runs `--full`. The script prints the Slurm job id and returns. It does not wait. Log: `logs/slurm-<jobid>.out` on Caviness. `run_profiles.sh` sets the cluster Cetus and vanilla benchmark paths.
+
+The script connects with `ssh` and `rsync`. It does not name a key file. Both tools use the SSH host alias `caviness` (`CAVINESS_SSH_HOST` overrides the alias) and `BatchMode=yes`, so OpenSSH will not ask for a password. Before the script can run, `~/.ssh/config` must define that host name, and `IdentityFile` must point at a private key that Caviness accepts:
+
+```
+Host caviness
+    HostName caviness.hpc.udel.edu
+    User mgltorsa
+    IdentityFile ~/.ssh/mgltorsa_caviness
+```
+
+`Host` is the alias the script uses. `HostName` is the cluster. `User` is the Caviness login. `IdentityFile` is the key.
 
 ### Windows / WSL
 
@@ -177,9 +188,9 @@ wsl bash -lc "cd /mnt/d/workspace/cetus/cetus_regression_test_suite && make && .
 cetus_regression_test_suite/
 ├── cetus_regression_test.c    # Main entry + kernel runner
 ├── cli.c / cli.h              # Unified CLI
-├── helper_tests.h             # Kernel paths, enums, TestCase struct
-├── master_test_cases.h        # 15 kernel test definitions
-├── benchmark_config.c/.h      # JSON + paths.env loader
+├── helper_tests.h             # Kernel paths and result enums
+├── kernel_config.c/.h         # Kernel suite JSON loader
+├── benchmark_config.c/.h      # Benchmark JSON + paths.env loader
 ├── benchmark_runner.c/.h      # Benchmark lifecycle
 ├── benchmark_adapters.c/.h    # Adapter factory
 ├── polybench_adapter.c
@@ -195,7 +206,8 @@ cetus_regression_test_suite/
 ├── benchmarks/config/
 │   ├── paths.example.env
 │   ├── profiles.json
-│   └── suites/                # polybench.json, npb-ser.json, …
+│   ├── suites/                # polybench.json, npb-ser.json, …
+│   └── kernels/               # tiling.json, subsub.json
 ├── input_files/
 │   ├── tiling/                # PAW tiling (6 tests)
 │   └── subsub/                # Subscripted-subscript (9 tests)
@@ -215,19 +227,19 @@ cetus_regression_test_suite/
 | Layer | Files | Role |
 |-------|-------|------|
 | CLI | `cli.c`, `cetus_regression_test.c` | Parse args, dispatch kernel vs benchmark vs `--full` |
-| Kernel runner | `cetus_regression_test.c`, `master_test_cases.h` | Preprocess → Cetus → format → diff |
-| Config | `benchmark_config.c` | Load `paths.env`, `profiles.json`, `suites/*.json`; validate |
+| Kernel runner | `cetus_regression_test.c`, `kernel_config.c` | Load JSON, preprocess → Cetus → format → diff |
+| Config | `benchmark_config.c`, `kernel_config.c` | Load `paths.env`, `profiles.json`, `suites/*.json`, `kernels/*.json` |
 | Lifecycle | `benchmark_runner.c` | Sandbox reset, GT check, transform, diff/generate, inject, build, verify |
 | Adapters | `*_adapter.c` | Suite-specific prepare/cetus/inject/build/verify vtable hooks |
 | Process | `process_runner.c` | `fork`/`execvp`, capture stdout/stderr, timeout, process-group kill |
 
-Benchmark JSON is loaded **only** when `--benchmarks`, `--full`, or `--list-benchmark-suites` is used.
+Benchmark JSON is loaded when `--benchmarks`, `--full`, or `--list-benchmark-suites` is used. Kernel JSON under `benchmarks/config/kernels/` is loaded for kernel runs and `--list-suites`. Neither requires a rebuild.
 
 ## Test suites
 
 ### PAW tiling (`TRANSFORM_TILING`)
 
-Six kernels. Base flags (all tiling tests):
+Six kernels in `benchmarks/config/kernels/tiling.json`. Shared flags, with `-tileSizes=64` added on `tiling_gemm.c`:
 
 ```
 -alias=3 -verbosity=0 -profitable-omp=0 -tile-profitability=1
@@ -239,7 +251,7 @@ Six kernels. Base flags (all tiling tests):
 
 ### Subscripted-subscript analysis (`TRANSFORM_SUBSUB_ANALYSIS`)
 
-Nine cases. Flags:
+Nine cases in `benchmarks/config/kernels/subsub.json`. Flags:
 
 ```
 -subsub_analysis -normalize-loops -ompGen=0 -profitable-omp=0
@@ -283,11 +295,10 @@ The checked-in PolyBench and NPB suites do not use `xfail`. NPB verify sets `OMP
 ## Adding a new kernel test
 
 1. Place input under `input_files/tiling/` or `input_files/subsub/`.
-2. Add entry to `master_test_cases.h` (suite, category, flags, expected outcome).
-3. `make`
-4. `./cetus_regression_test --run-test <category> --generate`
-5. Commit input + `ground_truth/*_gt.c`.
-6. `./cetus_regression_test --run-test <category>`
+2. Add the kernel to `benchmarks/config/kernels/<suite>.json` (name, input path, and any extra flags). No recompile.
+3. `./cetus_regression_test --run-test <name> --generate`
+4. Commit input, the JSON, and `ground_truth/<suite>/*_gt.c`.
+5. `./cetus_regression_test --run-test <name>`
 
 ## Adding a new benchmark case
 
@@ -319,7 +330,7 @@ diff -wB cetus_transformed_output/tiling/tiling_gemm.i ground_truth/tiling/tilin
 make test
 ```
 
-Runs: `tests/test_runner`, `test_benchmark_config`, `test_benchmark_runner`, `test_benchmark_adapters`, `test_cli`.
+Runs: `tests/test_runner`, `test_benchmark_config`, `test_benchmark_runner`, `test_benchmark_adapters`, `test_cli`, `test_kernel_config`.
 
 Use TDD when changing `benchmark_runner.c`, adapters, or CLI validation.
 

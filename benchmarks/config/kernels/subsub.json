@@ -1,0 +1,24 @@
+{
+  "id": "subsub",
+  "description": "Subscripted-subscript kernel snippets. Source diff only.",
+  "transform": "subsub_analysis",
+  "expected": "success_transformed",
+  "aliases": ["subsub_analysis", "subscripted-subscript"],
+  "flags": [
+    "-subsub_analysis",
+    "-normalize-loops",
+    "-ompGen=0",
+    "-profitable-omp=0"
+  ],
+  "kernels": [
+    {"name": "SubSub_ArrayRange", "input": "subsub/subsub_test_ArrayRange.c"},
+    {"name": "SubSub_Amgmk", "input": "subsub/subsub_test_amgmk.c"},
+    {"name": "SubSub_AmgmkSubexpr", "input": "subsub/subsub_test_amgmk_subexpr.c"},
+    {"name": "SubSub_CholmodCholesky", "input": "subsub/subsub_test_cholmod_cholesky.c"},
+    {"name": "SubSub_Evsl", "input": "subsub/subsub_test_evsl.c"},
+    {"name": "SubSub_Gromacs", "input": "subsub/subsub_test_gromacs.c"},
+    {"name": "SubSub_Sddmm", "input": "subsub/subsub_test_sddmm.c"},
+    {"name": "SubSub_SparseMatrixScale", "input": "subsub/subsub_test_sparse_matrix_scale.c"},
+    {"name": "SubSub_UA", "input": "subsub/subsub_test_ua.c"}
+  ]
+}

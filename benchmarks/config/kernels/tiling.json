@@ -1,0 +1,51 @@
+{
+  "id": "tiling",
+  "description": "PAW tiling kernel snippets. Source diff only.",
+  "transform": "tiling",
+  "expected": "success_transformed",
+  "aliases": ["paw", "paw_tiling"],
+  "flags": [
+    "-alias=3",
+    "-verbosity=0",
+    "-profitable-omp=0",
+    "-tile-profitability=1",
+    "-cores=4",
+    "-cacheSize=25600",
+    "-cacheLine=64",
+    "-selection=NT",
+    "-tilingLevel=0",
+    "-ddt=2",
+    "-privatize=2",
+    "-reduction=2",
+    "-parallelize-loops=1",
+    "-ompGen=1",
+    "-paw_tiling=1"
+  ],
+  "kernels": [
+    {
+      "name": "Tiling_PAW_GEMM_Fixed64",
+      "input": "tiling/tiling_gemm.c",
+      "flags": ["-tileSizes=64"]
+    },
+    {
+      "name": "Tiling_PAW_SmallFootprint_UnTiled",
+      "input": "tiling/tiling_small_footprint.c"
+    },
+    {
+      "name": "Tiling_PAW_SymbolicBounds_RuntimeGuard",
+      "input": "tiling/tiling_symbolic_bounds.c"
+    },
+    {
+      "name": "Tiling_PAW_SkewedDep_LegalFilter",
+      "input": "tiling/tiling_skewed_dep.c"
+    },
+    {
+      "name": "Tiling_PAW_ImperfectNest_InitArrayHandling",
+      "input": "tiling/tiling_imperfect_nest.c"
+    },
+    {
+      "name": "Tiling_PAW_3mm_ExperimentalSections",
+      "input": "tiling/tiling_3mm.c"
+    }
+  ]
+}

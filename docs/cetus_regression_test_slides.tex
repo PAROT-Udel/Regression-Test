@@ -34,41 +34,61 @@
                   align=center, inner sep=3pt, text width=3.15cm,
                   font=\footnotesize},
       word/.style={draw=udblue, rounded corners=2pt, fill=udgold!45,
-                   align=center, inner sep=3pt, text width=3.15cm,
+                   align=center, inner sep=2pt, text width=4.5cm,
                    font=\footnotesize},
       stage/.style={draw=udblue, rounded corners=2pt, fill=white,
-                    align=center, inner sep=3pt, text width=2.55cm,
+                    align=center, inner sep=2pt, text width=2.55cm,
                     font=\footnotesize},
+      ok/.style={draw=udblue, rounded corners=2pt, fill=udgold!40,
+                 align=center, inner sep=2pt, text width=9.4cm,
+                 font=\scriptsize},
       arr/.style={-{Stealth[length=2mm]}, thick, udblue}
     ]
     \node[cfg] (env) {\texttt{paths.env}\\Cetus, NPB, PolyBench};
     \node[cfg, right=of env] (prof) {\texttt{profiles.json}\\named flag lists};
     \node[cfg, right=of prof] (suite) {\texttt{suites/*.json}\\kernels and profiles};
-    \node[word, below=0.62cm of prof] (case) {\textbf{one case}\\suite + kernel + profile};
+    \node[word, below=0.24cm of prof] (case) {\textbf{one case}\\suite + kernel + profile};
     \draw[arr] (env.south) -- (case.north west);
     \draw[arr] (prof) -- (case);
     \draw[arr] (suite.south) -- (case.north east);
-    \node[stage, below=0.7cm of case, xshift=-4.35cm] (copy) {1. Copy into\\a sandbox};
+    \node[stage, below=0.28cm of case, xshift=-4.35cm] (copy) {1. Copy into\\a sandbox};
     \node[stage, right=0.42cm of copy] (cetus) {2. Run Cetus\\with that profile};
-    \node[stage, right=0.42cm of cetus] (diff) {3. Diff against\\ground truth};
+    \node[stage, right=0.42cm of cetus] (diff) {3. Diff the\\transformed source};
     \node[stage, right=0.42cm of diff] (run) {4. Compile\\and run};
     \draw[arr] (copy) -- (cetus);
     \draw[arr] (cetus) -- (diff);
     \draw[arr] (diff) -- (run);
     \draw[arr] (case.south) -- ($(copy.north)!0.5!(run.north)$);
+    \coordinate (rowmid) at ($(copy.south)!0.5!(run.south)$);
+    \node[ok, below=0.28cm of diff.south -| rowmid, anchor=north] (check)
+      {\textbf{Correctness}\\
+       Source: the diff against ground truth is empty.\\
+       NPB: the program prints ``Verification Successful''.\\
+       PolyBench: dumped arrays match the original program.};
+    \draw[arr] (diff.south) -- (diff.south |- check.north);
+    \draw[arr] (run.south) -- (run.south |- check.north);
   \end{tikzpicture}
-  \vspace{0.45em}
-  {\footnotesize
+
+  \vspace{0.2em}
+  \begin{minipage}{\linewidth}
+  \raggedright\footnotesize
   A \textbf{kernel} is one program (\texttt{gemm}, \texttt{bt}).
-  A \textbf{profile} is one flag list (\texttt{parallel}, \texttt{paw\_tiling\_nt}).
+  A \textbf{profile} is one named list of Cetus flags
+  (\texttt{parallel}, \texttt{paw\_tiling\_nt}).
   A \textbf{benchmark} is that program taken from PolyBench or NPB.
-  Kernel snippets skip the JSON and stop after the diff.}
-  \note{JSON is loaded only for benchmark runs. The original NPB and PolyBench trees are never edited. Ground truth is checked in under ground\_truth/benchmarks/suite/profile/kernel.}
+
+  \vspace{0.35em}
+  The JSON files in the diagram describe benchmark cases.
+  Kernel snippets are JSON too, under \texttt{kernels/}.
+  They stop after the source diff and are not compiled or run.
+  \end{minipage}
+  \note{Benchmark JSON is benchmarks/config/suites and profiles.json. Kernel snippets are benchmarks/config/kernels. Both load at runtime. The original NPB and PolyBench trees are never edited. Ground truth lives under ground\_truth/benchmarks/suite/profile/kernel. NPB verify looks for the verification-successful line. PolyBench diffs POLYBENCH\_DUMP\_ARRAYS output of the original and the transformed binary.}
 \end{frame}
 
 \begin{frame}{How a test is configured}
   A benchmark case is one triple from JSON: \textbf{suite}, \textbf{kernel}, \textbf{profile}.
-  Changing the JSON does not require rebuilding the harness.
+  Kernel snippets are JSON suites too.
+  Changing either file does not require rebuilding the harness.
   \vspace{0.45em}
   \begin{enumerate}
     \item Copy the kernel into a sandbox. The NPB and PolyBench trees stay untouched.
@@ -83,12 +103,12 @@
     \midrule
     NPB 3.3 serial & class S & 4 threads, passive wait, verification string \\
     PolyBench/C 4.2 & MINI & 1 thread, dumped arrays match the original \\
-    Kernel snippets & fixed in the source & source diff only \\
+    Kernel snippets & \texttt{kernels/*.json} & source diff only \\
     \bottomrule
   \end{tabular}\par
   \vspace{0.4em}
   Paths to Cetus, NPB, and PolyBench come from \texttt{paths.env}.
-  \note{Say the JSON lives in benchmarks/config. Suites pick kernels, class or dataset, and which profiles apply. Profiles are a separate file of Cetus flags. Five unit-test programs check the harness itself and are not Cetus runs.}
+  \note{Say the JSON lives in benchmarks/config. Suites pick kernels, class or dataset, and which profiles apply. Profiles are a separate file of Cetus flags. Kernel snippets are benchmarks/config/kernels. Six unit-test programs check the harness itself and are not Cetus runs.}
 \end{frame}
 
 \begin{frame}{What is tested}

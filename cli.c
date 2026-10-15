@@ -285,7 +285,7 @@ void cli_print_usage(const char *program_name)
         "  (no args), --all         Run all kernel tests\n"
         "  --run-test <id>          Run one test (category, filename, or path)\n"
         "  --run-suite <name>       Run all tests in a suite (tiling, subsub)\n"
-        "  --list-suites            List defined kernel suites\n"
+        "  --list-suites            List kernel suites from JSON\n"
         "\nBenchmark modes:\n"
         "  --benchmarks             Run benchmark tests only\n"
         "  --full                   Run both kernels and default benchmarks\n"

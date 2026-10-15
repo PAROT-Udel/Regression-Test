@@ -11,7 +11,7 @@ ADAPTER_SOURCES := benchmark_adapters.c polybench_adapter.c npb_adapter.c \
 
 TARGET := cetus_regression_test
 TARGET_SOURCES := cetus_regression_test.c cli.c runner_common.c process_runner.c \
-	benchmark_config.c benchmark_runner.c $(ADAPTER_SOURCES) \
+	benchmark_config.c benchmark_runner.c kernel_config.c $(ADAPTER_SOURCES) \
 	third_party/cjson/cJSON.c
 TARGET_OBJECTS := $(TARGET_SOURCES:.c=.o)
 
@@ -30,6 +30,9 @@ ADAPTER_TEST_SOURCES := tests/test_benchmark_adapters.c $(ADAPTER_SOURCES) \
 	third_party/cjson/cJSON.c
 CLI_TEST_TARGET := tests/test_cli
 CLI_TEST_SOURCES := tests/test_cli.c cli.c runner_common.c
+KERNEL_CONFIG_TEST_TARGET := tests/test_kernel_config
+KERNEL_CONFIG_TEST_SOURCES := tests/test_kernel_config.c kernel_config.c \
+	runner_common.c third_party/cjson/cJSON.c
 
 .PHONY: all clean test
 
@@ -58,14 +61,20 @@ $(ADAPTER_TEST_TARGET): $(ADAPTER_TEST_SOURCES) benchmark_adapters.h \
 $(CLI_TEST_TARGET): $(CLI_TEST_SOURCES) cli.h runner_common.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $(CLI_TEST_SOURCES) $(LDLIBS)
 
+$(KERNEL_CONFIG_TEST_TARGET): $(KERNEL_CONFIG_TEST_SOURCES) kernel_config.h \
+	helper_tests.h runner_common.h third_party/cjson/cJSON.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $(KERNEL_CONFIG_TEST_SOURCES) $(LDLIBS)
+
 test: $(TEST_TARGET) $(CONFIG_TEST_TARGET) $(BENCHMARK_TEST_TARGET) \
-	$(ADAPTER_TEST_TARGET) $(CLI_TEST_TARGET)
+	$(ADAPTER_TEST_TARGET) $(CLI_TEST_TARGET) $(KERNEL_CONFIG_TEST_TARGET)
 	./$(TEST_TARGET)
 	./$(CONFIG_TEST_TARGET)
 	./$(BENCHMARK_TEST_TARGET)
 	./$(ADAPTER_TEST_TARGET)
 	./$(CLI_TEST_TARGET)
+	./$(KERNEL_CONFIG_TEST_TARGET)
 
 clean:
 	rm -f $(TARGET) $(TARGET_OBJECTS) $(TEST_TARGET) $(CONFIG_TEST_TARGET) \
-		$(BENCHMARK_TEST_TARGET) $(ADAPTER_TEST_TARGET) $(CLI_TEST_TARGET)
+		$(BENCHMARK_TEST_TARGET) $(ADAPTER_TEST_TARGET) $(CLI_TEST_TARGET) \
+		$(KERNEL_CONFIG_TEST_TARGET)

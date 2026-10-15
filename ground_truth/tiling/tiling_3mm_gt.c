@@ -373,17 +373,17 @@ void matrix_multiply(double A[10000][10000], double B[10000][10000],
   int i;
   int j;
   int k;
-  int cetus_tile_matrix_multiply_0_j = 16;
+  int cetus_tile_matrix_multiply_0_j = 8;
   int j_cetus_cross;
-  int cetus_tile_matrix_multiply_0_k = 16;
+  int cetus_tile_matrix_multiply_0_k = 8;
   int k_cetus_cross;
   int cetus_tile_matrix_multiply_0_i = 8;
   int i_cetus_cross;
 #pragma cetus parallel
 #pragma cetus private(i, j, j_cetus_cross, k, k_cetus_cross)
 #pragma loop name matrix_multiply #0
-#pragma c_paw_tiling matrix_multiply #0 = j #16
-#pragma c_paw_tiling matrix_multiply #0 = k #16
+#pragma c_paw_tiling matrix_multiply #0 = j #8
+#pragma c_paw_tiling matrix_multiply #0 = k #8
 #pragma c_paw_tiling matrix_multiply #0 = i #8
 #pragma omp parallel for private(i, j, j_cetus_cross, k, k_cetus_cross)
   for (i_cetus_cross = 0; i_cetus_cross < 10000;
