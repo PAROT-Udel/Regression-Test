@@ -73,28 +73,28 @@ static void init_array(int nr, int nq, int np,
                        double A[(10 + 0)][(8 + 0)][(12 + 0)],
                        double C4[(12 + 0)][(12 + 0)]) {
   int i, j, k;
-#pragma cetus private(j, k)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(j, k)
+#pragma cetus private(i, j, k)
+#pragma omp parallel for private(i, j, k)
   for (i = 0; i < nr; i++) {
-#pragma cetus private(j, k)
 #pragma loop name init_array #0 #0
+#pragma cetus private(j, k)
     for (j = 0; j < nq; j++) {
-#pragma cetus private(k)
 #pragma loop name init_array #0 #0 #0
+#pragma cetus private(k)
       for (k = 0; k < np; k++) {
         A[i][j][k] = (((double)(((i * j) + k) % np)) / np);
       }
     }
   }
-#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (i = 0; i < np; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #1 #0
+#pragma cetus private(j)
     for (j = 0; j < np; j++) {
       C4[i][j] = (((double)((i * j) % np)) / np);
     }
@@ -110,14 +110,14 @@ static void print_array(int nr, int nq, int np,
   int i, j, k;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "A");
-#pragma cetus private(i, j, k)
 #pragma loop name print_array #0
+#pragma cetus private(i, j, k)
   for (i = 0; i < nr; i++) {
-#pragma cetus private(j, k)
 #pragma loop name print_array #0 #0
+#pragma cetus private(j, k)
     for (j = 0; j < nq; j++) {
-#pragma cetus private(k)
 #pragma loop name print_array #0 #0 #0
+#pragma cetus private(k)
       for (k = 0; k < np; k++) {
         if ((((((i * nq) * np) + (j * np)) + k) % 20) == 0) {
           fprintf(stderr, "\n");
@@ -140,30 +140,36 @@ void kernel_doitgen(int nr, int nq, int np,
   int r, q, p, s;
 #pragma scop
 #pragma cetus firstprivate(sum)
-#pragma cetus private(p, q, s)
 #pragma cetus lastprivate(sum)
 #pragma loop name kernel_doitgen #0
-#pragma cetus parallel
-#pragma omp parallel for private(p, q, s) firstprivate(sum) lastprivate(sum)
+#pragma cetus firstprivate(sum)
+#pragma cetus private(p, q, r, s)
+#pragma cetus lastprivate(sum)
   for (r = 0; r < nr; r++) {
+#pragma cetus firstprivate(sum)
+#pragma cetus lastprivate(sum)
+#pragma loop name kernel_doitgen #0 #0
 #pragma cetus firstprivate(sum)
 #pragma cetus private(p, q, s)
 #pragma cetus lastprivate(sum)
-#pragma loop name kernel_doitgen #0 #0
     for (q = 0; q < nq; q++) {
-#pragma cetus private(p, s)
 #pragma loop name kernel_doitgen #0 #0 #0
+#pragma cetus parallel
+#pragma cetus private(p, s)
+#pragma omp parallel for private(p, s)
       for (p = 0; p < np; p++) {
         sum[p] = 0.0;
-#pragma cetus private(s)
 #pragma loop name kernel_doitgen #0 #0 #0 #0
-        /* #pragma cetus reduction(+: sum[p])  */
+/* #pragma cetus reduction(+: sum[p])  */
+#pragma cetus private(s)
         for (s = 0; s < np; s++) {
           sum[p] += (A[r][q][s] * C4[s][p]);
         }
       }
-#pragma cetus private(p)
 #pragma loop name kernel_doitgen #0 #0 #1
+#pragma cetus parallel
+#pragma cetus private(p)
+#pragma omp parallel for private(p)
       for (p = 0; p < np; p++) {
         A[r][q][p] = sum[p];
       }

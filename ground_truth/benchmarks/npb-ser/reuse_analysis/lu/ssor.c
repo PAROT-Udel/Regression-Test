@@ -161,6 +161,7 @@ void ssor(int niter) {
 /* --------------------------------------------------------------------- */
 #pragma cetus private(i, j, k, m)
 #pragma loop name ssor #3
+  /* #pragma cetus reduction(+: u[k][j][i][m])  */
   for (istep = 1; istep <= niter; istep++) {
     /* if ( ( (istep % inorm) == 0 ) && ipr == 1 ) { */
     /*  printf(" \n     pseudo-time SSOR iteration no.=%4d\n\n", istep); */

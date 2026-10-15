@@ -5,7 +5,6 @@
 #define FLOOR(x) ((int)((x) - 0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
-#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -79,13 +78,9 @@ static void init_array(int m, int n, double A[(42 + 0)][(38 + 0)],
   for (i = 0; i < m; i++) {
     p[i] = (((double)(i % m)) / m);
   }
-#pragma cetus private(j)
 #pragma loop name init_array #1
-#pragma cetus parallel
-#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
     r[i] = (((double)(i % n)) / n);
-#pragma cetus private(j)
 #pragma loop name init_array #1 #0
     for (j = 0; j < m; j++) {
       A[i][j] = (((double)((i * (j + 1)) % n)) / n);
@@ -101,7 +96,6 @@ static void print_array(int m, int n, double s[(38 + 0)], double q[(42 + 0)]) {
   int i;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "s");
-#pragma cetus private(i)
 #pragma loop name print_array #0
   for (i = 0; i < m; i++) {
     if ((i % 20) == 0) {
@@ -111,7 +105,6 @@ static void print_array(int m, int n, double s[(38 + 0)], double q[(42 + 0)]) {
   }
   fprintf(stderr, "\nend   dump: %s\n", "s");
   fprintf(stderr, "begin dump: %s", "q");
-#pragma cetus private(i)
 #pragma loop name print_array #1
   for (i = 0; i < n; i++) {
     if ((i % 20) == 0) {
@@ -152,7 +145,6 @@ static void kernel_bicg(int m, int n, double A[(42 + 0)][(38 + 0)],
 #pragma omp for
     for (i = 0; i < n; i++) {
       q[i] = 0.0;
-#pragma cetus private(j)
 #pragma loop name kernel_bicg #1 #0
       /* #pragma cetus reduction(+: q[i])  */
       for (j = 0; j < m; j++) {

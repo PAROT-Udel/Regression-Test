@@ -116,9 +116,9 @@ void mortar() {
   /* VERTICES */
   count = (-1);
 /* assign mortar point indices to element vertices */
-#pragma cetus private(cb, cb1, cb2, ij1, ij2, ntemp, ntemp1, sumcb)
 #pragma loop name mortar #0
 #pragma cetus parallel
+#pragma cetus private(cb, cb1, cb2, ij1, ij2, ntemp, ntemp1, sumcb)
 #pragma cetus private(cb, cb1, cb2, iel, ij1, ij2, ntemp, ntemp1, sumcb)
 #pragma omp parallel for private(cb, cb1, cb2, iel, ij1, ij2, ntemp, ntemp1,   \
                                      sumcb)
@@ -866,17 +866,19 @@ void mortar() {
 /* to all elements sharing this mortar point. Note, if a mortar point  */
 /* is shared by several elements, the mortar point index of it will only */
 /* be generated on the element with the lowest element index.  */
-#pragma cetus private(i, iel)
 #pragma cetus lastprivate(count)
 #pragma loop name mortar #1
+#pragma cetus private(i, iel)
+#pragma cetus lastprivate(count)
 #pragma cetus private(i, iel)
 #pragma cetus lastprivate(count)
   for (iel = 0; iel < nelt; iel++) {
     /* compute the starting vertex mortar point index in element iel */
     front[iel] = (front[iel] - newc[iel]);
-#pragma cetus private(i)
 #pragma cetus lastprivate(count)
 #pragma loop name mortar #1 #0
+#pragma cetus private(i)
+#pragma cetus lastprivate(count)
 #pragma cetus private(i)
 #pragma cetus lastprivate(count)
     for (i = 0; i < newc[iel]; i++) {
@@ -913,8 +915,8 @@ void mortar() {
 /*            to the right or top part of edge n. */
 /* if_1_edge[iel][n]=true indicates that the size of iel is smaller than  */
 /*            that of its neighbor connected, neighbored by edge n only */
-#pragma cetus private(cb1, cb2, cb3, cb4, cb5, cb6, iel, ntemp)
 #pragma loop name mortar #2
+#pragma cetus private(cb1, cb2, cb3, cb4, cb5, cb6, iel, ntemp)
 #pragma cetus private(cb1, cb2, cb3, cb4, cb5, cb6, iel, ntemp)
   for (iel = 0; iel < nelt; iel++) {
     newc[iel] = 0;
@@ -1503,17 +1505,17 @@ void mortar() {
 /* Generate (potentially in parallel) new mortar point indices on  */
 /* each conforming element face. On each face, first visit all  */
 /* conforming edges, and then the face interior. */
+#pragma loop name mortar #3
 #pragma cetus private(cb, cb1, edge_g, face2, i, ie, ie2, iel, ii, jface, jj,  \
                       ne, ntemp, space)
-#pragma loop name mortar #3
 #pragma cetus private(cb, cb1, edge_g, face2, i, ie, ie2, iel, ii, jface, jj,  \
                       ne, ntemp, space)
   for (iel = 0; iel < nelt; iel++) {
     front[iel] = (front[iel] - newc[iel]);
     count = (nvertex + front[iel]);
+#pragma loop name mortar #3 #0
 #pragma cetus private(cb, cb1, edge_g, face2, i, ie, ie2, ii, jface, jj, ne,   \
                       ntemp, space)
-#pragma loop name mortar #3 #0
 #pragma cetus private(cb, cb1, edge_g, face2, i, ie, ie2, ii, jface, jj, ne,   \
                       ntemp, space)
     for (i = 0; i < 6; i++) {
@@ -1541,8 +1543,8 @@ void mortar() {
           space = 1;
         }
       }
-#pragma cetus private(edge_g, face2, ie, ie2, ntemp)
 #pragma loop name mortar #3 #0 #0
+#pragma cetus private(edge_g, face2, ie, ie2, ntemp)
 #pragma cetus private(edge_g, face2, ie, ie2, ntemp)
       for (ie = 0; ie < ne; ie += space) {
         edge_g = edgenumber[i][ie];
@@ -1598,12 +1600,12 @@ void mortar() {
         /* of face i of iel. */
         cb = cbc[iel][i];
         if ((cb == 1) || (cb == 0)) {
-#pragma cetus private(ii, jj)
 #pragma loop name mortar #3 #0 #1
 #pragma cetus private(ii, jj)
+#pragma cetus private(ii, jj)
           for (jj = 1; jj < (5 - 1); jj++) {
-#pragma cetus private(ii)
 #pragma loop name mortar #3 #0 #1 #0
+#pragma cetus private(ii)
 #pragma cetus private(ii)
             for (ii = 1; ii < (5 - 1); ii++) {
               idmo[iel][i][0][0][jj][ii] = count;
@@ -1617,12 +1619,12 @@ void mortar() {
             if (idmo[iel][i][0][0][1][1] == (-1)) {
               ntemp = sje[iel][i][0][0];
               jface = jjface[i];
-#pragma cetus private(ii, jj)
 #pragma loop name mortar #3 #0 #2
 #pragma cetus private(ii, jj)
+#pragma cetus private(ii, jj)
               for (jj = 1; jj < (5 - 1); jj++) {
-#pragma cetus private(ii)
 #pragma loop name mortar #3 #0 #2 #0
+#pragma cetus private(ii)
 #pragma cetus private(ii)
                 for (ii = 1; ii < (5 - 1); ii++) {
                   idmo[iel][i][0][0][jj][ii] = count;
@@ -1638,12 +1640,12 @@ void mortar() {
   }
 /* for edges on nonconforming faces, copy the mortar points indices */
 /* from neighbors. */
-#pragma cetus private(cb, i, iel, ii, iii, jface, jj, jjj, ntemp)
 #pragma loop name mortar #4
 #pragma cetus private(cb, i, iel, ii, iii, jface, jj, jjj, ntemp)
+#pragma cetus private(cb, i, iel, ii, iii, jface, jj, jjj, ntemp)
   for (iel = 0; iel < nelt; iel++) {
-#pragma cetus private(cb, i, ii, iii, jface, jj, jjj, ntemp)
 #pragma loop name mortar #4 #0
+#pragma cetus private(cb, i, ii, iii, jface, jj, jjj, ntemp)
 #pragma cetus private(cb, i, ii, iii, jface, jj, jjj, ntemp)
     for (i = 0; i < 6; i++) {
       cb = cbc[iel][i];
@@ -1654,23 +1656,23 @@ void mortar() {
       /* face interior  */
       jface = jjface[i];
       if (cb == 3) {
-#pragma cetus private(ii, iii, jj, jjj, ntemp)
 #pragma loop name mortar #4 #0 #0
 #pragma cetus private(ii, iii, jj, jjj, ntemp)
+#pragma cetus private(ii, iii, jj, jjj, ntemp)
         for (iii = 0; iii < 2; iii++) {
-#pragma cetus private(ii, jj, jjj, ntemp)
 #pragma loop name mortar #4 #0 #0 #0
+#pragma cetus private(ii, jj, jjj, ntemp)
 #pragma cetus private(ii, jj, jjj, ntemp)
           for (jjj = 0; jjj < 2; jjj++) {
             ntemp = sje[iel][i][jjj][iii];
-#pragma cetus private(ii)
 #pragma loop name mortar #4 #0 #0 #0 #0
 #pragma cetus parallel
+#pragma cetus private(ii)
 #pragma cetus private(ii, jj)
 #pragma omp parallel for private(ii, jj)
             for (jj = 0; jj < 5; jj++) {
-#pragma cetus private(ii)
 #pragma loop name mortar #4 #0 #0 #0 #0 #0
+#pragma cetus private(ii)
 #pragma cetus private(ii)
               for (ii = 0; ii < 5; ii++) {
                 idmo[iel][i][jjj][iii][jj][ii] =
@@ -1707,8 +1709,8 @@ static void get_emo(int ie, int n, int ng) {
   int ntemp, i;
   logical L1;
   L1 = false;
-#pragma cetus private(i)
 #pragma loop name get_emo #0
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 0; i <= nemo[n]; i++) {
     if (emo[n][i][0] == ie) {
@@ -1745,8 +1747,8 @@ logical ifsame(int iel, int i, int ntemp, int j) {
 /* ----------------------------------------------------------------- */
 static void mor_assign(int mor_v[3], int *count) {
   int i;
-#pragma cetus private(i)
 #pragma loop name mor_assign #0
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 0; i < 3; i++) {
     mor_v[i] = (*count);
@@ -1765,7 +1767,8 @@ static void mor_edge(int ie, int face, int iel, int mor_v[3]) {
     j = 0;
 #pragma loop name mor_edge #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(nn)
+#pragma omp parallel for private(nn)
     for (nn = 1; nn < (5 - 1); nn++) {
       idmo[iel][face][0][0][j][nn] = mor_v[nn - 1];
     }
@@ -1774,7 +1777,8 @@ static void mor_edge(int ie, int face, int iel, int mor_v[3]) {
       i = (5 - 1);
 #pragma loop name mor_edge #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(nn)
+#pragma omp parallel for private(nn)
       for (nn = 1; nn < (5 - 1); nn++) {
         idmo[iel][face][0][0][nn][i] = mor_v[nn - 1];
       }
@@ -1783,7 +1787,8 @@ static void mor_edge(int ie, int face, int iel, int mor_v[3]) {
         j = (5 - 1);
 #pragma loop name mor_edge #2
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(nn)
+#pragma omp parallel for private(nn)
         for (nn = 1; nn < (5 - 1); nn++) {
           idmo[iel][face][0][0][j][nn] = mor_v[nn - 1];
         }
@@ -1792,7 +1797,8 @@ static void mor_edge(int ie, int face, int iel, int mor_v[3]) {
           i = 0;
 #pragma loop name mor_edge #3
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(nn)
+#pragma omp parallel for private(nn)
           for (nn = 1; nn < (5 - 1); nn++) {
             idmo[iel][face][0][0][nn][i] = mor_v[nn - 1];
           }
@@ -1819,14 +1825,16 @@ static void edgecopy_s(int face, int iel) {
   nr_init((int *)mor_s_v, 4 * 2, -1);
 #pragma loop name edgecopy_s #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 1; i < (5 - 1); i++) {
     mor_s_v[0][i - 1] = idmo[ntemp1][jjface[face]][0][0][0][i];
   }
   mor_s_v[0][5 - 2] = idmo[ntemp1][jjface[face]][1][0][0][5 - 1];
 #pragma loop name edgecopy_s #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < (5 - 1); i++) {
     mor_s_v[1][i] = idmo[ntemp2][jjface[face]][0][0][0][i];
   }
@@ -1841,7 +1849,8 @@ static void edgecopy_s(int face, int iel) {
 /* local edge 1 */
 #pragma loop name edgecopy_s #2
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 1; i < (5 - 1); i++) {
     mor_s_v[0][i - 1] = idmo[ntemp2][jjface[face]][0][0][i][5 - 1];
   }
@@ -1849,7 +1858,8 @@ static void edgecopy_s(int face, int iel) {
   mor_s_v[1][0] = idmo[ntemp4][jjface[face]][1][0][0][5 - 1];
 #pragma loop name edgecopy_s #3
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 1; i < (5 - 1); i++) {
     mor_s_v[1][i] = idmo[ntemp4][jjface[face]][0][0][i][5 - 1];
   }
@@ -1861,7 +1871,8 @@ static void edgecopy_s(int face, int iel) {
 /* local edge 2 */
 #pragma loop name edgecopy_s #4
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 1; i < (5 - 1); i++) {
     mor_s_v[0][i - 1] = idmo[ntemp3][jjface[face]][0][0][5 - 1][i];
   }
@@ -1869,7 +1880,8 @@ static void edgecopy_s(int face, int iel) {
   mor_s_v[1][0] = idmo[ntemp4][jjface[face]][0][1][5 - 1][0];
 #pragma loop name edgecopy_s #5
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 1; i < (5 - 1); i++) {
     mor_s_v[1][i] = idmo[ntemp4][jjface[face]][0][0][5 - 1][i];
   }
@@ -1881,14 +1893,16 @@ static void edgecopy_s(int face, int iel) {
 /* local edge 3 */
 #pragma loop name edgecopy_s #6
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 1; i < (5 - 1); i++) {
     mor_s_v[0][i - 1] = idmo[ntemp1][jjface[face]][0][0][i][0];
   }
   mor_s_v[0][5 - 2] = idmo[ntemp1][jjface[face]][0][1][5 - 1][0];
 #pragma loop name edgecopy_s #7
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < (5 - 1); i++) {
     mor_s_v[1][i] = idmo[ntemp3][jjface[face]][0][0][i][0];
   }
@@ -1908,13 +1922,15 @@ static void mor_s_e(int n, int face, int iel, int mor_s_v[2][4]) {
   if (n == 0) {
 #pragma loop name mor_s_e #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
     for (i = 1; i < 5; i++) {
       idmo[iel][face][0][0][0][i] = mor_s_v[0][i - 1];
     }
 #pragma loop name mor_s_e #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
     for (i = 0; i < (5 - 1); i++) {
       idmo[iel][face][1][0][0][i] = mor_s_v[1][i];
     }
@@ -1922,13 +1938,15 @@ static void mor_s_e(int n, int face, int iel, int mor_s_v[2][4]) {
     if (n == 1) {
 #pragma loop name mor_s_e #2
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
       for (i = 1; i < 5; i++) {
         idmo[iel][face][1][0][i][5 - 1] = mor_s_v[0][i - 1];
       }
 #pragma loop name mor_s_e #3
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
       for (i = 0; i < (5 - 1); i++) {
         idmo[iel][face][1][1][i][5 - 1] = mor_s_v[1][i];
       }
@@ -1936,13 +1954,15 @@ static void mor_s_e(int n, int face, int iel, int mor_s_v[2][4]) {
       if (n == 2) {
 #pragma loop name mor_s_e #4
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
         for (i = 1; i < 5; i++) {
           idmo[iel][face][0][1][5 - 1][i] = mor_s_v[0][i - 1];
         }
 #pragma loop name mor_s_e #5
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
         for (i = 0; i < (5 - 1); i++) {
           idmo[iel][face][1][1][5 - 1][i] = mor_s_v[1][i];
         }
@@ -1950,13 +1970,15 @@ static void mor_s_e(int n, int face, int iel, int mor_s_v[2][4]) {
         if (n == 3) {
 #pragma loop name mor_s_e #6
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
           for (i = 1; i < 5; i++) {
             idmo[iel][face][0][0][i][0] = mor_s_v[0][i - 1];
           }
 #pragma loop name mor_s_e #7
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
           for (i = 0; i < (5 - 1); i++) {
             idmo[iel][face][0][1][i][0] = mor_s_v[1][i];
           }
@@ -1978,14 +2000,16 @@ static void mor_s_e_nn(int n, int face, int iel, int mor_s_v[4], int nn) {
     if (nn == 0) {
 #pragma loop name mor_s_e_nn #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
       for (i = 1; i < 5; i++) {
         idmo[iel][face][0][0][0][i] = mor_s_v[i - 1];
       }
     } else {
 #pragma loop name mor_s_e_nn #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
       for (i = 0; i < (5 - 1); i++) {
         idmo[iel][face][1][0][0][i] = mor_s_v[i];
       }
@@ -1995,14 +2019,16 @@ static void mor_s_e_nn(int n, int face, int iel, int mor_s_v[4], int nn) {
       if (nn == 0) {
 #pragma loop name mor_s_e_nn #2
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
         for (i = 1; i < 5; i++) {
           idmo[iel][face][1][0][i][5 - 1] = mor_s_v[i - 1];
         }
       } else {
 #pragma loop name mor_s_e_nn #3
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
         for (i = 0; i < (5 - 1); i++) {
           idmo[iel][face][1][1][i][5 - 1] = mor_s_v[i];
         }
@@ -2012,14 +2038,16 @@ static void mor_s_e_nn(int n, int face, int iel, int mor_s_v[4], int nn) {
         if (nn == 0) {
 #pragma loop name mor_s_e_nn #4
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
           for (i = 1; i < 5; i++) {
             idmo[iel][face][0][1][5 - 1][i] = mor_s_v[i - 1];
           }
         } else {
 #pragma loop name mor_s_e_nn #5
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
           for (i = 0; i < (5 - 1); i++) {
             idmo[iel][face][1][1][5 - 1][i] = mor_s_v[i];
           }
@@ -2029,14 +2057,16 @@ static void mor_s_e_nn(int n, int face, int iel, int mor_s_v[4], int nn) {
           if (nn == 0) {
 #pragma loop name mor_s_e_nn #6
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
             for (i = 1; i < 5; i++) {
               idmo[iel][face][0][0][i][0] = mor_s_v[i - 1];
             }
           } else {
 #pragma loop name mor_s_e_nn #7
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
             for (i = 0; i < (5 - 1); i++) {
               idmo[iel][face][0][1][i][0] = mor_s_v[i];
             }
@@ -2058,7 +2088,8 @@ static void mortar_vertex(int i, int iel, int count) {
   logical if_temp;
 #pragma loop name mortar_vertex #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(l)
+#pragma omp parallel for private(l)
   for (l = 0; l < 8; l++) {
     ntempx[l] = (-1);
     ifntempx[l] = (-1);
@@ -2068,7 +2099,8 @@ static void mortar_vertex(int i, int iel, int count) {
 /* face in face_a. */
 #pragma loop name mortar_vertex #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(l)
+#pragma omp parallel for private(l)
   for (l = 0; l < 3; l++) {
     face_a[l] = f_c[i][l];
     lc_a[l] = local_corner[face_a[l]][i];
@@ -2083,8 +2115,8 @@ static void mortar_vertex(int i, int iel, int count) {
 /* first find all elements sharing this vertex, ifntempx */
 /* find the three possible neighbors of iel, neighbored by faces  */
 /* listed in array face_a */
-#pragma cetus private(ii, itemp, jj, ntemp)
 #pragma loop name mortar_vertex #2
+#pragma cetus private(ii, itemp, jj, ntemp)
 #pragma cetus private(ii, itemp, jj, ntemp)
   for (itemp = 0; itemp < 3; itemp++) {
     /* j[itemp] is the local corner number of this vertex on the  */
@@ -2122,8 +2154,8 @@ static void mortar_vertex(int i, int iel, int count) {
     }
   }
 /* find the possible three neighbors, neighbored by an edge only */
-#pragma cetus private(ii, itemp, jj, l, lc, nbe, ntemp, temp)
 #pragma loop name mortar_vertex #3
+#pragma cetus private(ii, itemp, jj, l, lc, nbe, ntemp, temp)
 #pragma cetus private(ii, itemp, jj, l, lc, nbe, ntemp, temp)
   for (l = 0; l < 3; l++) {
     /* find first existing neighbor of any of the faces in array face_a */
@@ -2416,7 +2448,8 @@ static void mor_ne(int mor_v[3], int nn, int edge, int face, int edge2,
     if (nn == 0) {
 #pragma loop name mor_ne #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
       for (i = 1; i < (5 - 1); i++) {
         mor_s_v[i - 1] = mor_v[i - 1];
       }
@@ -2425,7 +2458,8 @@ static void mor_ne(int mor_v[3], int nn, int edge, int face, int edge2,
       mor_s_v[0] = idmo[ntemp][face][0][1][5 - 1][0];
 #pragma loop name mor_ne #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
       for (i = 1; i < (5 - 1); i++) {
         mor_s_v[i] = mor_v[i - 1];
       }
@@ -2435,7 +2469,8 @@ static void mor_ne(int mor_v[3], int nn, int edge, int face, int edge2,
       if (nn == 0) {
 #pragma loop name mor_ne #2
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
         for (i = 1; i < (5 - 1); i++) {
           mor_s_v[i - 1] = mor_v[i - 1];
         }
@@ -2444,7 +2479,8 @@ static void mor_ne(int mor_v[3], int nn, int edge, int face, int edge2,
         mor_s_v[0] = idmo[ntemp][face][0][0][0][0];
 #pragma loop name mor_ne #3
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
         for (i = 1; i < (5 - 1); i++) {
           mor_s_v[i] = mor_v[i - 1];
         }
@@ -2454,7 +2490,8 @@ static void mor_ne(int mor_v[3], int nn, int edge, int face, int edge2,
         if (nn == 0) {
 #pragma loop name mor_ne #4
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
           for (i = 1; i < (5 - 1); i++) {
             mor_s_v[i - 1] = mor_v[i - 1];
           }
@@ -2463,7 +2500,8 @@ static void mor_ne(int mor_v[3], int nn, int edge, int face, int edge2,
           mor_s_v[0] = idmo[ntemp][face][0][0][0][0];
 #pragma loop name mor_ne #5
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
           for (i = 1; i < (5 - 1); i++) {
             mor_s_v[i] = mor_v[i - 1];
           }
@@ -2473,7 +2511,8 @@ static void mor_ne(int mor_v[3], int nn, int edge, int face, int edge2,
           if (nn == 0) {
 #pragma loop name mor_ne #6
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
             for (i = 1; i < (5 - 1); i++) {
               mor_s_v[i - 1] = mor_v[i - 1];
             }
@@ -2482,7 +2521,8 @@ static void mor_ne(int mor_v[3], int nn, int edge, int face, int edge2,
             mor_s_v[0] = idmo[ntemp][face][1][0][0][5 - 1];
 #pragma loop name mor_ne #7
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
             for (i = 1; i < (5 - 1); i++) {
               mor_s_v[i] = mor_v[i - 1];
             }

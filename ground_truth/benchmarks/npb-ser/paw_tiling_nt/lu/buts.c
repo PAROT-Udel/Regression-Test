@@ -105,96 +105,32 @@ void buts(int ldmx, int ldmy, int ldmz, int nx, int ny, int nz, int k,
   int i, j, m;
   double tmp, tmp1;
   double tmat[5][5];
-  int cetus_tile_buts_0_i = 808;
-  int i_cetus_cross;
-  int cetus_tile_buts_0_j = (((-2 + jend) + (-1 * jst)) /
-                             (4 * (((3229 + jend) + (-1 * jst)) / 3232)));
-  int j_cetus_cross;
-  if (((((1 * jst) * ist) * 4) <= 100000) ||
-      (3276800 >=
-       (((((5 + (30 * ldmy)) + (10 * (ldmx / 2))) + (10 * (ldmy / 2))) +
-         ((20 * (ldmx / 2)) * (ldmy / 2))) +
-        ((60 * ldmy) * (ldmx / 2))))) {
-#pragma cetus private(i, m)
 #pragma loop name buts #0
 #pragma cetus parallel
+#pragma cetus private(i, m)
 #pragma cetus private(i, j, m)
-#pragma loop name buts #0
 #pragma omp parallel for private(i, j, m)
-    for (j = (jend - 1); j >= jst; j--) {
+  for (j = (jend - 1); j >= jst; j--) {
 #pragma cetus private(i, m)
 #pragma loop name buts #0 #0
 #pragma cetus private(i, m)
 #pragma cetus private(i, m)
-#pragma loop name buts #0 #0
-#pragma loop name buts #1 #0 #0 #0
-      for (i = (iend - 1); i >= ist; i--) {
-#pragma cetus private(m)
+    for (i = (iend - 1); i >= ist; i--) {
 #pragma loop name buts #0 #0 #0
 #pragma cetus private(m)
 #pragma cetus private(m)
-#pragma loop name buts #0 #0 #0
-#pragma loop name buts #1 #0 #0 #0 #0
-        for (m = 0; m < 5; m++) {
-          tv[j][i][m] = (omega * (((((udz[j][i][0][m] * v[k + 1][j][i][0]) +
-                                     (udz[j][i][1][m] * v[k + 1][j][i][1])) +
-                                    (udz[j][i][2][m] * v[k + 1][j][i][2])) +
-                                   (udz[j][i][3][m] * v[k + 1][j][i][3])) +
-                                  (udz[j][i][4][m] * v[k + 1][j][i][4])));
-        }
-      }
-    }
-  } else {
-#pragma cetus parallel
-#pragma cetus private(i, i_cetus_cross, j, m)
-#pragma loop name buts #1
-#pragma c_paw_tiling buts #1 = i #808
-#pragma c_paw_tiling buts #1 = j #symbolic
-#pragma omp parallel for private(i, i_cetus_cross, j, m)
-    for (j_cetus_cross = (jend - 1); j_cetus_cross >= jst;
-         j_cetus_cross -= cetus_tile_buts_0_j) {
-#pragma cetus private(i, i_cetus_cross, j, m)
-#pragma loop name buts #1 #0
-      for (i_cetus_cross = (iend - 1); i_cetus_cross >= ist;
-           i_cetus_cross -= cetus_tile_buts_0_i) {
-#pragma cetus private(i, j, m)
-#pragma loop name buts #1 #0 #0
-        for (j = j_cetus_cross;
-             j >= MAX(jst, ((1 + (-1 * cetus_tile_buts_0_j)) + j_cetus_cross));
-             j--) {
-#pragma cetus private(i, m)
-#pragma loop name buts #0 #0
-#pragma cetus private(i, m)
-#pragma cetus private(i, m)
-#pragma loop name buts #0 #0
-#pragma loop name buts #1 #0 #0 #0
-          for (i = i_cetus_cross;
-               i >=
-               MAX(ist, ((1 + (-1 * cetus_tile_buts_0_i)) + i_cetus_cross));
-               i--) {
-#pragma cetus private(m)
-#pragma loop name buts #0 #0 #0
-#pragma cetus private(m)
-#pragma cetus private(m)
-#pragma loop name buts #0 #0 #0
-#pragma loop name buts #1 #0 #0 #0 #0
-            for (m = 0; m < 5; m++) {
-              tv[j][i][m] =
-                  (omega * (((((udz[j][i][0][m] * v[k + 1][j][i][0]) +
-                               (udz[j][i][1][m] * v[k + 1][j][i][1])) +
-                              (udz[j][i][2][m] * v[k + 1][j][i][2])) +
-                             (udz[j][i][3][m] * v[k + 1][j][i][3])) +
-                            (udz[j][i][4][m] * v[k + 1][j][i][4])));
-            }
-          }
-        }
+      for (m = 0; m < 5; m++) {
+        tv[j][i][m] = (omega * (((((udz[j][i][0][m] * v[k + 1][j][i][0]) +
+                                   (udz[j][i][1][m] * v[k + 1][j][i][1])) +
+                                  (udz[j][i][2][m] * v[k + 1][j][i][2])) +
+                                 (udz[j][i][3][m] * v[k + 1][j][i][3])) +
+                                (udz[j][i][4][m] * v[k + 1][j][i][4])));
       }
     }
   }
-#pragma cetus private(i, j, m, tmat, tmp, tmp1)
 #pragma loop name buts #1
 #pragma cetus private(i, j, m, tmat, tmp, tmp1)
-#pragma loop name buts #2
+#pragma cetus private(i, j, m, tmat, tmp, tmp1)
   for (j = (jend - 1); j >= jst; j--) {
 #pragma cetus firstprivate(tmat)
 #pragma cetus private(i, m, tmp, tmp1)
@@ -203,12 +139,14 @@ void buts(int ldmx, int ldmy, int ldmz, int nx, int ny, int nz, int k,
 #pragma cetus firstprivate(tmat)
 #pragma cetus private(i, m, tmp, tmp1)
 #pragma cetus lastprivate(tmat)
-#pragma loop name buts #2 #0
+#pragma cetus firstprivate(tmat)
+#pragma cetus private(i, m, tmp, tmp1)
+#pragma cetus lastprivate(tmat)
     for (i = (iend - 1); i >= ist; i--) {
 #pragma loop name buts #1 #0 #0
 #pragma cetus parallel
-#pragma loop name buts #2 #0 #0
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         tv[j][i][m] =
             (tv[j][i][m] +
@@ -228,8 +166,8 @@ void buts(int ldmx, int ldmy, int ldmz, int nx, int ny, int nz, int k,
 /* --------------------------------------------------------------------- */
 #pragma loop name buts #1 #0 #1
 #pragma cetus parallel
-#pragma loop name buts #2 #0 #1
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         tmat[m][0] = d[j][i][0][m];
         tmat[m][1] = d[j][i][1][m];

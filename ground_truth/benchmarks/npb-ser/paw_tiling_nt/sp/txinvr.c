@@ -89,24 +89,24 @@ void txinvr() {
   if (timeron) {
     timer_start(11);
   }
-#pragma cetus private(ac, ac2inv, i, j, r1, r2, r3, r4, r5, ru1, t1, t2, t3,   \
-                      uu, vv, ww)
 #pragma loop name txinvr #0
 #pragma cetus parallel
+#pragma cetus private(ac, ac2inv, i, j, r1, r2, r3, r4, r5, ru1, t1, t2, t3,   \
+                      uu, vv, ww)
 #pragma cetus private(ac, ac2inv, i, j, k, r1, r2, r3, r4, r5, ru1, t1, t2,    \
                       t3, uu, vv, ww)
 #pragma omp parallel for private(ac, ac2inv, i, j, k, r1, r2, r3, r4, r5, ru1, \
                                      t1, t2, t3, uu, vv, ww)
   for (k = 1; k <= nz2; k++) {
-#pragma cetus private(ac, ac2inv, i, j, r1, r2, r3, r4, r5, ru1, t1, t2, t3,   \
-                      uu, vv, ww)
 #pragma loop name txinvr #0 #0
 #pragma cetus private(ac, ac2inv, i, j, r1, r2, r3, r4, r5, ru1, t1, t2, t3,   \
                       uu, vv, ww)
+#pragma cetus private(ac, ac2inv, i, j, r1, r2, r3, r4, r5, ru1, t1, t2, t3,   \
+                      uu, vv, ww)
     for (j = 1; j <= ny2; j++) {
+#pragma loop name txinvr #0 #0 #0
 #pragma cetus private(ac, ac2inv, i, r1, r2, r3, r4, r5, ru1, t1, t2, t3, uu,  \
                       vv, ww)
-#pragma loop name txinvr #0 #0 #0
 #pragma cetus private(ac, ac2inv, i, r1, r2, r3, r4, r5, ru1, t1, t2, t3, uu,  \
                       vv, ww)
       for (i = 1; i <= nx2; i++) {

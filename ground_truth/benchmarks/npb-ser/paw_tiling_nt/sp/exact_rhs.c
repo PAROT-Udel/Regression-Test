@@ -91,22 +91,22 @@ void exact_rhs() {
 /* --------------------------------------------------------------------- */
 #pragma scop
 #pragma experimental section start
-#pragma cetus private(i, j, m)
 #pragma loop name exact_rhs #0
 #pragma cetus parallel
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, k, m)
 #pragma omp parallel for private(i, j, k, m)
   for (k = 0; k <= (grid_points[2] - 1); k++) {
-#pragma cetus private(i, j, m)
 #pragma loop name exact_rhs #0 #0
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
     for (j = 0; j <= (grid_points[1] - 1); j++) {
-#pragma cetus private(i, m)
 #pragma loop name exact_rhs #0 #0 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
       for (i = 0; i <= (grid_points[0] - 1); i++) {
-#pragma cetus private(m)
 #pragma loop name exact_rhs #0 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           forcing[k][j][i][m] = 0.0;
@@ -117,32 +117,34 @@ void exact_rhs() {
 /* --------------------------------------------------------------------- */
 /* xi-direction flux differences                       */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(dtpp, eta, i, im1, ip1, j, k, m, xi, zeta)
 #pragma loop name exact_rhs #1
+#pragma cetus private(dtpp, eta, i, im1, ip1, j, k, m, xi, zeta)
 #pragma cetus private(dtpp, eta, i, im1, ip1, j, k, m, xi, zeta)
   for (k = 1; k <= (grid_points[2] - 2); k++) {
     zeta = (((double)k) * dnzm1);
-#pragma cetus private(dtpp, eta, i, im1, ip1, j, m, xi)
 #pragma loop name exact_rhs #1 #0
+#pragma cetus private(dtpp, eta, i, im1, ip1, j, m, xi)
 #pragma cetus private(dtpp, eta, i, im1, ip1, j, m, xi)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
       eta = (((double)j) * dnym1);
-#pragma cetus private(dtpp, i, m, xi)
 #pragma loop name exact_rhs #1 #0 #0
+#pragma cetus private(dtpp, i, m, xi)
 #pragma cetus private(dtpp, i, m, xi)
       for (i = 0; i <= (grid_points[0] - 1); i++) {
         xi = (((double)i) * dnxm1);
         exact_solution(xi, eta, zeta, dtemp);
 #pragma loop name exact_rhs #1 #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
         for (m = 0; m < 5; m++) {
           ue[i][m] = dtemp[m];
         }
         dtpp = (1.0 / dtemp[0]);
 #pragma loop name exact_rhs #1 #0 #0 #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
         for (m = 1; m < 5; m++) {
           buf[i][m] = (dtpp * dtemp[m]);
         }
@@ -152,9 +154,9 @@ void exact_rhs() {
         q[i] = (0.5 * (((buf[i][1] * ue[i][1]) + (buf[i][2] * ue[i][2])) +
                        (buf[i][3] * ue[i][3])));
       }
-#pragma cetus private(im1, ip1)
 #pragma loop name exact_rhs #1 #0 #1
 #pragma cetus parallel
+#pragma cetus private(im1, ip1)
 #pragma cetus private(i, im1, ip1)
 #pragma omp parallel for private(i, im1, ip1)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
@@ -194,9 +196,9 @@ void exact_rhs() {
 /* --------------------------------------------------------------------- */
 /* Fourth-order dissipation                          */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i)
 #pragma loop name exact_rhs #1 #0 #2
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, m)
 #pragma omp parallel for private(i, m)
       for (m = 0; m < 5; m++) {
@@ -212,14 +214,14 @@ void exact_rhs() {
                        (4.0 * ue[i + 1][m])) +
                       ue[i + 2][m])));
       }
-#pragma cetus private(m)
 #pragma loop name exact_rhs #1 #0 #3
 #pragma cetus parallel
+#pragma cetus private(m)
 #pragma cetus private(i, m)
 #pragma omp parallel for private(i, m)
       for (i = 3; i <= (grid_points[0] - 4); i++) {
-#pragma cetus private(m)
 #pragma loop name exact_rhs #1 #0 #3 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           forcing[k][j][i][m] =
@@ -230,9 +232,9 @@ void exact_rhs() {
                  ue[i + 2][m])));
         }
       }
-#pragma cetus private(i)
 #pragma loop name exact_rhs #1 #0 #4
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, m)
 #pragma omp parallel for private(i, m)
       for (m = 0; m < 5; m++) {
@@ -252,32 +254,34 @@ void exact_rhs() {
 /* --------------------------------------------------------------------- */
 /* eta-direction flux differences              */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(dtpp, eta, i, j, jm1, jp1, k, m, xi, zeta)
 #pragma loop name exact_rhs #2
+#pragma cetus private(dtpp, eta, i, j, jm1, jp1, k, m, xi, zeta)
 #pragma cetus private(dtpp, eta, i, j, jm1, jp1, k, m, xi, zeta)
   for (k = 1; k <= (grid_points[2] - 2); k++) {
     zeta = (((double)k) * dnzm1);
-#pragma cetus private(dtpp, eta, i, j, jm1, jp1, m, xi)
 #pragma loop name exact_rhs #2 #0
+#pragma cetus private(dtpp, eta, i, j, jm1, jp1, m, xi)
 #pragma cetus private(dtpp, eta, i, j, jm1, jp1, m, xi)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
       xi = (((double)i) * dnxm1);
-#pragma cetus private(dtpp, eta, j, m)
 #pragma loop name exact_rhs #2 #0 #0
+#pragma cetus private(dtpp, eta, j, m)
 #pragma cetus private(dtpp, eta, j, m)
       for (j = 0; j <= (grid_points[1] - 1); j++) {
         eta = (((double)j) * dnym1);
         exact_solution(xi, eta, zeta, dtemp);
 #pragma loop name exact_rhs #2 #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
         for (m = 0; m < 5; m++) {
           ue[j][m] = dtemp[m];
         }
         dtpp = (1.0 / dtemp[0]);
 #pragma loop name exact_rhs #2 #0 #0 #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
         for (m = 1; m < 5; m++) {
           buf[j][m] = (dtpp * dtemp[m]);
         }
@@ -287,9 +291,9 @@ void exact_rhs() {
         q[j] = (0.5 * (((buf[j][1] * ue[j][1]) + (buf[j][2] * ue[j][2])) +
                        (buf[j][3] * ue[j][3])));
       }
-#pragma cetus private(jm1, jp1)
 #pragma loop name exact_rhs #2 #0 #1
 #pragma cetus parallel
+#pragma cetus private(jm1, jp1)
 #pragma cetus private(j, jm1, jp1)
 #pragma omp parallel for private(j, jm1, jp1)
       for (j = 1; j <= (grid_points[1] - 2); j++) {
@@ -329,9 +333,9 @@ void exact_rhs() {
 /* --------------------------------------------------------------------- */
 /* Fourth-order dissipation                       */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(j)
 #pragma loop name exact_rhs #2 #0 #2
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(j, m)
 #pragma omp parallel for private(j, m)
       for (m = 0; m < 5; m++) {
@@ -347,14 +351,14 @@ void exact_rhs() {
                        (4.0 * ue[j + 1][m])) +
                       ue[j + 2][m])));
       }
-#pragma cetus private(m)
 #pragma loop name exact_rhs #2 #0 #3
 #pragma cetus parallel
+#pragma cetus private(m)
 #pragma cetus private(j, m)
 #pragma omp parallel for private(j, m)
       for (j = 3; j <= (grid_points[1] - 4); j++) {
-#pragma cetus private(m)
 #pragma loop name exact_rhs #2 #0 #3 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           forcing[k][j][i][m] =
@@ -365,9 +369,9 @@ void exact_rhs() {
                  ue[j + 2][m])));
         }
       }
-#pragma cetus private(j)
 #pragma loop name exact_rhs #2 #0 #4
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(j, m)
 #pragma omp parallel for private(j, m)
       for (m = 0; m < 5; m++) {
@@ -387,32 +391,34 @@ void exact_rhs() {
 /* --------------------------------------------------------------------- */
 /* zeta-direction flux differences                       */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(dtpp, eta, i, j, k, km1, kp1, m, xi, zeta)
 #pragma loop name exact_rhs #3
+#pragma cetus private(dtpp, eta, i, j, k, km1, kp1, m, xi, zeta)
 #pragma cetus private(dtpp, eta, i, j, k, km1, kp1, m, xi, zeta)
   for (j = 1; j <= (grid_points[1] - 2); j++) {
     eta = (((double)j) * dnym1);
-#pragma cetus private(dtpp, i, k, km1, kp1, m, xi, zeta)
 #pragma loop name exact_rhs #3 #0
+#pragma cetus private(dtpp, i, k, km1, kp1, m, xi, zeta)
 #pragma cetus private(dtpp, i, k, km1, kp1, m, xi, zeta)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
       xi = (((double)i) * dnxm1);
-#pragma cetus private(dtpp, k, m, zeta)
 #pragma loop name exact_rhs #3 #0 #0
+#pragma cetus private(dtpp, k, m, zeta)
 #pragma cetus private(dtpp, k, m, zeta)
       for (k = 0; k <= (grid_points[2] - 1); k++) {
         zeta = (((double)k) * dnzm1);
         exact_solution(xi, eta, zeta, dtemp);
 #pragma loop name exact_rhs #3 #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
         for (m = 0; m < 5; m++) {
           ue[k][m] = dtemp[m];
         }
         dtpp = (1.0 / dtemp[0]);
 #pragma loop name exact_rhs #3 #0 #0 #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
         for (m = 1; m < 5; m++) {
           buf[k][m] = (dtpp * dtemp[m]);
         }
@@ -422,9 +428,9 @@ void exact_rhs() {
         q[k] = (0.5 * (((buf[k][1] * ue[k][1]) + (buf[k][2] * ue[k][2])) +
                        (buf[k][3] * ue[k][3])));
       }
-#pragma cetus private(km1, kp1)
 #pragma loop name exact_rhs #3 #0 #1
 #pragma cetus parallel
+#pragma cetus private(km1, kp1)
 #pragma cetus private(k, km1, kp1)
 #pragma omp parallel for private(k, km1, kp1)
       for (k = 1; k <= (grid_points[2] - 2); k++) {
@@ -464,9 +470,9 @@ void exact_rhs() {
 /* --------------------------------------------------------------------- */
 /* Fourth-order dissipation */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(k)
 #pragma loop name exact_rhs #3 #0 #2
 #pragma cetus parallel
+#pragma cetus private(k)
 #pragma cetus private(k, m)
 #pragma omp parallel for private(k, m)
       for (m = 0; m < 5; m++) {
@@ -482,14 +488,14 @@ void exact_rhs() {
                        (4.0 * ue[k + 1][m])) +
                       ue[k + 2][m])));
       }
-#pragma cetus private(m)
 #pragma loop name exact_rhs #3 #0 #3
 #pragma cetus parallel
+#pragma cetus private(m)
 #pragma cetus private(k, m)
 #pragma omp parallel for private(k, m)
       for (k = 3; k <= (grid_points[2] - 4); k++) {
-#pragma cetus private(m)
 #pragma loop name exact_rhs #3 #0 #3 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           forcing[k][j][i][m] =
@@ -500,9 +506,9 @@ void exact_rhs() {
                  ue[k + 2][m])));
         }
       }
-#pragma cetus private(k)
 #pragma loop name exact_rhs #3 #0 #4
 #pragma cetus parallel
+#pragma cetus private(k)
 #pragma cetus private(k, m)
 #pragma omp parallel for private(k, m)
       for (m = 0; m < 5; m++) {
@@ -522,22 +528,22 @@ void exact_rhs() {
 /* --------------------------------------------------------------------- */
 /* now change the sign of the forcing function,  */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, m)
 #pragma loop name exact_rhs #4
 #pragma cetus parallel
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, k, m)
 #pragma omp parallel for private(i, j, k, m)
   for (k = 1; k <= (grid_points[2] - 2); k++) {
-#pragma cetus private(i, j, m)
 #pragma loop name exact_rhs #4 #0
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, m)
 #pragma loop name exact_rhs #4 #0 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name exact_rhs #4 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           forcing[k][j][i][m] = ((-1.0) * forcing[k][j][i][m]);

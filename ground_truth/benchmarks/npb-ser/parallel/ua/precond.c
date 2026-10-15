@@ -115,6 +115,7 @@ void setuppc() {
         for (i = 0; i < 5; i++) {
 #pragma cetus private(q)
 #pragma loop name setuppc #1 #0 #0 #0 #0
+          /* #pragma cetus reduction(+: dpcelm[ie][k][j][i])  */
           for (q = 0; q < 5; q++) {
             dpcelm[ie][k][j][i] = (((dpcelm[ie][k][j][i] +
                                      (g1m1_s[isize][k][j][q] * dxtm1_2[q][i])) +
@@ -165,6 +166,7 @@ void setpcmo_pre() {
   for (i = 1; i < (5 - 1); i++) {
 #pragma cetus private(j)
 #pragma loop name setpcmo_pre #0 #0
+    /* #pragma cetus reduction(+: tmp[0][i])  */
     for (j = 0; j < 5; j++) {
       tmp[0][i] = (tmp[0][i] + (qbnew[0][j][i - 1] * tig[j]));
     }
@@ -180,6 +182,7 @@ void setpcmo_pre() {
     for (j = 1; j < (5 - 1); j++) {
 #pragma cetus private(i)
 #pragma loop name setpcmo_pre #1 #0 #0
+      /* #pragma cetus reduction(+: tcpre[j][col])  */
       for (i = 0; i < 5; i++) {
         tcpre[j][col] = (tcpre[j][col] + (qbnew[0][i][j - 1] * tmp[i][col]));
       }

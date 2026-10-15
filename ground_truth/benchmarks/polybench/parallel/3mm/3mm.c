@@ -164,6 +164,7 @@ kernel_3mm(int ni, int nj, int nk, int nl, int nm, double E[(16 + 0)][(18 + 0)],
       E[i][j] = 0.0;
 #pragma cetus private(k)
 #pragma loop name kernel_3mm #0 #0 #0
+      /* #pragma cetus reduction(+: E[i][j])  */
       for (k = 0; k < nk; ++k) {
         E[i][j] += (A[i][k] * B[k][j]);
       }
@@ -183,6 +184,7 @@ kernel_3mm(int ni, int nj, int nk, int nl, int nm, double E[(16 + 0)][(18 + 0)],
       F[i][j] = 0.0;
 #pragma cetus private(k)
 #pragma loop name kernel_3mm #1 #0 #0
+      /* #pragma cetus reduction(+: F[i][j])  */
       for (k = 0; k < nm; ++k) {
         F[i][j] += (C[i][k] * D[k][j]);
       }
@@ -202,6 +204,7 @@ kernel_3mm(int ni, int nj, int nk, int nl, int nm, double E[(16 + 0)][(18 + 0)],
       G[i][j] = 0.0;
 #pragma cetus private(k)
 #pragma loop name kernel_3mm #2 #0 #0
+      /* #pragma cetus reduction(+: G[i][j])  */
       for (k = 0; k < nj; ++k) {
         G[i][j] += (E[i][k] * F[k][j]);
       }

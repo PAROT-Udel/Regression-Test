@@ -163,10 +163,8 @@ static void kernel_lu(int n, double A[(40 + 0)][(40 + 0)]) {
 #pragma cetus private(i, j, k)
 #pragma loop name kernel_lu #0
   for (i = 0; i < n; i++) {
-#pragma cetus private(k)
+#pragma cetus private(j, k)
 #pragma loop name kernel_lu #0 #0
-#pragma cetus parallel
-#pragma omp parallel for private(k)
     for (j = 0; j < i; j++) {
 #pragma cetus private(k)
 #pragma loop name kernel_lu #0 #0 #0

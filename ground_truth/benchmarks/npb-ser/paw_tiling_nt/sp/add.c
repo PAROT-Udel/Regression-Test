@@ -88,22 +88,22 @@ void add() {
   if (timeron) {
     timer_start(15);
   }
-#pragma cetus private(i, j, m)
 #pragma loop name add #0
 #pragma cetus parallel
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, k, m)
 #pragma omp parallel for private(i, j, k, m)
   for (k = 1; k <= nz2; k++) {
-#pragma cetus private(i, j, m)
 #pragma loop name add #0 #0
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
     for (j = 1; j <= ny2; j++) {
-#pragma cetus private(i, m)
 #pragma loop name add #0 #0 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
       for (i = 1; i <= nx2; i++) {
-#pragma cetus private(m)
 #pragma loop name add #0 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           u[k][j][i][m] = (u[k][j][i][m] + rhs[k][j][i][m]);

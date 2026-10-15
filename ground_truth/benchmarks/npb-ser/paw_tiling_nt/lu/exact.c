@@ -96,7 +96,8 @@ void exact(int i, int j, int k, double u000ijk[]) {
   zeta = (((double)k) / (nz - 1));
 #pragma loop name exact #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
   for (m = 0; m < 5; m++) {
     u000ijk[m] =
         (((ce[m][0] +

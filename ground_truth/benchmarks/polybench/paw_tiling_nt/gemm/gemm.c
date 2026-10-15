@@ -76,40 +76,40 @@ static void init_array(int ni, int nj, int nk, double *alpha, double *beta,
   int i, j;
   (*alpha) = 1.5;
   (*beta) = 1.2;
-#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < ni; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < nj; j++) {
       C[i][j] = (((double)(((i * j) + 1) % ni)) / ni);
     }
   }
-#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < ni; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #1 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < nk; j++) {
       A[i][j] = (((double)((i * (j + 1)) % nk)) / nk);
     }
   }
-#pragma cetus private(j)
 #pragma loop name init_array #2
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < nk; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #2 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < nj; j++) {
       B[i][j] = (((double)((i * (j + 2)) % nj)) / nj);
@@ -125,12 +125,12 @@ static void print_array(int ni, int nj, double C[(20 + 0)][(25 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "C");
-#pragma cetus private(i, j)
 #pragma loop name print_array #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
   for (i = 0; i < ni; i++) {
-#pragma cetus private(j)
 #pragma loop name print_array #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < nj; j++) {
       if ((((i * ni) + j) % 20) == 0) {
@@ -160,24 +160,26 @@ static void kernel_gemm(int ni, int nj, int nk, double alpha, double beta,
 /* B is NKxNJ */
 /* C is NIxNJ */
 #pragma scop
-#pragma cetus private(j, k)
 #pragma loop name kernel_gemm #0
 #pragma cetus parallel
+#pragma cetus private(j, k)
 #pragma cetus private(i, j, k)
 #pragma omp parallel for private(i, j, k)
   for (i = 0; i < ni; i++) {
-#pragma cetus private(j)
 #pragma loop name kernel_gemm #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < nj; j++) {
       C[i][j] *= beta;
     }
-#pragma cetus private(j, k)
 #pragma loop name kernel_gemm #0 #1
+/* #pragma cetus reduction(+: C[i][j])  */
 #pragma cetus private(j, k)
+#pragma cetus private(j, k)
+#pragma cetus reduction(+ : C[i][j])
     for (k = 0; k < nk; k++) {
-#pragma cetus private(j)
 #pragma loop name kernel_gemm #0 #1 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
       for (j = 0; j < nj; j++) {
         C[i][j] += ((alpha * A[i][k]) * B[k][j]);

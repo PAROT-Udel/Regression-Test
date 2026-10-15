@@ -5,7 +5,6 @@
 #define FLOOR(x) ((int)((x) - 0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
-#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -95,21 +94,18 @@ void error_norm(double rms[5]) {
   for (m = 0; m < 5; m++) {
     rms[m] = 0.0;
   }
-#pragma cetus private(add, eta, i, j, k, m, xi, zeta)
 #pragma loop name error_norm #1
 /* #pragma cetus reduction(+: rms[m])  */
 #pragma cetus private(add, eta, i, j, k, m, xi, zeta)
 #pragma cetus reduction(+ : rms[m])
   for (k = 0; k <= (grid_points[2] - 1); k++) {
     zeta = (((double)k) * dnzm1);
-#pragma cetus private(add, eta, i, j, m, xi)
 #pragma loop name error_norm #1 #0
 /* #pragma cetus reduction(+: rms[m])  */
 #pragma cetus private(add, eta, i, j, m, xi)
 #pragma cetus reduction(+ : rms[m])
     for (j = 0; j <= (grid_points[1] - 1); j++) {
       eta = (((double)j) * dnym1);
-#pragma cetus private(add, i, m, xi)
 #pragma loop name error_norm #1 #0 #0
 /* #pragma cetus reduction(+: rms[m])  */
 #pragma cetus private(add, i, m, xi)
@@ -117,11 +113,10 @@ void error_norm(double rms[5]) {
       for (i = 0; i <= (grid_points[0] - 1); i++) {
         xi = (((double)i) * dnxm1);
         exact_solution(xi, eta, zeta, u_exact);
-#pragma cetus private(add)
 #pragma loop name error_norm #1 #0 #0 #0
 #pragma cetus parallel
-#pragma cetus private(add, m)
-#pragma omp parallel for private(add, m)
+#pragma cetus private(add)
+#pragma omp parallel for private(add)
         for (m = 0; m < 5; m++) {
           add = (u[k][j][i][m] - u_exact[m]);
           rms[m] = (rms[m] + (add * add));
@@ -129,13 +124,11 @@ void error_norm(double rms[5]) {
       }
     }
   }
-#pragma cetus private(d)
 #pragma loop name error_norm #2
 #pragma cetus parallel
-#pragma cetus private(d, m)
-#pragma omp parallel for private(d, m)
-  for (m = 0; m < 5; m++) {
 #pragma cetus private(d)
+#pragma omp parallel for private(d)
+  for (m = 0; m < 5; m++) {
 #pragma loop name error_norm #2 #0
 #pragma cetus private(d)
     for (d = 0; d < 3; d++) {
@@ -172,19 +165,16 @@ void rhs_norm(double rms[5]) {
 #pragma cetus
 #pragma omp for private(add, i, j, m)
     for (k = 1; k <= (grid_points[2] - 2); k++) {
-#pragma cetus private(add, i, j, m)
 #pragma loop name rhs_norm #1 #0
 /* #pragma cetus reduction(+: rms[m])  */
 #pragma cetus private(add, i, j, m)
 #pragma cetus reduction(+ : reduce[m])
       for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(add, i, m)
 #pragma loop name rhs_norm #1 #0 #0
 /* #pragma cetus reduction(+: rms[m])  */
 #pragma cetus private(add, i, m)
 #pragma cetus reduction(+ : reduce[m])
         for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(add, m)
 #pragma loop name rhs_norm #1 #0 #0 #0
 #pragma cetus private(add, m)
           for (m = 0; m < 5; m++) {

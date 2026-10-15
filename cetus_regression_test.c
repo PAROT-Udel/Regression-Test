@@ -431,7 +431,8 @@ void log_test_outcome(TestOutcome outcome, const char *category,
 int run_test_case(const char *category, const char *input_file_base_name,
                   TestMode mode, TransformationType transform_type,
                   ExpectedOutcome expected_outcome,
-                  const char *custom_cetus_flags)
+                  const char *custom_cetus_flags, const char *cetus_path,
+                  const char *clang_format_path)
 {
     (void)transform_type;
 
@@ -667,8 +668,15 @@ int run_test_case(const char *category, const char *input_file_base_name,
                 get_current_time());
 
     /* --- 3. Cetus execution --- */
+    if (cetus_path == NULL || cetus_path[0] == '\0') {
+        log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
+                         "CETUS is not set in benchmarks/config/paths.env "
+                         "or the environment.",
+                         NULL);
+        return 0;
+    }
     if (snprintf(cetus_command, sizeof(cetus_command),
-                 "%s -outdir=\"%s\" %s \"%s\"", CETUS_PATH, transformed_dir,
+                 "\"%s\" -outdir=\"%s\" %s \"%s\"", cetus_path, transformed_dir,
                  custom_cetus_flags,
                  preprocessed_input_file) >= (int)sizeof(cetus_command)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
@@ -853,8 +861,15 @@ int run_test_case(const char *category, const char *input_file_base_name,
     verbose_printf(
         "[%s] DEBUG: Formatting Cetus output file: %s with clang-format...\n",
         get_current_time(), cetus_actual_output_file);
+    if (clang_format_path == NULL || clang_format_path[0] == '\0') {
+        log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
+                         "CLANG_FORMAT is not set in "
+                         "benchmarks/config/paths.env or the environment.",
+                         NULL);
+        return 0;
+    }
     if (snprintf(format_cmd, sizeof(format_cmd),
-                 "%s -i -style=Google \"%s\"", CLANG_FORMAT_PATH,
+                 "\"%s\" -i -style=Google \"%s\"", clang_format_path,
                  cetus_actual_output_file) >= (int)sizeof(format_cmd)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
                          "clang-format command buffer overflow for output.",
@@ -876,7 +891,7 @@ int run_test_case(const char *category, const char *input_file_base_name,
         "[%s] DEBUG: Formatting Ground Truth file: %s with clang-format...\n",
         get_current_time(), ground_truth_file_path);
     if (snprintf(format_cmd, sizeof(format_cmd),
-                 "%s -i -style=Google \"%s\"", CLANG_FORMAT_PATH,
+                 "\"%s\" -i -style=Google \"%s\"", clang_format_path,
                  ground_truth_file_path) >= (int)sizeof(format_cmd)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
                          "clang-format command buffer overflow for GT.", NULL);
@@ -1332,18 +1347,53 @@ int main(int argc, char *argv[])
     /* ================================================================= */
     if (do_kernels) {
         KernelConfig kernels;
+        BenchmarkConfig tool_paths;
+        const char *cetus_path = NULL;
+        const char *clang_format = NULL;
         char kernel_error[2048];
+        int tools_ready = 0;
         TestMode current_mode =
             opts.generate ? GENERATE_MODE : COMPARE_MODE;
 
+        benchmark_config_init(&tool_paths);
         kernel_config_init(&kernels);
-        if (load_kernels(opts.config_dir, &kernels, kernel_error,
+        if (benchmark_config_load_paths(opts.config_dir, &tool_paths,
+                                        kernel_error,
+                                        sizeof(kernel_error)) != 0) {
+            fprintf(stderr,
+                    "[%s] ERROR: Failed to load tool paths from '%s': %s\n",
+                    get_current_time(), opts.config_dir, kernel_error);
+            overall_exit_status = 1;
+        } else {
+            cetus_path = benchmark_config_path(&tool_paths, "CETUS");
+            clang_format = benchmark_config_path(&tool_paths, "CLANG_FORMAT");
+            if (cetus_path == NULL || cetus_path[0] == '\0' ||
+                !runner_file_exists(cetus_path)) {
+                fprintf(stderr,
+                        "[%s] ERROR: CETUS is not set in %s/paths.env "
+                        "(or the environment) or does not exist.\n",
+                        get_current_time(), opts.config_dir);
+                overall_exit_status = 1;
+            } else if (clang_format == NULL || clang_format[0] == '\0') {
+                fprintf(stderr,
+                        "[%s] ERROR: CLANG_FORMAT is not set in %s/paths.env "
+                        "or the environment.\n",
+                        get_current_time(), opts.config_dir);
+                overall_exit_status = 1;
+            } else {
+                tools_ready = 1;
+                printf("[%s] Kernel tools from %s/paths.env: CETUS=%s\n",
+                       get_current_time(), opts.config_dir, cetus_path);
+            }
+        }
+        if (tools_ready &&
+            load_kernels(opts.config_dir, &kernels, kernel_error,
                          sizeof(kernel_error)) != 0) {
             fprintf(stderr,
                     "[%s] ERROR: Failed to load kernel config: %s\n",
                     get_current_time(), kernel_error);
             overall_exit_status = 1;
-        } else if (opts.test_identifier != NULL) {
+        } else if (tools_ready && opts.test_identifier != NULL) {
             KernelCase *found_test = NULL;
             size_t i;
             for (i = 0; i < kernels.case_count; ++i) {
@@ -1369,14 +1419,15 @@ int main(int argc, char *argv[])
                         found_test->transform, found_test->expected,
                         opts.custom_cetus_options != NULL
                             ? opts.custom_cetus_options
-                            : found_test->flags)) {
+                            : found_test->flags,
+                        cetus_path, clang_format)) {
                     passed_tests++;
                 } else {
                     overall_exit_status = 1;
                 }
                 total_tests++;
             }
-        } else {
+        } else if (tools_ready) {
             size_t *selected = calloc(kernels.case_count, sizeof(*selected));
             size_t selected_count = 0;
             size_t i;
@@ -1421,7 +1472,8 @@ int main(int argc, char *argv[])
                                 current_test->expected,
                                 opts.custom_cetus_options != NULL
                                     ? opts.custom_cetus_options
-                                    : current_test->flags)) {
+                                    : current_test->flags,
+                                cetus_path, clang_format)) {
                             passed_tests++;
                         } else {
                             overall_exit_status = 1;
@@ -1436,6 +1488,7 @@ int main(int argc, char *argv[])
         }
 
         kernel_config_free(&kernels);
+        benchmark_config_free(&tool_paths);
         printf("[%s] Kernel Summary: %d/%d tests passed.\n",
                get_current_time(), passed_tests, total_tests);
         if (log_all_fp)

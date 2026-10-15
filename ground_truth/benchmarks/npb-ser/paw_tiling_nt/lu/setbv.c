@@ -92,17 +92,18 @@ void setbv() {
 /* --------------------------------------------------------------------- */
 /* set the dependent variable values along the top and bottom faces */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, m)
 #pragma loop name setbv #0
+#pragma cetus private(i, j, m)
   for (j = 0; j < ny; j++) {
-#pragma cetus private(i, m)
 #pragma loop name setbv #0 #0
+#pragma cetus private(i, m)
     for (i = 0; i < nx; i++) {
       exact(i, j, 0, temp1);
       exact(i, j, nz - 1, temp2);
 #pragma loop name setbv #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         u[0][j][i][m] = temp1[m];
         u[nz - 1][j][i][m] = temp2[m];
@@ -112,17 +113,18 @@ void setbv() {
 /* --------------------------------------------------------------------- */
 /* set the dependent variable values along north and south faces */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, k, m)
 #pragma loop name setbv #1
+#pragma cetus private(i, k, m)
   for (k = 0; k < nz; k++) {
-#pragma cetus private(i, m)
 #pragma loop name setbv #1 #0
+#pragma cetus private(i, m)
     for (i = 0; i < nx; i++) {
       exact(i, 0, k, temp1);
       exact(i, ny - 1, k, temp2);
 #pragma loop name setbv #1 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         u[k][0][i][m] = temp1[m];
         u[k][ny - 1][i][m] = temp2[m];
@@ -132,17 +134,18 @@ void setbv() {
 /* --------------------------------------------------------------------- */
 /* set the dependent variable values along east and west faces */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(j, k, m)
 #pragma loop name setbv #2
+#pragma cetus private(j, k, m)
   for (k = 0; k < nz; k++) {
-#pragma cetus private(j, m)
 #pragma loop name setbv #2 #0
+#pragma cetus private(j, m)
     for (j = 0; j < ny; j++) {
       exact(0, j, k, temp1);
       exact(nx - 1, j, k, temp2);
 #pragma loop name setbv #2 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         u[k][j][0][m] = temp1[m];
         u[k][j][nx - 1][m] = temp2[m];

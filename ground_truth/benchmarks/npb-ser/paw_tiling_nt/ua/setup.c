@@ -88,15 +88,15 @@ void create_initial_grid() {
   ntot = (((nelt * 5) * 5) * 5);
   tree[0] = 1;
   mt_to_id[0] = 0;
-#pragma cetus private(i)
 #pragma loop name create_initial_grid #0
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 0; i < 7; i += 2) {
     xc[0][i] = 0.0;
     xc[0][i + 1] = 1.0;
   }
-#pragma cetus private(i)
 #pragma loop name create_initial_grid #1
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 0; i < 2; i++) {
     yc[0][i] = 0.0;
@@ -104,8 +104,8 @@ void create_initial_grid() {
     yc[0][4 + i] = 0.0;
     yc[0][6 + i] = 1.0;
   }
-#pragma cetus private(i)
 #pragma loop name create_initial_grid #2
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 0; i < 4; i++) {
     zc[0][i] = 0.0;
@@ -113,7 +113,8 @@ void create_initial_grid() {
   }
 #pragma loop name create_initial_grid #3
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < 6; i++) {
     cbc[0][i] = 0;
   }
@@ -148,18 +149,18 @@ void coef() {
   wxm1[2] = (32.0 / 45.0);
   wxm1[3] = wxm1[1];
   wxm1[4] = 0.1;
-#pragma cetus private(i, j)
 #pragma loop name coef #0
 #pragma cetus parallel
+#pragma cetus private(i, j)
 #pragma cetus private(i, j, k)
 #pragma omp parallel for private(i, j, k)
   for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j)
 #pragma loop name coef #0 #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
     for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name coef #0 #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < 5; i++) {
         w3m1[k][j][i] = ((wxm1[i] * wxm1[j]) * wxm1[k]);
@@ -182,25 +183,25 @@ void coef() {
   dxm1[2][2] = 0.0;
   dxm1[2][3] = (-dxm1[2][1]);
   dxm1[2][4] = (-dxm1[2][0]);
-#pragma cetus private(i, j)
 #pragma loop name coef #1
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
   for (j = 3; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name coef #1 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 5; i++) {
       dxm1[j][i] = (-dxm1[(5 - 1) - j][(5 - 1) - i]);
     }
   }
-#pragma cetus private(i)
 #pragma loop name coef #2
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name coef #2 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 5; i++) {
       dxtm1[j][i] = dxm1[i][j];
@@ -222,12 +223,12 @@ void coef() {
   qbnew[0][4][0] = 0.0;
   qbnew[0][4][1] = 0.0703125;
   qbnew[0][4][2] = 0.0;
-#pragma cetus private(i, j)
 #pragma loop name coef #3
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
   for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name coef #3 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 3; i++) {
       qbnew[1][j][i] = qbnew[0][(5 - 1) - j][2 - i];
@@ -259,40 +260,40 @@ void coef() {
   ixtmc1[4][2] = 1.0;
   ixtmc1[4][3] = 0.0;
   ixtmc1[4][4] = 0.0;
-#pragma cetus private(i)
 #pragma loop name coef #4
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name coef #4 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 5; i++) {
       ixmc1[j][i] = ixtmc1[i][j];
     }
   }
-#pragma cetus private(i)
 #pragma loop name coef #5
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name coef #5 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 5; i++) {
       ixtmc2[j][i] = ixtmc1[(5 - 1) - j][(5 - 1) - i];
     }
   }
-#pragma cetus private(i)
 #pragma loop name coef #6
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name coef #6 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 5; i++) {
       ixmc2[j][i] = ixtmc2[i][j];
@@ -306,7 +307,8 @@ void coef() {
   map2[4] = 0.06222966087199998;
 #pragma loop name coef #7
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < 5; i++) {
     map4[i] = map2[(5 - 1) - i];
   }
@@ -333,13 +335,14 @@ void geom1() {
   int isize, i, j, k, ntemp, iel;
 #pragma loop name geom1 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < 5; i++) {
     xfrac[i] = ((zgm1[i] * 0.5) + 0.5);
   }
-#pragma cetus private(dtemp, i, j, k, temp, temp1, temp2)
 #pragma loop name geom1 #1
 #pragma cetus parallel
+#pragma cetus private(dtemp, i, j, k, temp, temp1, temp2)
 #pragma cetus private(dtemp, i, isize, j, k, temp, temp1, temp2)
 #pragma omp parallel for private(dtemp, i, isize, j, k, temp, temp1, temp2)
   for (isize = 0; isize < 4; isize++) {
@@ -347,16 +350,16 @@ void geom1() {
     dtemp = (1.0 / temp);
     temp1 = ((temp * temp) * temp);
     temp2 = (temp * temp);
-#pragma cetus private(i, j, k)
 #pragma loop name geom1 #1 #0
 #pragma cetus private(i, j, k)
+#pragma cetus private(i, j, k)
     for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j)
 #pragma loop name geom1 #1 #0 #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name geom1 #1 #0 #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
         for (i = 0; i < 5; i++) {
           xrm1_s[isize][k][j][i] = dtemp;
@@ -371,19 +374,19 @@ void geom1() {
       }
     }
   }
-#pragma cetus private(i, j, ntemp)
 #pragma loop name geom1 #2
 #pragma cetus parallel
+#pragma cetus private(i, j, ntemp)
 #pragma cetus private(i, iel, j, ntemp)
 #pragma omp parallel for private(i, iel, j, ntemp)
   for (iel = 0; iel < 250; iel++) {
     ntemp = (((5 * 5) * 5) * iel);
-#pragma cetus private(i, j)
 #pragma loop name geom1 #2 #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
     for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name geom1 #2 #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < 5; i++) {
         idel[iel][0][j][i] = ((((ntemp + (i * 5)) + ((j * 5) * 5)) + 5) - 1);
@@ -405,19 +408,21 @@ void geom1() {
 void setdef() {
   int i, j, ip;
   r_init(wdtdr[0], 5 * 5, 0.0);
-#pragma cetus private(ip, j)
 #pragma loop name setdef #0
 #pragma cetus parallel
+#pragma cetus private(ip, j)
 #pragma cetus private(i, ip, j)
 #pragma omp parallel for private(i, ip, j)
   for (i = 0; i < 5; i++) {
-#pragma cetus private(ip, j)
 #pragma loop name setdef #0 #0
 #pragma cetus private(ip, j)
+#pragma cetus private(ip, j)
     for (j = 0; j < 5; j++) {
-#pragma cetus private(ip)
 #pragma loop name setdef #0 #0 #0
+/* #pragma cetus reduction(+: wdtdr[j][i])  */
 #pragma cetus private(ip)
+#pragma cetus private(ip)
+#pragma cetus reduction(+ : wdtdr[j][i])
       for (ip = 0; ip < 5; ip++) {
         wdtdr[j][i] = (wdtdr[j][i] + ((wxm1[ip] * dxm1[i][ip]) * dxm1[j][ip]));
       }
@@ -438,19 +443,20 @@ void prepwork() {
 /* calculate the refinement levels of each element */
 #pragma loop name prepwork #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(iel)
+#pragma omp parallel for private(iel)
   for (iel = 0; iel < nelt; iel++) {
     size_e[iel] =
         (((int)(((-log(xc[iel][1] - xc[iel][0])) * rdlog2) + 1.0E-8)) - 1);
   }
 /* mask matrix for element boundary */
-#pragma cetus private(iel, iface)
 #pragma loop name prepwork #1
+#pragma cetus private(iel, iface)
 #pragma cetus private(iel, iface)
   for (iel = 0; iel < nelt; iel++) {
     r_init(tmult[iel][0][0], (5 * 5) * 5, 1.0);
-#pragma cetus private(iface)
 #pragma loop name prepwork #1 #0
+#pragma cetus private(iface)
 #pragma cetus private(iface)
     for (iface = 0; iface < 6; iface++) {
       facev(tmult[iel], iface, 0.0);
@@ -458,30 +464,30 @@ void prepwork() {
   }
   /* masks for domain boundary at mortar  */
   r_init(tmmor, nmor, 1.0);
-#pragma cetus private(cb, i, iel, iface, j)
 #pragma loop name prepwork #2
 #pragma cetus private(cb, i, iel, iface, j)
+#pragma cetus private(cb, i, iel, iface, j)
   for (iel = 0; iel < nelt; iel++) {
-#pragma cetus private(cb, i, iface, j)
 #pragma loop name prepwork #2 #0
+#pragma cetus private(cb, i, iface, j)
 #pragma cetus private(cb, i, iface, j)
     for (iface = 0; iface < 6; iface++) {
       cb = cbc[iel][iface];
       if (cb == 0) {
-#pragma cetus private(i, j)
 #pragma loop name prepwork #2 #0 #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
         for (j = 1; j < (5 - 1); j++) {
-#pragma cetus private(i)
 #pragma loop name prepwork #2 #0 #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
           for (i = 1; i < (5 - 1); i++) {
             tmmor[idmo[iel][iface][0][0][j][i]] = 0.0;
           }
         }
         j = 0;
-#pragma cetus private(i)
 #pragma loop name prepwork #2 #0 #1
+#pragma cetus private(i)
 #pragma cetus private(i)
         for (i = 0; i < (5 - 1); i++) {
           tmmor[idmo[iel][iface][0][0][j][i]] = 0.0;
@@ -490,8 +496,8 @@ void prepwork() {
           tmmor[idmo[iel][iface][1][0][0][5 - 1]] = 0.0;
         } else {
           tmmor[idmo[iel][iface][0][0][0][5 - 1]] = 0.0;
-#pragma cetus private(i)
 #pragma loop name prepwork #2 #0 #2
+#pragma cetus private(i)
 #pragma cetus private(i)
           for (i = 0; i < 5; i++) {
             tmmor[idmo[iel][iface][1][0][j][i]] = 0.0;
@@ -499,22 +505,22 @@ void prepwork() {
         }
         i = (5 - 1);
         if (idmo[iel][iface][1][0][1][5 - 1] == (-1)) {
-#pragma cetus private(j)
 #pragma loop name prepwork #2 #0 #3
+#pragma cetus private(j)
 #pragma cetus private(j)
           for (j = 1; j < (5 - 1); j++) {
             tmmor[idmo[iel][iface][0][0][j][i]] = 0.0;
           }
           tmmor[idmo[iel][iface][1][1][5 - 1][5 - 1]] = 0.0;
         } else {
-#pragma cetus private(j)
 #pragma loop name prepwork #2 #0 #4
+#pragma cetus private(j)
 #pragma cetus private(j)
           for (j = 1; j < 5; j++) {
             tmmor[idmo[iel][iface][1][0][j][i]] = 0.0;
           }
-#pragma cetus private(j)
 #pragma loop name prepwork #2 #0 #5
+#pragma cetus private(j)
 #pragma cetus private(j)
           for (j = 0; j < 5; j++) {
             tmmor[idmo[iel][iface][1][1][j][i]] = 0.0;
@@ -523,37 +529,37 @@ void prepwork() {
         j = (5 - 1);
         tmmor[idmo[iel][iface][0][1][5 - 1][0]] = 0.0;
         if (idmo[iel][iface][0][1][5 - 1][1] == (-1)) {
-#pragma cetus private(i)
 #pragma loop name prepwork #2 #0 #6
+#pragma cetus private(i)
 #pragma cetus private(i)
           for (i = 1; i < (5 - 1); i++) {
             tmmor[idmo[iel][iface][0][0][j][i]] = 0.0;
           }
         } else {
-#pragma cetus private(i)
 #pragma loop name prepwork #2 #0 #7
+#pragma cetus private(i)
 #pragma cetus private(i)
           for (i = 1; i < 5; i++) {
             tmmor[idmo[iel][iface][0][1][j][i]] = 0.0;
           }
-#pragma cetus private(i)
 #pragma loop name prepwork #2 #0 #8
+#pragma cetus private(i)
 #pragma cetus private(i)
           for (i = 0; i < (5 - 1); i++) {
             tmmor[idmo[iel][iface][1][1][j][i]] = 0.0;
           }
         }
         i = 0;
-#pragma cetus private(j)
 #pragma loop name prepwork #2 #0 #9
+#pragma cetus private(j)
 #pragma cetus private(j)
         for (j = 1; j < (5 - 1); j++) {
           tmmor[idmo[iel][iface][0][0][j][i]] = 0.0;
         }
         if (idmo[iel][iface][0][0][5 - 1][0] != (-1)) {
           tmmor[idmo[iel][iface][0][0][5 - 1][i]] = 0.0;
-#pragma cetus private(j)
 #pragma loop name prepwork #2 #0 #10
+#pragma cetus private(j)
 #pragma cetus private(j)
           for (j = 0; j < (5 - 1); j++) {
             tmmor[idmo[iel][iface][0][1][j][i]] = 0.0;

@@ -79,9 +79,9 @@ static void init_array(int n, double *alpha, double *beta,
   double fn = (double)n;
   (*alpha) = 1.5;
   (*beta) = 1.2;
-#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
@@ -93,8 +93,8 @@ static void init_array(int n, double *alpha, double *beta,
     z[i] = (((i + 1) / fn) / 9.0);
     x[i] = 0.0;
     w[i] = 0.0;
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < n; j++) {
       A[i][j] = (((double)((i * j) % n)) / n);
@@ -110,8 +110,8 @@ static void print_array(int n, double w[(40 + 0)]) {
   int i;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "w");
-#pragma cetus private(i)
 #pragma loop name print_array #0
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 0; i < n; i++) {
     if ((i % 20) == 0) {
@@ -135,28 +135,28 @@ static void kernel_gemver(int n, double alpha, double beta,
                           double z[(40 + 0)]) {
   int i, j;
 #pragma scop
-#pragma cetus private(j)
 #pragma loop name kernel_gemver #0
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name kernel_gemver #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < n; j++) {
       A[i][j] = ((A[i][j] + (u1[i] * v1[j])) + (u2[i] * v2[j]));
     }
   }
-#pragma cetus private(j)
 #pragma loop name kernel_gemver #1
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name kernel_gemver #1 #0
 /* #pragma cetus reduction(+: x[i])  */
+#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma cetus reduction(+ : x[i])
     for (j = 0; j < n; j++) {
@@ -165,19 +165,20 @@ static void kernel_gemver(int n, double alpha, double beta,
   }
 #pragma loop name kernel_gemver #2
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     x[i] = (x[i] + z[i]);
   }
-#pragma cetus private(j)
 #pragma loop name kernel_gemver #3
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name kernel_gemver #3 #0
 /* #pragma cetus reduction(+: w[i])  */
+#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma cetus reduction(+ : w[i])
     for (j = 0; j < n; j++) {

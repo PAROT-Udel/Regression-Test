@@ -320,45 +320,45 @@ void init_array(int ni, int nj, int nk, double A[ni][nk], double B[nk][nj],
                 double C[ni][nj]) {
   int i;
   int j;
-#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma loop name init_array #0
 #pragma omp parallel for private(i, j)
   for (i = 0; i < ni; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma loop name init_array #0 #0
     for (j = 0; j < nk; j++) {
       A[i][j] = (((double)(((i * j) + 1) % ni)) / ni);
     }
   }
-#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma loop name init_array #1
 #pragma omp parallel for private(i, j)
   for (i = 0; i < nk; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #1 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma loop name init_array #1 #0
     for (j = 0; j < nj; j++) {
       B[i][j] = (((double)(((i * j) + 2) % nj)) / nj);
     }
   }
-#pragma cetus private(j)
 #pragma loop name init_array #2
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma loop name init_array #2
 #pragma omp parallel for private(i, j)
   for (i = 0; i < ni; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #2 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma loop name init_array #2 #0
     for (j = 0; j < nj; j++) {
@@ -381,6 +381,7 @@ void matrix_multiply(double A[10000][10000], double B[10000][10000],
   int i_cetus_cross;
 #pragma cetus parallel
 #pragma cetus private(i, j, j_cetus_cross, k, k_cetus_cross)
+#pragma cetus
 #pragma loop name matrix_multiply #0
 #pragma c_paw_tiling matrix_multiply #0 = j #8
 #pragma c_paw_tiling matrix_multiply #0 = k #8
@@ -389,10 +390,12 @@ void matrix_multiply(double A[10000][10000], double B[10000][10000],
   for (i_cetus_cross = 0; i_cetus_cross < 10000;
        i_cetus_cross += cetus_tile_matrix_multiply_0_i) {
 #pragma cetus private(i, j, j_cetus_cross, k, k_cetus_cross)
+#pragma cetus reduction(+ : C[i][j])
 #pragma loop name matrix_multiply #0 #0
     for (k_cetus_cross = 0; k_cetus_cross < 10000;
          k_cetus_cross += cetus_tile_matrix_multiply_0_k) {
 #pragma cetus private(i, j, j_cetus_cross, k)
+#pragma cetus reduction(+ : C[i][j])
 #pragma loop name matrix_multiply #0 #0 #0
       for (j_cetus_cross = 0; j_cetus_cross < 10000;
            j_cetus_cross += cetus_tile_matrix_multiply_0_j) {
@@ -401,15 +404,17 @@ void matrix_multiply(double A[10000][10000], double B[10000][10000],
         for (i = i_cetus_cross;
              i < MIN(10000, (cetus_tile_matrix_multiply_0_i + i_cetus_cross));
              i++) {
-#pragma cetus private(j, k)
 #pragma loop name matrix_multiply #0 #0
 #pragma cetus private(j, k)
+#pragma cetus private(j, k)
+#pragma cetus reduction(+ : C[i][j])
 #pragma loop name matrix_multiply #0 #0 #0 #0 #0
           for (k = k_cetus_cross;
                k < MIN(10000, (cetus_tile_matrix_multiply_0_k + k_cetus_cross));
                k++) {
-#pragma cetus private(k)
 #pragma loop name matrix_multiply #0 #0 #0
+/* #pragma cetus reduction(+: C[i][j])  */
+#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma loop name matrix_multiply #0 #0 #0 #0 #0 #0
             for (j = j_cetus_cross;
@@ -429,13 +434,13 @@ void matrix_multiply(double A[10000][10000], double B[10000][10000],
 void print_array(int ni, int nj, double C[ni][nj]) {
   int i;
   int j;
-#pragma cetus private(i, j)
 #pragma loop name print_array #0
+#pragma cetus private(i, j)
 #pragma cetus private(i, j)
 #pragma loop name print_array #0
   for (i = 0; i < ni; i++) {
-#pragma cetus private(j)
 #pragma loop name print_array #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma loop name print_array #0 #0
     for (j = 0; j < nj; j++) {

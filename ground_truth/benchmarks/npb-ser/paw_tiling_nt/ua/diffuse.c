@@ -104,27 +104,23 @@ void diffusion(logical ifmortar) {
   /* pdiff and pmorx are combined to generate q0 in the CG algorithm. */
   /* rho1 is  (qm,rm) in the CG algorithm. */
   rho1 = 0.0;
-#pragma cetus private(i, j, k)
 #pragma loop name diffusion #0
 #pragma cetus reduction(+ : rho1)
 #pragma cetus parallel
-#pragma cetus private(i, ie, j, k)
-#pragma cetus reduction(+ : rho1)
-#pragma omp parallel for private(i, ie, j, k) reduction(+ : rho1)
-  for (ie = 0; ie < nelt; ie++) {
 #pragma cetus private(i, j, k)
+#pragma cetus reduction(+ : rho1)
+#pragma omp parallel for private(i, j, k) reduction(+ : rho1)
+  for (ie = 0; ie < nelt; ie++) {
 #pragma loop name diffusion #0 #0
 /* #pragma cetus reduction(+: rho1)  */
 #pragma cetus private(i, j, k)
 #pragma cetus reduction(+ : rho1)
     for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j)
 #pragma loop name diffusion #0 #0 #0
 /* #pragma cetus reduction(+: rho1)  */
 #pragma cetus private(i, j)
 #pragma cetus reduction(+ : rho1)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name diffusion #0 #0 #0 #0
 /* #pragma cetus reduction(+: rho1)  */
 #pragma cetus private(i)
@@ -149,7 +145,6 @@ void diffusion(logical ifmortar) {
 /* ................................................................. */
 /* commence conjugate gradient iteration */
 /* ................................................................. */
-#pragma cetus private(beta, cona, i, ie, im, iside, iter, j, k, rho2, rho_aux)
 #pragma loop name diffusion #2
 #pragma cetus private(beta, cona, i, ie, im, iside, iter, j, k, rho2, rho_aux)
   for (iter = 1; iter <= nmxh; iter++) {
@@ -157,27 +152,23 @@ void diffusion(logical ifmortar) {
       rho_aux = 0.0;
 /* pdiffp and ppmor are combined to generate q_m+1 in the specification */
 /* rho_aux is (q_m+1,r_m+1) */
-#pragma cetus private(i, j, k)
 #pragma loop name diffusion #2 #0
 #pragma cetus reduction(+ : rho_aux)
 #pragma cetus parallel
-#pragma cetus private(i, ie, j, k)
-#pragma cetus reduction(+ : rho_aux)
-#pragma omp parallel for private(i, ie, j, k) reduction(+ : rho_aux)
-      for (ie = 0; ie < nelt; ie++) {
 #pragma cetus private(i, j, k)
+#pragma cetus reduction(+ : rho_aux)
+#pragma omp parallel for private(i, j, k) reduction(+ : rho_aux)
+      for (ie = 0; ie < nelt; ie++) {
 #pragma loop name diffusion #2 #0 #0
 /* #pragma cetus reduction(+: rho_aux)  */
 #pragma cetus private(i, j, k)
 #pragma cetus reduction(+ : rho_aux)
         for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j)
 #pragma loop name diffusion #2 #0 #0 #0
 /* #pragma cetus reduction(+: rho_aux)  */
 #pragma cetus private(i, j)
 #pragma cetus reduction(+ : rho_aux)
           for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name diffusion #2 #0 #0 #0 #0
 /* #pragma cetus reduction(+: rho_aux)  */
 #pragma cetus private(i)
@@ -216,7 +207,6 @@ void diffusion(logical ifmortar) {
       timer_stop(6);
     }
 /* compute pdiffp which is (A theta pm) in the specification */
-#pragma cetus private(ie)
 #pragma loop name diffusion #2 #2
 #pragma cetus private(ie)
     for (ie = 0; ie < nelt; ie++) {
@@ -232,11 +222,9 @@ void diffusion(logical ifmortar) {
       timer_stop(7);
     }
 /* apply boundary condition */
-#pragma cetus private(ie, iside)
 #pragma loop name diffusion #2 #3
 #pragma cetus private(ie, iside)
     for (ie = 0; ie < nelt; ie++) {
-#pragma cetus private(iside)
 #pragma loop name diffusion #2 #3 #0
 #pragma cetus private(iside)
       for (iside = 0; iside < 6; iside++) {
@@ -247,27 +235,23 @@ void diffusion(logical ifmortar) {
     }
     /* compute cona which is (pm,theta T A theta pm) */
     cona = 0.0;
-#pragma cetus private(i, j, k)
 #pragma loop name diffusion #2 #4
 #pragma cetus reduction(+ : cona)
 #pragma cetus parallel
-#pragma cetus private(i, ie, j, k)
-#pragma cetus reduction(+ : cona)
-#pragma omp parallel for private(i, ie, j, k) reduction(+ : cona)
-    for (ie = 0; ie < nelt; ie++) {
 #pragma cetus private(i, j, k)
+#pragma cetus reduction(+ : cona)
+#pragma omp parallel for private(i, j, k) reduction(+ : cona)
+    for (ie = 0; ie < nelt; ie++) {
 #pragma loop name diffusion #2 #4 #0
 /* #pragma cetus reduction(+: cona)  */
 #pragma cetus private(i, j, k)
 #pragma cetus reduction(+ : cona)
       for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j)
 #pragma loop name diffusion #2 #4 #0 #0
 /* #pragma cetus reduction(+: cona)  */
 #pragma cetus private(i, j)
 #pragma cetus reduction(+ : cona)
         for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name diffusion #2 #4 #0 #0 #0
 /* #pragma cetus reduction(+: cona)  */
 #pragma cetus private(i)
@@ -318,19 +302,19 @@ void laplacian(double r[5][5][5], double u[5][5][5], int sizei) {
   double tm1[5][5][5], tm2[5][5][5];
   rdtime = (1.0 / dtime);
   r_init((double *)tm1, (5 * 5) * 5, 0.0);
-#pragma cetus private(i, j)
 #pragma loop name laplacian #0
-#pragma cetus private(i, iz, j, k)
-  for (k = 0; k < 5; k++) {
+#pragma cetus parallel
 #pragma cetus private(i, j, k)
+#pragma omp parallel for private(i, j, k)
+  for (iz = 0; iz < 5; iz++) {
 #pragma loop name laplacian #0 #0
-#pragma cetus private(i, iz, j)
-    for (iz = 0; iz < 5; iz++) {
-#pragma cetus private(i, j)
+/* #pragma cetus reduction(+: tm1[iz][j][i])  */
+#pragma cetus private(i, j, k)
+#pragma cetus reduction(+ : tm1[iz][j][i])
+    for (k = 0; k < 5; k++) {
 #pragma loop name laplacian #0 #0 #0
 #pragma cetus private(i, j)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name laplacian #0 #0 #0 #0
 #pragma cetus private(i)
         for (i = 0; i < 5; i++) {
@@ -340,19 +324,19 @@ void laplacian(double r[5][5][5], double u[5][5][5], int sizei) {
     }
   }
   r_init((double *)tm2, (5 * 5) * 5, 0.0);
-#pragma cetus private(i, j)
 #pragma loop name laplacian #1
-#pragma cetus private(i, iz, j, k)
-  for (k = 0; k < 5; k++) {
+#pragma cetus parallel
 #pragma cetus private(i, j, k)
+#pragma omp parallel for private(i, j, k)
+  for (iz = 0; iz < 5; iz++) {
 #pragma loop name laplacian #1 #0
-#pragma cetus private(i, iz, j)
-    for (iz = 0; iz < 5; iz++) {
-#pragma cetus private(i, j)
+/* #pragma cetus reduction(+: tm2[iz][j][i])  */
+#pragma cetus private(i, j, k)
+#pragma cetus reduction(+ : tm2[iz][j][i])
+    for (k = 0; k < 5; k++) {
 #pragma loop name laplacian #1 #0 #0
 #pragma cetus private(i, j)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name laplacian #1 #0 #0 #0
 #pragma cetus private(i)
         for (i = 0; i < 5; i++) {
@@ -362,25 +346,56 @@ void laplacian(double r[5][5][5], double u[5][5][5], int sizei) {
     }
   }
   r_init((double *)r, (5 * 5) * 5, 0.0);
-#pragma cetus private(i, iz, j, k)
-#pragma loop name laplacian #2
-#pragma cetus private(i, iz, j, k)
-  for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j)
-#pragma loop name laplacian #2 #0
 #pragma cetus parallel
 #pragma cetus private(i, iz, j)
-#pragma omp parallel for private(i, iz, j)
-    for (iz = 0; iz < 5; iz++) {
-#pragma cetus private(i, j)
+#pragma omp parallel private(i, iz, j)
+  {
+    double(*reduce)[5][5] = (double(*)[5][5])malloc(125 * sizeof(double));
+    int reduce_span_0;
+    int reduce_span_1;
+    int reduce_span_2;
+#pragma cetus private(reduce_span_0, reduce_span_1, reduce_span_2)
+    for (reduce_span_0 = 0; reduce_span_0 < 5; reduce_span_0++) {
+#pragma cetus private(reduce_span_1, reduce_span_2)
+      for (reduce_span_1 = 0; reduce_span_1 < 5; reduce_span_1++) {
+#pragma cetus private(reduce_span_2)
+        for (reduce_span_2 = 0; reduce_span_2 < 5; reduce_span_2++) {
+          reduce[reduce_span_0][reduce_span_1][reduce_span_2] = 0;
+        }
+      }
+    }
+#pragma loop name laplacian #2
+#pragma cetus for
+#pragma cetus private(i, iz, j)
+#pragma cetus
+#pragma omp for private(i, iz, j)
+    for (k = 0; k < 5; k++) {
+#pragma loop name laplacian #2 #0
+#pragma cetus private(i, iz, j)
+      for (iz = 0; iz < 5; iz++) {
 #pragma loop name laplacian #2 #0 #0
 #pragma cetus private(i, j)
-      for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
+        for (j = 0; j < 5; j++) {
 #pragma loop name laplacian #2 #0 #0 #0
 #pragma cetus private(i)
-        for (i = 0; i < 5; i++) {
-          r[iz][j][i] = (r[iz][j][i] + (u[k][j][i] * wdtdr[iz][k]));
+          for (i = 0; i < 5; i++) {
+            reduce[iz][j][i] = (reduce[iz][j][i] + (u[k][j][i] * wdtdr[iz][k]));
+          }
+        }
+      }
+    }
+#pragma cetus critical
+#pragma omp critical
+    {
+#pragma cetus private(reduce_span_0, reduce_span_1, reduce_span_2)
+      for (reduce_span_0 = 0; reduce_span_0 < 5; reduce_span_0++) {
+#pragma cetus private(reduce_span_1, reduce_span_2)
+        for (reduce_span_1 = 0; reduce_span_1 < 5; reduce_span_1++) {
+#pragma cetus private(reduce_span_2)
+          for (reduce_span_2 = 0; reduce_span_2 < 5; reduce_span_2++) {
+            r[reduce_span_0][reduce_span_1][reduce_span_2] +=
+                reduce[reduce_span_0][reduce_span_1][reduce_span_2];
+          }
         }
       }
     }

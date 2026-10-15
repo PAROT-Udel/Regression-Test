@@ -95,16 +95,16 @@ void setiv() {
   double pxi, peta, pzeta;
   double ue_1jk[5], ue_nx0jk[5], ue_i1k[5];
   double ue_iny0k[5], ue_ij1[5], ue_ijnz[5];
-#pragma cetus private(eta, i, j, k, m, peta, pxi, pzeta, xi, zeta)
 #pragma loop name setiv #0
+#pragma cetus private(eta, i, j, k, m, peta, pxi, pzeta, xi, zeta)
   for (k = 1; k < (nz - 1); k++) {
     zeta = (((double)k) / (nz - 1));
-#pragma cetus private(eta, i, j, m, peta, pxi, pzeta, xi)
 #pragma loop name setiv #0 #0
+#pragma cetus private(eta, i, j, m, peta, pxi, pzeta, xi)
     for (j = 1; j < (ny - 1); j++) {
       eta = (((double)j) / (ny0 - 1));
-#pragma cetus private(i, m, peta, pxi, pzeta, xi)
 #pragma loop name setiv #0 #0 #0
+#pragma cetus private(i, m, peta, pxi, pzeta, xi)
       for (i = 1; i < (nx - 1); i++) {
         xi = (((double)i) / (nx0 - 1));
         exact(0, j, k, ue_1jk);
@@ -113,10 +113,10 @@ void setiv() {
         exact(i, ny0 - 1, k, ue_iny0k);
         exact(i, j, 0, ue_ij1);
         exact(i, j, nz - 1, ue_ijnz);
-#pragma cetus private(peta, pxi, pzeta)
 #pragma loop name setiv #0 #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(peta, pxi, pzeta)
+#pragma cetus private(m, peta, pxi, pzeta)
+#pragma omp parallel for private(m, peta, pxi, pzeta)
         for (m = 0; m < 5; m++) {
           pxi = (((1.0 - xi) * ue_1jk[m]) + (xi * ue_nx0jk[m]));
           peta = (((1.0 - eta) * ue_i1k[m]) + (eta * ue_iny0k[m]));

@@ -108,10 +108,8 @@ static void kernel_trisolv(int n, double L[(40 + 0)][(40 + 0)],
                            double x[(40 + 0)], double b[(40 + 0)]) {
   int i, j;
 #pragma scop
-#pragma cetus private(j)
+#pragma cetus private(i, j)
 #pragma loop name kernel_trisolv #0
-#pragma cetus parallel
-#pragma omp parallel for private(j)
   for (i = 0; i < n; i++) {
     x[i] = b[i];
 #pragma cetus private(j)

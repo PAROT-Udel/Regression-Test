@@ -151,6 +151,7 @@ static void kernel_covariance(int m, int n, double float_n,
       cov[i][j] = 0.0;
 #pragma cetus private(k)
 #pragma loop name kernel_covariance #2 #0 #0
+      /* #pragma cetus reduction(+: cov[i][j])  */
       for (k = 0; k < n; k++) {
         cov[i][j] += (data[k][i] * data[k][j]);
       }

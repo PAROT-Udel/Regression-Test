@@ -1199,27 +1199,17 @@ static int load_environment(BenchmarkConfig *config,
                             size_t error_size)
 {
     static const char *known[] = {"CETUS", "CLANG_FORMAT", "GCC", "DIFF", "CPP"};
-    char *example = runner_path_join(directory, "paths.example.env");
     char *local = runner_path_join(directory, "paths.env");
     size_t index;
     const char *value;
-    if (example == NULL || local == NULL) {
-        free(local);
-        free(example);
+    if (local == NULL) {
         return fail(error, error_size, "%s: out of memory", directory);
     }
-    if (runner_file_exists(example) &&
-        runner_parse_env_file(example, &config->paths) != 0) {
-        fail(error, error_size, "%s: invalid environment file", example);
-        free(local);
-        free(example);
-        return -1;
-    }
+    /* paths.example.env is a template for developers. It is not loaded. */
     if (runner_file_exists(local) &&
         runner_parse_env_file(local, &config->paths) != 0) {
         fail(error, error_size, "%s: invalid environment file", local);
         free(local);
-        free(example);
         return -1;
     }
     for (index = 0; index < sizeof(known) / sizeof(known[0]); ++index) {
@@ -1227,12 +1217,10 @@ static int load_environment(BenchmarkConfig *config,
         if (value != NULL &&
             runner_key_value_map_set(&config->paths, known[index], value) != 0) {
             free(local);
-            free(example);
             return fail(error, error_size, "%s: out of memory", directory);
         }
     }
     free(local);
-    free(example);
     return 0;
 }
 
@@ -1266,6 +1254,18 @@ static int apply_suite_root_environment(BenchmarkConfig *config,
         }
     }
     return 0;
+}
+
+int benchmark_config_load_paths(const char *config_directory,
+                                BenchmarkConfig *config,
+                                char *error,
+                                size_t error_size)
+{
+    if (error != NULL && error_size != 0) {
+        error[0] = '\0';
+    }
+    benchmark_config_free(config);
+    return load_environment(config, config_directory, error, error_size);
 }
 
 int benchmark_config_load(const char *config_directory,

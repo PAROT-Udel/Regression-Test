@@ -1,4 +1,3 @@
-#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -147,6 +146,7 @@ void transf(double tmor[], double tx[]) {
                 il = idel[ie][iface][col][i];
 #pragma cetus private(ig, j)
 #pragma loop name transf #0 #0 #0 #0 #0 #0 #0
+                /* #pragma cetus reduction(+: tmp[ije1][col][i])  */
                 for (j = 0; j < 5; j++) {
                   ig = idmo[ie][iface][ije2][ije1][col][j];
                   tmp[ije1][col][i] =
@@ -160,7 +160,7 @@ void transf(double tmor[], double tx[]) {
 /* face tx */
 #pragma cetus private(col, i, il, j)
 #pragma loop name transf #0 #0 #1
-        /* #pragma cetus reduction(+: tx[il])  */
+        /* #pragma cetus reduction(+: )  */
         for (ije1 = 0; ije1 < nnje; ije1++) {
           /* the first column, col=0, is an edge of face iface. */
           /* the value on the three interior collocation points, tx, is */
@@ -242,7 +242,7 @@ void transf(double tmor[], double tx[]) {
         if (idmo[ie][iface][0][0][0][5 - 1] != (-1)) {
 #pragma cetus private(ig, ije1, il, j)
 #pragma loop name transf #0 #0 #3
-          /* #pragma cetus reduction(+: tx[il])  */
+          /* #pragma cetus reduction(+: )  */
           for (i = 1; i < (5 - 1); i++) {
             il = idel[ie][iface][0][i];
 #pragma cetus private(ig, ije1, j)
@@ -272,7 +272,7 @@ void transf(double tmor[], double tx[]) {
         if (idmo[ie][iface][1][0][1][5 - 1] != (-1)) {
 #pragma cetus private(ig, ije1, il, j)
 #pragma loop name transf #0 #0 #5
-          /* #pragma cetus reduction(+: tx[il])  */
+          /* #pragma cetus reduction(+: )  */
           for (i = 1; i < (5 - 1); i++) {
             il = idel[ie][iface][i][5 - 1];
 #pragma cetus private(ig, ije1, j)
@@ -302,7 +302,7 @@ void transf(double tmor[], double tx[]) {
         if (idmo[ie][iface][0][1][5 - 1][1] != (-1)) {
 #pragma cetus private(ig, ije1, il, j)
 #pragma loop name transf #0 #0 #7
-          /* #pragma cetus reduction(+: tx[il])  */
+          /* #pragma cetus reduction(+: )  */
           for (i = 1; i < (5 - 1); i++) {
             il = idel[ie][iface][5 - 1][i];
 #pragma cetus private(ig, ije1, j)
@@ -332,7 +332,7 @@ void transf(double tmor[], double tx[]) {
         if (idmo[ie][iface][0][0][5 - 1][0] != (-1)) {
 #pragma cetus private(ig, ije1, il, j)
 #pragma loop name transf #0 #0 #9
-          /* #pragma cetus reduction(+: tx[il])  */
+          /* #pragma cetus reduction(+: )  */
           for (i = 1; i < (5 - 1); i++) {
             il = idel[ie][iface][i][0];
 #pragma cetus private(ig, ije1, j)
@@ -459,7 +459,7 @@ void transfb(double tmor[], double tx[]) {
 /* mapping from temp to tmor */
 #pragma cetus private(col, i, ig, ije2, j, shift, tmp, tmp1)
 #pragma loop name transfb #0 #0 #1
-        /* #pragma cetus reduction(+: tmor[ig])  */
+        /* #pragma cetus reduction(+: )  */
         for (ije1 = 0; ije1 < nnje; ije1++) {
           shift = ije1;
 #pragma cetus private(col, i, ig, ije2, j, tmp, tmp1)
@@ -524,7 +524,7 @@ void transfb(double tmor[], double tx[]) {
 /* face interior */
 #pragma cetus private(ig, il, j)
 #pragma loop name transfb #0 #0 #2
-        /* #pragma cetus reduction(+: tmor[ig])  */
+        /* #pragma cetus reduction(+: )  */
         for (col = 1; col < (5 - 1); col++) {
 #pragma cetus private(ig, il, j)
 #pragma loop name transfb #0 #0 #2 #0
@@ -540,7 +540,7 @@ void transfb(double tmor[], double tx[]) {
         if (idmo[ie][iface][0][0][0][5 - 1] != (-1)) {
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #3
-          /* #pragma cetus reduction(+: tmor[ig])  */
+          /* #pragma cetus reduction(+: )  */
           for (ije = 0; ije < 2; ije++) {
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #3 #0
@@ -562,7 +562,7 @@ void transfb(double tmor[], double tx[]) {
         } else {
 #pragma cetus private(ig, il)
 #pragma loop name transfb #0 #0 #4
-          /* #pragma cetus reduction(+: tmor[ig])  */
+          /* #pragma cetus reduction(+: )  */
           for (j = 1; j < (5 - 1); j++) {
             il = idel[ie][iface][0][j];
             ig = idmo[ie][iface][0][0][0][j];
@@ -573,7 +573,7 @@ void transfb(double tmor[], double tx[]) {
         if (idmo[ie][iface][1][0][1][5 - 1] != (-1)) {
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #5
-          /* #pragma cetus reduction(+: tmor[ig])  */
+          /* #pragma cetus reduction(+: )  */
           for (ije = 0; ije < 2; ije++) {
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #5 #0
@@ -595,7 +595,7 @@ void transfb(double tmor[], double tx[]) {
         } else {
 #pragma cetus private(ig, il)
 #pragma loop name transfb #0 #0 #6
-          /* #pragma cetus reduction(+: tmor[ig])  */
+          /* #pragma cetus reduction(+: )  */
           for (j = 1; j < (5 - 1); j++) {
             il = idel[ie][iface][j][5 - 1];
             ig = idmo[ie][iface][0][0][j][5 - 1];
@@ -606,7 +606,7 @@ void transfb(double tmor[], double tx[]) {
         if (idmo[ie][iface][0][1][5 - 1][1] != (-1)) {
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #7
-          /* #pragma cetus reduction(+: tmor[ig])  */
+          /* #pragma cetus reduction(+: )  */
           for (ije = 0; ije < 2; ije++) {
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #7 #0
@@ -628,7 +628,7 @@ void transfb(double tmor[], double tx[]) {
         } else {
 #pragma cetus private(ig, il)
 #pragma loop name transfb #0 #0 #8
-          /* #pragma cetus reduction(+: tmor[ig])  */
+          /* #pragma cetus reduction(+: )  */
           for (j = 1; j < (5 - 1); j++) {
             il = idel[ie][iface][5 - 1][j];
             ig = idmo[ie][iface][0][0][5 - 1][j];
@@ -639,7 +639,7 @@ void transfb(double tmor[], double tx[]) {
         if (idmo[ie][iface][0][0][5 - 1][0] != (-1)) {
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #9
-          /* #pragma cetus reduction(+: tmor[ig])  */
+          /* #pragma cetus reduction(+: )  */
           for (ije = 0; ije < 2; ije++) {
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #9 #0
@@ -661,7 +661,7 @@ void transfb(double tmor[], double tx[]) {
         } else {
 #pragma cetus private(ig, il)
 #pragma loop name transfb #0 #0 #10
-          /* #pragma cetus reduction(+: tmor[ig])  */
+          /* #pragma cetus reduction(+: )  */
           for (j = 1; j < (5 - 1); j++) {
             il = idel[ie][iface][j][0];
             ig = idmo[ie][iface][0][0][j][0];
@@ -829,6 +829,7 @@ void transf_nc(double tmor[5][5], double tx[5][5]) {
     for (i = 1; i < (5 - 1); i++) {
 #pragma cetus private(j)
 #pragma loop name transf_nc #0 #0 #0
+      /* #pragma cetus reduction(+: tmp[col][i])  */
       for (j = 0; j < 5; j++) {
         tmp[col][i] = (tmp[col][i] + (qbnew[0][j][i - 1] * tmor[col][j]));
       }
@@ -846,6 +847,7 @@ void transf_nc(double tmor[5][5], double tx[5][5]) {
     for (i = 1; i < (5 - 1); i++) {
 #pragma cetus private(j)
 #pragma loop name transf_nc #1 #0 #0
+      /* #pragma cetus reduction(+: tx[i][col])  */
       for (j = 0; j < 5; j++) {
         tx[i][col] = (tx[i][col] + (qbnew[0][j][i - 1] * tmp[j][col]));
       }
@@ -867,6 +869,7 @@ void transfb_nc0(double tmor[5][5], double tx[5][5][5]) {
   for (j = 0; j < 5; j++) {
 #pragma cetus private(i)
 #pragma loop name transfb_nc0 #0 #0
+    /* #pragma cetus reduction(+: tmor[0][j])  */
     for (i = 1; i < (5 - 1); i++) {
       tmor[0][j] = (tmor[0][j] + (qbnew[0][j][i - 1] * tx[0][0][i]));
     }
@@ -907,6 +910,7 @@ void transfb_nc2(double tmor[5][5], double tx[5][5]) {
     for (j = 1; j < 5; j++) {
 #pragma cetus private(i)
 #pragma loop name transfb_nc2 #0 #1 #0
+      /* #pragma cetus reduction(+: temp[j][col])  */
       for (i = 1; i < (5 - 1); i++) {
         temp[j][col] = (temp[j][col] + (qbnew[0][j][i - 1] * tx[i][col]));
       }
@@ -923,6 +927,7 @@ void transfb_nc2(double tmor[5][5], double tx[5][5]) {
   for (j = 0; j < 5; j++) {
 #pragma cetus private(i)
 #pragma loop name transfb_nc2 #1 #0
+    /* #pragma cetus reduction(+: tmor[col][j])  */
     for (i = 1; i < (5 - 1); i++) {
       tmor[col][j] = ((tmor[col][j] + (qbnew[0][j][i - 1] * bottom[i])) +
                       ((qbnew[0][j][i - 1] * temp[col][i]) * 0.5));
@@ -939,6 +944,7 @@ void transfb_nc2(double tmor[5][5], double tx[5][5]) {
     for (j = 0; j < 5; j++) {
 #pragma cetus private(i)
 #pragma loop name transfb_nc2 #2 #0 #0
+      /* #pragma cetus reduction(+: tmor[col][j])  */
       for (i = 1; i < (5 - 1); i++) {
         tmor[col][j] = (tmor[col][j] + (qbnew[0][j][i - 1] * temp[col][i]));
       }
@@ -978,6 +984,7 @@ void transfb_nc1(double tmor[5][5], double tx[5][5]) {
     for (j = 1; j < 5; j++) {
 #pragma cetus private(i)
 #pragma loop name transfb_nc1 #0 #1 #0
+      /* #pragma cetus reduction(+: temp[j][col])  */
       for (i = 1; i < (5 - 1); i++) {
         temp[j][col] = (temp[j][col] + (qbnew[0][j][i - 1] * tx[i][col]));
       }
@@ -992,6 +999,7 @@ void transfb_nc1(double tmor[5][5], double tx[5][5]) {
   for (j = 0; j < 5; j++) {
 #pragma cetus private(i)
 #pragma loop name transfb_nc1 #1 #0
+    /* #pragma cetus reduction(+: tmor[col][j])  */
     for (i = 1; i < (5 - 1); i++) {
       /* temp is not divided by 2 here. It includes the contribution */
       /* from the other conforming face. */
@@ -1010,6 +1018,7 @@ void transfb_nc1(double tmor[5][5], double tx[5][5]) {
     for (j = 0; j < 5; j++) {
 #pragma cetus private(i)
 #pragma loop name transfb_nc1 #2 #0 #0
+      /* #pragma cetus reduction(+: tmor[col][j])  */
       for (i = 1; i < (5 - 1); i++) {
         tmor[col][j] = (tmor[col][j] + (qbnew[0][j][i - 1] * temp[col][i]));
       }
@@ -1033,28 +1042,8 @@ void transfb_c(double tx[]) {
   {
     double *reduce = (double *)malloc(11600 * sizeof(double));
     int reduce_span_0;
-    double *reduce0 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_1;
-    double *reduce1 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_2;
-    double *reduce2 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_3;
-    double *reduce3 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_4;
     for (reduce_span_0 = 0; reduce_span_0 < 11600; reduce_span_0++) {
       reduce[reduce_span_0] = 0;
-    }
-    for (reduce_span_1 = 0; reduce_span_1 < 11600; reduce_span_1++) {
-      reduce0[reduce_span_1] = 0;
-    }
-    for (reduce_span_2 = 0; reduce_span_2 < 11600; reduce_span_2++) {
-      reduce1[reduce_span_2] = 0;
-    }
-    for (reduce_span_3 = 0; reduce_span_3 < 11600; reduce_span_3++) {
-      reduce2[reduce_span_3] = 0;
-    }
-    for (reduce_span_4 = 0; reduce_span_4 < 11600; reduce_span_4++) {
-      reduce3[reduce_span_4] = 0;
     }
 #pragma loop name transfb_c #0
 #pragma cetus for
@@ -1075,10 +1064,10 @@ void transfb_c(double tx[]) {
           ig2 = idmo[ie][iface][1][0][0][5 - 1];
           ig3 = idmo[ie][iface][0][1][5 - 1][0];
           ig4 = idmo[ie][iface][1][1][5 - 1][5 - 1];
-          reduce2[ig1] = (reduce2[ig1] + (tx[il1] * third));
-          reduce3[ig2] = (reduce3[ig2] + (tx[il2] * third));
-          reduce0[ig3] = (reduce0[ig3] + (tx[il3] * third));
-          reduce1[ig4] = (reduce1[ig4] + (tx[il4] * third));
+          reduce[ig1] = (reduce[ig1] + (tx[il1] * third));
+          reduce[ig2] = (reduce[ig2] + (tx[il2] * third));
+          reduce[ig3] = (reduce[ig3] + (tx[il3] * third));
+          reduce[ig4] = (reduce[ig4] + (tx[il4] * third));
 #pragma cetus private(col, ig, il, j)
 #pragma loop name transfb_c #0 #0 #0
           /* #pragma cetus reduction(+: tmort[ig])  */
@@ -1141,18 +1130,6 @@ void transfb_c(double tx[]) {
       for (reduce_span_0 = 0; reduce_span_0 < 11600; reduce_span_0++) {
         tmort[reduce_span_0] += reduce[reduce_span_0];
       }
-      for (reduce_span_1 = 0; reduce_span_1 < 11600; reduce_span_1++) {
-        tmort[reduce_span_1] += reduce0[reduce_span_1];
-      }
-      for (reduce_span_2 = 0; reduce_span_2 < 11600; reduce_span_2++) {
-        tmort[reduce_span_2] += reduce1[reduce_span_2];
-      }
-      for (reduce_span_3 = 0; reduce_span_3 < 11600; reduce_span_3++) {
-        tmort[reduce_span_3] += reduce2[reduce_span_3];
-      }
-      for (reduce_span_4 = 0; reduce_span_4 < 11600; reduce_span_4++) {
-        tmort[reduce_span_4] += reduce3[reduce_span_4];
-      }
     }
   }
 }
@@ -1177,51 +1154,11 @@ void transfb_c_2(double tx[]) {
     int reduce_span_0;
     double *reduce0 = (double *)malloc(11600 * sizeof(double));
     int reduce_span_1;
-    double *reduce1 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_2;
-    double *reduce2 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_3;
-    double *reduce3 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_4;
-    double *reduce4 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_5;
-    double *reduce5 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_6;
-    double *reduce6 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_7;
-    double *reduce7 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_8;
-    double *reduce8 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_9;
     for (reduce_span_0 = 0; reduce_span_0 < 11600; reduce_span_0++) {
       reduce[reduce_span_0] = 0;
     }
     for (reduce_span_1 = 0; reduce_span_1 < 11600; reduce_span_1++) {
       reduce0[reduce_span_1] = 0;
-    }
-    for (reduce_span_2 = 0; reduce_span_2 < 11600; reduce_span_2++) {
-      reduce1[reduce_span_2] = 0;
-    }
-    for (reduce_span_3 = 0; reduce_span_3 < 11600; reduce_span_3++) {
-      reduce2[reduce_span_3] = 0;
-    }
-    for (reduce_span_4 = 0; reduce_span_4 < 11600; reduce_span_4++) {
-      reduce3[reduce_span_4] = 0;
-    }
-    for (reduce_span_5 = 0; reduce_span_5 < 11600; reduce_span_5++) {
-      reduce4[reduce_span_5] = 0;
-    }
-    for (reduce_span_6 = 0; reduce_span_6 < 11600; reduce_span_6++) {
-      reduce5[reduce_span_6] = 0;
-    }
-    for (reduce_span_7 = 0; reduce_span_7 < 11600; reduce_span_7++) {
-      reduce6[reduce_span_7] = 0;
-    }
-    for (reduce_span_8 = 0; reduce_span_8 < 11600; reduce_span_8++) {
-      reduce7[reduce_span_8] = 0;
-    }
-    for (reduce_span_9 = 0; reduce_span_9 < 11600; reduce_span_9++) {
-      reduce8[reduce_span_9] = 0;
     }
 #pragma loop name transfb_c_2 #0
 #pragma cetus for
@@ -1243,14 +1180,14 @@ void transfb_c_2(double tx[]) {
           ig2 = idmo[ie][iface][1][0][0][5 - 1];
           ig3 = idmo[ie][iface][0][1][5 - 1][0];
           ig4 = idmo[ie][iface][1][1][5 - 1][5 - 1];
-          reduce4[ig1] = (reduce4[ig1] + (tx[il1] * third));
-          reduce5[ig2] = (reduce5[ig2] + (tx[il2] * third));
-          reduce2[ig3] = (reduce2[ig3] + (tx[il3] * third));
-          reduce3[ig4] = (reduce3[ig4] + (tx[il4] * third));
-          reduce1[ig1] = (reduce1[ig1] + third);
+          reduce0[ig1] = (reduce0[ig1] + (tx[il1] * third));
+          reduce0[ig2] = (reduce0[ig2] + (tx[il2] * third));
+          reduce0[ig3] = (reduce0[ig3] + (tx[il3] * third));
+          reduce0[ig4] = (reduce0[ig4] + (tx[il4] * third));
+          reduce[ig1] = (reduce[ig1] + third);
           reduce[ig2] = (reduce[ig2] + third);
-          reduce8[ig3] = (reduce8[ig3] + third);
-          reduce6[ig4] = (reduce6[ig4] + third);
+          reduce[ig3] = (reduce[ig3] + third);
+          reduce[ig4] = (reduce[ig4] + third);
 #pragma cetus private(col, ig, il, j)
 #pragma loop name transfb_c_2 #0 #0 #0
           /* #pragma cetus reduction(+: mormult[ig], tmort[ig])  */
@@ -1262,7 +1199,7 @@ void transfb_c_2(double tx[]) {
               il = idel[ie][iface][col][j];
               ig = idmo[ie][iface][0][0][col][j];
               reduce0[ig] = (reduce0[ig] + tx[il]);
-              reduce7[ig] = (reduce7[ig] + 1.0);
+              reduce[ig] = (reduce[ig] + 1.0);
             }
           }
           if (idmo[ie][iface][0][0][0][5 - 1] == (-1)) {
@@ -1273,7 +1210,7 @@ void transfb_c_2(double tx[]) {
               il = idel[ie][iface][0][j];
               ig = idmo[ie][iface][0][0][0][j];
               reduce0[ig] = (reduce0[ig] + (tx[il] * 0.5));
-              reduce7[ig] = (reduce7[ig] + 0.5);
+              reduce[ig] = (reduce[ig] + 0.5);
             }
           }
           if (idmo[ie][iface][1][0][1][5 - 1] == (-1)) {
@@ -1284,7 +1221,7 @@ void transfb_c_2(double tx[]) {
               il = idel[ie][iface][j][5 - 1];
               ig = idmo[ie][iface][0][0][j][5 - 1];
               reduce0[ig] = (reduce0[ig] + (tx[il] * 0.5));
-              reduce7[ig] = (reduce7[ig] + 0.5);
+              reduce[ig] = (reduce[ig] + 0.5);
             }
           }
           if (idmo[ie][iface][0][1][5 - 1][1] == (-1)) {
@@ -1295,7 +1232,7 @@ void transfb_c_2(double tx[]) {
               il = idel[ie][iface][5 - 1][j];
               ig = idmo[ie][iface][0][0][5 - 1][j];
               reduce0[ig] = (reduce0[ig] + (tx[il] * 0.5));
-              reduce7[ig] = (reduce7[ig] + 0.5);
+              reduce[ig] = (reduce[ig] + 0.5);
             }
           }
           if (idmo[ie][iface][0][0][5 - 1][0] == (-1)) {
@@ -1306,7 +1243,7 @@ void transfb_c_2(double tx[]) {
               il = idel[ie][iface][j][0];
               ig = idmo[ie][iface][0][0][j][0];
               reduce0[ig] = (reduce0[ig] + (tx[il] * 0.5));
-              reduce7[ig] = (reduce7[ig] + 0.5);
+              reduce[ig] = (reduce[ig] + 0.5);
             }
           }
         }
@@ -1320,30 +1257,6 @@ void transfb_c_2(double tx[]) {
       }
       for (reduce_span_1 = 0; reduce_span_1 < 11600; reduce_span_1++) {
         tmort[reduce_span_1] += reduce0[reduce_span_1];
-      }
-      for (reduce_span_2 = 0; reduce_span_2 < 11600; reduce_span_2++) {
-        mormult[reduce_span_2] += reduce1[reduce_span_2];
-      }
-      for (reduce_span_3 = 0; reduce_span_3 < 11600; reduce_span_3++) {
-        tmort[reduce_span_3] += reduce2[reduce_span_3];
-      }
-      for (reduce_span_4 = 0; reduce_span_4 < 11600; reduce_span_4++) {
-        tmort[reduce_span_4] += reduce3[reduce_span_4];
-      }
-      for (reduce_span_5 = 0; reduce_span_5 < 11600; reduce_span_5++) {
-        tmort[reduce_span_5] += reduce4[reduce_span_5];
-      }
-      for (reduce_span_6 = 0; reduce_span_6 < 11600; reduce_span_6++) {
-        tmort[reduce_span_6] += reduce5[reduce_span_6];
-      }
-      for (reduce_span_7 = 0; reduce_span_7 < 11600; reduce_span_7++) {
-        mormult[reduce_span_7] += reduce6[reduce_span_7];
-      }
-      for (reduce_span_8 = 0; reduce_span_8 < 11600; reduce_span_8++) {
-        mormult[reduce_span_8] += reduce7[reduce_span_8];
-      }
-      for (reduce_span_9 = 0; reduce_span_9 < 11600; reduce_span_9++) {
-        mormult[reduce_span_9] += reduce8[reduce_span_9];
       }
     }
   }

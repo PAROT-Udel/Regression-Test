@@ -159,10 +159,8 @@ Main computational kernel. The whole function will be timed,
 static void kernel_cholesky(int n, double A[(40 + 0)][(40 + 0)]) {
   int i, j, k;
 #pragma scop
-#pragma cetus private(j, k)
+#pragma cetus private(i, j, k)
 #pragma loop name kernel_cholesky #0
-#pragma cetus parallel
-#pragma omp parallel for private(j, k)
   for (i = 0; i < n; i++) {
 /* j<i */
 #pragma cetus private(j, k)

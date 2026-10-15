@@ -111,19 +111,21 @@ void x_solve() {
 /* determine a (labeled f) and n jacobians */
 /* --------------------------------------------------------------------- */
 #pragma experimental section start
-#pragma cetus private(i, j, k, m, n)
 #pragma loop name x_solve #0
 #pragma cetus private(i, j, k, m, n)
+#pragma cetus private(i, j, k, m, n)
   for (k = 1; k <= (grid_points[2] - 2); k++) {
-#pragma cetus private(i, j, m, n)
 #pragma loop name x_solve #0 #0
+#pragma cetus private(i, j, m, n)
 #pragma cetus private(i, j, m, n)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
 #pragma cetus lastprivate(tmp1, tmp2, tmp3)
 #pragma loop name x_solve #0 #0 #0
 #pragma cetus parallel
 #pragma cetus lastprivate(tmp1, tmp2, tmp3)
-#pragma omp parallel for lastprivate(tmp1, tmp2, tmp3)
+#pragma cetus private(i)
+#pragma cetus lastprivate(tmp1, tmp2, tmp3)
+#pragma omp parallel for private(i) lastprivate(tmp1, tmp2, tmp3)
       for (i = 0; i <= isize; i++) {
         tmp1 = rho_i[k][j][i];
         tmp2 = (tmp1 * tmp1);
@@ -204,7 +206,9 @@ void x_solve() {
 #pragma loop name x_solve #0 #0 #1
 #pragma cetus parallel
 #pragma cetus lastprivate(tmp1, tmp2)
-#pragma omp parallel for lastprivate(tmp1, tmp2)
+#pragma cetus private(i)
+#pragma cetus lastprivate(tmp1, tmp2)
+#pragma omp parallel for private(i) lastprivate(tmp1, tmp2)
       for (i = 1; i <= (isize - 1); i++) {
         tmp1 = (dt * tx1);
         tmp2 = (dt * tx2);
@@ -380,8 +384,8 @@ void x_solve() {
 /* begin inner most do loop */
 /* do all the elements of the cell unless last  */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i)
 #pragma loop name x_solve #0 #0 #2
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 1; i <= (isize - 1); i++) {
         /* -------------------------------------------------------------------
@@ -428,18 +432,19 @@ void x_solve() {
 /* so just use it */
 /* after u(istart) will be sent to next cell */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, m, n)
 #pragma loop name x_solve #0 #0 #3
+#pragma cetus private(i, m, n)
 #pragma cetus private(i, m, n)
       for (i = (isize - 1); i >= 0; i--) {
 #pragma cetus private(n)
 #pragma loop name x_solve #0 #0 #3 #0
 #pragma cetus parallel
 #pragma cetus private(m, n)
+#pragma cetus private(m, n)
 #pragma omp parallel for private(m, n)
         for (m = 0; m < 5; m++) {
-#pragma cetus private(n)
 #pragma loop name x_solve #0 #0 #3 #0 #0
+#pragma cetus private(n)
 #pragma cetus private(n)
           for (n = 0; n < 5; n++) {
             rhs[k][j][i][m] =

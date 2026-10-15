@@ -160,10 +160,9 @@ int main() {
   char *t_names[10];
   double tmax;
   FILE *fp;
-#pragma cetus private(i)
 #pragma loop name main #0
 #pragma cetus private(i)
-#pragma loop name main #0
+#pragma cetus private(i)
   for (i = 0; i < 10; i++) {
     timer_clear(i);
   }
@@ -202,10 +201,9 @@ int main() {
     while (fgetc(fp) != '\n') {
       ;
     }
-#pragma cetus private(i, result)
 #pragma loop name main #1
 #pragma cetus private(i, result)
-#pragma loop name main #1
+#pragma cetus private(i, result)
     for (i = 0; i <= 7; i++) {
       result = fscanf(fp, "%d", &debug_vec[i]);
     }
@@ -219,8 +217,8 @@ int main() {
     nz[lt] = 32;
 #pragma loop name main #2
 #pragma cetus parallel
-#pragma loop name main #2
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
     for (i = 0; i <= 7; i++) {
       debug_vec[i] = 0;
     }
@@ -316,10 +314,9 @@ int main() {
   timer_stop(0);
   tinit = timer_read(0);
   printf(" Initialization time: %15.3f seconds\n\n", tinit);
-#pragma cetus private(i)
 #pragma loop name main #3
 #pragma cetus private(i)
-#pragma loop name main #3
+#pragma cetus private(i)
   for (i = 1; i < 10; i++) {
     timer_clear(i);
   }
@@ -334,10 +331,9 @@ int main() {
   norm2u3(r, n1, n2, n3, &rnm2, &rnmu, nx[lt], ny[lt], nz[lt]);
   old2 = rnm2;
   oldu = rnmu;
-#pragma cetus private(it)
 #pragma loop name main #4
 #pragma cetus private(it)
-#pragma loop name main #4
+#pragma cetus private(it)
   for (it = 1; it <= nit; it++) {
     if (((it == 1) || (it == nit)) || ((it % 5) == 0)) {
       printf("  iter %3d\n", it);
@@ -431,10 +427,9 @@ int main() {
       tmax = 1.0;
     }
     printf("  SECTION   Time (secs)\n");
-#pragma cetus private(i, t)
 #pragma loop name main #5
 #pragma cetus private(i, t)
-#pragma loop name main #5
+#pragma cetus private(i, t)
     for (i = 1; i < 10; i++) {
       t = timer_read(i);
       if (i == 5) {
@@ -456,23 +451,22 @@ static void setup(int *n1, int *n2, int *n3) {
   ng[lt][0] = nx[lt];
   ng[lt][1] = ny[lt];
   ng[lt][2] = nz[lt];
-#pragma cetus private(ax, k)
 #pragma loop name setup #0
 #pragma cetus private(ax, k)
-#pragma loop name setup #0
+#pragma cetus private(ax, k)
   for (k = (lt - 1); k >= 1; k--) {
 #pragma loop name setup #0 #0
 #pragma cetus parallel
-#pragma loop name setup #0 #0
-#pragma omp parallel for
+#pragma cetus private(ax)
+#pragma omp parallel for private(ax)
     for (ax = 0; ax < 3; ax++) {
       ng[k][ax] = (ng[k + 1][ax] / 2);
     }
   }
 #pragma loop name setup #1
 #pragma cetus parallel
-#pragma loop name setup #1
-#pragma omp parallel for
+#pragma cetus private(k)
+#pragma omp parallel for private(k)
   for (k = lt; k >= 1; k--) {
     nx[k] = ng[k][0];
     ny[k] = ng[k][1];
@@ -482,13 +476,12 @@ static void setup(int *n1, int *n2, int *n3) {
 #pragma loop name setup #2
 #pragma cetus parallel
 #pragma cetus private(ax, k)
-#pragma loop name setup #2
+#pragma cetus private(ax, k)
 #pragma omp parallel for private(ax, k)
   for (k = lt; k >= 1; k--) {
-#pragma cetus private(ax)
 #pragma loop name setup #2 #0
 #pragma cetus private(ax)
-#pragma loop name setup #2 #0
+#pragma cetus private(ax)
     for (ax = 0; ax < 3; ax++) {
       mi[k][ax] = (2 + ng[k][ax]);
     }
@@ -507,10 +500,9 @@ static void setup(int *n1, int *n2, int *n3) {
   ie3 = (1 + ng[k][2]);
   (*n3) = ((3 + ie3) - is3);
   ir[lt] = 0;
-#pragma cetus private(j)
 #pragma loop name setup #3
 #pragma cetus private(j)
-#pragma loop name setup #3
+#pragma cetus private(j)
   for (j = (lt - 1); j >= 1; j--) {
     ir[j] = (ir[j + 1] + (((1 * m1[j + 1]) * m2[j + 1]) * m3[j + 1]));
   }
@@ -535,7 +527,7 @@ static void mg3P(double u[], double v[], double r[], double a[4], double c[4],
 #pragma cetus private(j, k)
 #pragma loop name mg3P #0
 #pragma cetus private(j, k)
-#pragma loop name mg3P #0
+#pragma cetus private(j, k)
   for (k = lt; k >= (lb + 1); k--) {
     j = (k - 1);
     rprj3(&r[ir[k]], m1[k], m2[k], m3[k], &r[ir[j]], m1[j], m2[j], m3[j], k);
@@ -546,10 +538,9 @@ static void mg3P(double u[], double v[], double r[], double a[4], double c[4],
   /* --------------------------------------------------------------------- */
   zero3(&u[ir[k]], m1[k], m2[k], m3[k]);
   psinv(&r[ir[k]], &u[ir[k]], m1[k], m2[k], m3[k], c, k);
-#pragma cetus private(j, k)
 #pragma loop name mg3P #1
 #pragma cetus private(j, k)
-#pragma loop name mg3P #1
+#pragma cetus private(j, k)
   for (k = (lb + 1); k <= (lt - 1); k++) {
     j = (k - 1);
     /* --------------------------------------------------------------------- */
@@ -593,24 +584,22 @@ static void psinv(void * or, void *ou, int n1, int n2, int n3, double c[4],
   if (timeron) {
     timer_start(3);
   }
-#pragma cetus private(i1, i2, r1, r2)
 #pragma loop name psinv #0
 #pragma cetus parallel
+#pragma cetus private(i1, i2, r1, r2)
 #pragma cetus private(i1, i2, i3, r1, r2)
-#pragma loop name psinv #0
 #pragma omp parallel for private(i1, i2, i3, r1, r2)
   for (i3 = 1; i3 < (n3 - 1); i3++) {
-#pragma cetus private(i1, i2)
 #pragma cetus lastprivate(r1, r2)
 #pragma loop name psinv #0 #0
 #pragma cetus private(i1, i2)
 #pragma cetus lastprivate(r1, r2)
-#pragma loop name psinv #0 #0
+#pragma cetus private(i1, i2)
+#pragma cetus lastprivate(r1, r2)
     for (i2 = 1; i2 < (n2 - 1); i2++) {
-#pragma cetus private(i1)
 #pragma loop name psinv #0 #0 #0
 #pragma cetus private(i1)
-#pragma loop name psinv #0 #0 #0
+#pragma cetus private(i1)
       for (i1 = 0; i1 < n1; i1++) {
         r1[i1] =
             (((r[i3][i2 - 1][i1] + r[i3][i2 + 1][i1]) + r[i3 - 1][i2][i1]) +
@@ -619,10 +608,9 @@ static void psinv(void * or, void *ou, int n1, int n2, int n3, double c[4],
                    r[i3 + 1][i2 - 1][i1]) +
                   r[i3 + 1][i2 + 1][i1]);
       }
-#pragma cetus private(i1)
 #pragma loop name psinv #0 #0 #1
 #pragma cetus private(i1)
-#pragma loop name psinv #0 #0 #1
+#pragma cetus private(i1)
       for (i1 = 1; i1 < (n1 - 1); i1++) {
         u[i3][i2][i1] =
             (((u[i3][i2][i1] + (c[0] * r[i3][i2][i1])) +
@@ -676,24 +664,22 @@ static void resid(void *ou, void *ov, void * or, int n1, int n2, int n3,
   if (timeron) {
     timer_start(4);
   }
-#pragma cetus private(i1, i2, u1, u2)
 #pragma loop name resid #0
 #pragma cetus parallel
+#pragma cetus private(i1, i2, u1, u2)
 #pragma cetus private(i1, i2, i3, u1, u2)
-#pragma loop name resid #0
 #pragma omp parallel for private(i1, i2, i3, u1, u2)
   for (i3 = 1; i3 < (n3 - 1); i3++) {
-#pragma cetus private(i1, i2)
 #pragma cetus lastprivate(u1, u2)
 #pragma loop name resid #0 #0
 #pragma cetus private(i1, i2)
 #pragma cetus lastprivate(u1, u2)
-#pragma loop name resid #0 #0
+#pragma cetus private(i1, i2)
+#pragma cetus lastprivate(u1, u2)
     for (i2 = 1; i2 < (n2 - 1); i2++) {
-#pragma cetus private(i1)
 #pragma loop name resid #0 #0 #0
 #pragma cetus private(i1)
-#pragma loop name resid #0 #0 #0
+#pragma cetus private(i1)
       for (i1 = 0; i1 < n1; i1++) {
         u1[i1] =
             (((u[i3][i2 - 1][i1] + u[i3][i2 + 1][i1]) + u[i3 - 1][i2][i1]) +
@@ -702,10 +688,9 @@ static void resid(void *ou, void *ov, void * or, int n1, int n2, int n3,
                    u[i3 + 1][i2 - 1][i1]) +
                   u[i3 + 1][i2 + 1][i1]);
       }
-#pragma cetus private(i1)
 #pragma loop name resid #0 #0 #1
 #pragma cetus private(i1)
-#pragma loop name resid #0 #0 #1
+#pragma cetus private(i1)
       for (i1 = 1; i1 < (n1 - 1); i1++) {
         /* -------------------------------------------------------------------
          */
@@ -771,22 +756,19 @@ static void rprj3(void * or, int m1k, int m2k, int m3k, void *os, int m1j,
   } else {
     d3 = 1;
   }
-#pragma cetus private(i1, i2, i3, j1, j2, j3, x2, y2)
 #pragma loop name rprj3 #0
 #pragma cetus private(i1, i2, i3, j1, j2, j3, x2, y2)
-#pragma loop name rprj3 #0
+#pragma cetus private(i1, i2, i3, j1, j2, j3, x2, y2)
   for (j3 = 1; j3 < (m3j - 1); j3++) {
     i3 = ((2 * j3) - d3);
-#pragma cetus private(i1, i2, j1, j2, x2, y2)
 #pragma loop name rprj3 #0 #0
 #pragma cetus private(i1, i2, j1, j2, x2, y2)
-#pragma loop name rprj3 #0 #0
+#pragma cetus private(i1, i2, j1, j2, x2, y2)
     for (j2 = 1; j2 < (m2j - 1); j2++) {
       i2 = ((2 * j2) - d2);
-#pragma cetus private(i1, j1)
 #pragma loop name rprj3 #0 #0 #0
 #pragma cetus private(i1, j1)
-#pragma loop name rprj3 #0 #0 #0
+#pragma cetus private(i1, j1)
       for (j1 = 1; j1 < m1j; j1++) {
         i1 = ((2 * j1) - d1);
         x1[i1] =
@@ -795,11 +777,10 @@ static void rprj3(void * or, int m1k, int m2k, int m3k, void *os, int m1j,
         y1[i1] = (((r[i3][i2][i1] + r[i3 + 2][i2][i1]) + r[i3][i2 + 2][i1]) +
                   r[i3 + 2][i2 + 2][i1]);
       }
-#pragma cetus private(i1, x2, y2)
 #pragma loop name rprj3 #0 #0 #1
 #pragma cetus parallel
+#pragma cetus private(i1, x2, y2)
 #pragma cetus private(i1, j1, x2, y2)
-#pragma loop name rprj3 #0 #0 #1
 #pragma omp parallel for private(i1, j1, x2, y2)
       for (j1 = 1; j1 < (m1j - 1); j1++) {
         i1 = ((2 * j1) - d1);
@@ -857,31 +838,29 @@ static void interp(void *oz, int mm1, int mm2, int mm3, void *ou, int n1,
     timer_start(7);
   }
   if (((n1 != 3) && (n2 != 3)) && (n3 != 3)) {
-#pragma cetus private(i1, i2, i3, z1, z2, z3)
 #pragma loop name interp #0
 #pragma cetus private(i1, i2, i3, z1, z2, z3)
-#pragma loop name interp #0
+#pragma cetus private(i1, i2, i3, z1, z2, z3)
     for (i3 = 0; i3 < (mm3 - 1); i3++) {
-#pragma cetus private(i1, i2)
 #pragma cetus lastprivate(z1, z2, z3)
 #pragma loop name interp #0 #0
 #pragma cetus private(i1, i2)
 #pragma cetus lastprivate(z1, z2, z3)
-#pragma loop name interp #0 #0
+#pragma cetus private(i1, i2)
+#pragma cetus lastprivate(z1, z2, z3)
       for (i2 = 0; i2 < (mm2 - 1); i2++) {
 #pragma loop name interp #0 #0 #0
 #pragma cetus parallel
-#pragma loop name interp #0 #0 #0
-#pragma omp parallel for
+#pragma cetus private(i1)
+#pragma omp parallel for private(i1)
         for (i1 = 0; i1 < mm1; i1++) {
           z1[i1] = (z[i3][i2 + 1][i1] + z[i3][i2][i1]);
           z2[i1] = (z[i3 + 1][i2][i1] + z[i3][i2][i1]);
           z3[i1] = ((z[i3 + 1][i2 + 1][i1] + z[i3 + 1][i2][i1]) + z1[i1]);
         }
-#pragma cetus private(i1)
 #pragma loop name interp #0 #0 #1
 #pragma cetus private(i1)
-#pragma loop name interp #0 #0 #1
+#pragma cetus private(i1)
         for (i1 = 0; i1 < (mm1 - 1); i1++) {
           u[2 * i3][2 * i2][2 * i1] =
               (u[2 * i3][2 * i2][2 * i1] + z[i3][i2][i1]);
@@ -889,10 +868,9 @@ static void interp(void *oz, int mm1, int mm2, int mm3, void *ou, int n1,
               (u[2 * i3][2 * i2][(2 * i1) + 1] +
                (0.5 * (z[i3][i2][i1 + 1] + z[i3][i2][i1])));
         }
-#pragma cetus private(i1)
 #pragma loop name interp #0 #0 #2
 #pragma cetus private(i1)
-#pragma loop name interp #0 #0 #2
+#pragma cetus private(i1)
         for (i1 = 0; i1 < (mm1 - 1); i1++) {
           u[2 * i3][(2 * i2) + 1][2 * i1] =
               (u[2 * i3][(2 * i2) + 1][2 * i1] + (0.5 * z1[i1]));
@@ -900,10 +878,9 @@ static void interp(void *oz, int mm1, int mm2, int mm3, void *ou, int n1,
               (u[2 * i3][(2 * i2) + 1][(2 * i1) + 1] +
                (0.25 * (z1[i1] + z1[i1 + 1])));
         }
-#pragma cetus private(i1)
 #pragma loop name interp #0 #0 #3
 #pragma cetus private(i1)
-#pragma loop name interp #0 #0 #3
+#pragma cetus private(i1)
         for (i1 = 0; i1 < (mm1 - 1); i1++) {
           u[(2 * i3) + 1][2 * i2][2 * i1] =
               (u[(2 * i3) + 1][2 * i2][2 * i1] + (0.5 * z2[i1]));
@@ -911,10 +888,9 @@ static void interp(void *oz, int mm1, int mm2, int mm3, void *ou, int n1,
               (u[(2 * i3) + 1][2 * i2][(2 * i1) + 1] +
                (0.25 * (z2[i1] + z2[i1 + 1])));
         }
-#pragma cetus private(i1)
 #pragma loop name interp #0 #0 #4
 #pragma cetus private(i1)
-#pragma loop name interp #0 #0 #4
+#pragma cetus private(i1)
         for (i1 = 0; i1 < (mm1 - 1); i1++) {
           u[(2 * i3) + 1][(2 * i2) + 1][2 * i1] =
               (u[(2 * i3) + 1][(2 * i2) + 1][2 * i1] + (0.25 * z3[i1]));
@@ -946,32 +922,28 @@ static void interp(void *oz, int mm1, int mm2, int mm3, void *ou, int n1,
       d3 = 1;
       t3 = 0;
     }
-#pragma cetus private(i1, i2)
 #pragma loop name interp #1
 #pragma cetus parallel
+#pragma cetus private(i1, i2)
 #pragma cetus private(i1, i2, i3)
-#pragma loop name interp #1
 #pragma omp parallel for private(i1, i2, i3)
     for (i3 = d3; i3 <= (mm3 - 1); i3++) {
-#pragma cetus private(i1, i2)
 #pragma loop name interp #1 #0
 #pragma cetus private(i1, i2)
-#pragma loop name interp #1 #0
+#pragma cetus private(i1, i2)
       for (i2 = d2; i2 <= (mm2 - 1); i2++) {
-#pragma cetus private(i1)
 #pragma loop name interp #1 #0 #0
 #pragma cetus private(i1)
-#pragma loop name interp #1 #0 #0
+#pragma cetus private(i1)
         for (i1 = d1; i1 <= (mm1 - 1); i1++) {
           u[((2 * i3) - d3) - 1][((2 * i2) - d2) - 1][((2 * i1) - d1) - 1] =
               (u[((2 * i3) - d3) - 1][((2 * i2) - d2) - 1]
                 [((2 * i1) - d1) - 1] +
                z[i3 - 1][i2 - 1][i1 - 1]);
         }
-#pragma cetus private(i1)
 #pragma loop name interp #1 #0 #1
 #pragma cetus private(i1)
-#pragma loop name interp #1 #0 #1
+#pragma cetus private(i1)
         for (i1 = 1; i1 <= (mm1 - 1); i1++) {
           u[((2 * i3) - d3) - 1][((2 * i2) - d2) - 1][((2 * i1) - t1) - 1] =
               (u[((2 * i3) - d3) - 1][((2 * i2) - d2) - 1]
@@ -979,25 +951,22 @@ static void interp(void *oz, int mm1, int mm2, int mm3, void *ou, int n1,
                (0.5 * (z[i3 - 1][i2 - 1][i1] + z[i3 - 1][i2 - 1][i1 - 1])));
         }
       }
-#pragma cetus private(i1, i2)
 #pragma loop name interp #1 #1
 #pragma cetus private(i1, i2)
-#pragma loop name interp #1 #1
+#pragma cetus private(i1, i2)
       for (i2 = 1; i2 <= (mm2 - 1); i2++) {
-#pragma cetus private(i1)
 #pragma loop name interp #1 #1 #0
 #pragma cetus private(i1)
-#pragma loop name interp #1 #1 #0
+#pragma cetus private(i1)
         for (i1 = d1; i1 <= (mm1 - 1); i1++) {
           u[((2 * i3) - d3) - 1][((2 * i2) - t2) - 1][((2 * i1) - d1) - 1] =
               (u[((2 * i3) - d3) - 1][((2 * i2) - t2) - 1]
                 [((2 * i1) - d1) - 1] +
                (0.5 * (z[i3 - 1][i2][i1 - 1] + z[i3 - 1][i2 - 1][i1 - 1])));
         }
-#pragma cetus private(i1)
 #pragma loop name interp #1 #1 #1
 #pragma cetus private(i1)
-#pragma loop name interp #1 #1 #1
+#pragma cetus private(i1)
         for (i1 = 1; i1 <= (mm1 - 1); i1++) {
           u[((2 * i3) - d3) - 1][((2 * i2) - t2) - 1][((2 * i1) - t1) - 1] =
               (u[((2 * i3) - d3) - 1][((2 * i2) - t2) - 1]
@@ -1008,32 +977,28 @@ static void interp(void *oz, int mm1, int mm2, int mm3, void *ou, int n1,
         }
       }
     }
-#pragma cetus private(i1, i2)
 #pragma loop name interp #2
 #pragma cetus parallel
+#pragma cetus private(i1, i2)
 #pragma cetus private(i1, i2, i3)
-#pragma loop name interp #2
 #pragma omp parallel for private(i1, i2, i3)
     for (i3 = 1; i3 <= (mm3 - 1); i3++) {
-#pragma cetus private(i1, i2)
 #pragma loop name interp #2 #0
 #pragma cetus private(i1, i2)
-#pragma loop name interp #2 #0
+#pragma cetus private(i1, i2)
       for (i2 = d2; i2 <= (mm2 - 1); i2++) {
-#pragma cetus private(i1)
 #pragma loop name interp #2 #0 #0
 #pragma cetus private(i1)
-#pragma loop name interp #2 #0 #0
+#pragma cetus private(i1)
         for (i1 = d1; i1 <= (mm1 - 1); i1++) {
           u[((2 * i3) - t3) - 1][((2 * i2) - d2) - 1][((2 * i1) - d1) - 1] =
               (u[((2 * i3) - t3) - 1][((2 * i2) - d2) - 1]
                 [((2 * i1) - d1) - 1] +
                (0.5 * (z[i3][i2 - 1][i1 - 1] + z[i3 - 1][i2 - 1][i1 - 1])));
         }
-#pragma cetus private(i1)
 #pragma loop name interp #2 #0 #1
 #pragma cetus private(i1)
-#pragma loop name interp #2 #0 #1
+#pragma cetus private(i1)
         for (i1 = 1; i1 <= (mm1 - 1); i1++) {
           u[((2 * i3) - t3) - 1][((2 * i2) - d2) - 1][((2 * i1) - t1) - 1] =
               (u[((2 * i3) - t3) - 1][((2 * i2) - d2) - 1]
@@ -1043,15 +1008,13 @@ static void interp(void *oz, int mm1, int mm2, int mm3, void *ou, int n1,
                         z[i3 - 1][i2 - 1][i1 - 1])));
         }
       }
-#pragma cetus private(i1, i2)
 #pragma loop name interp #2 #1
 #pragma cetus private(i1, i2)
-#pragma loop name interp #2 #1
+#pragma cetus private(i1, i2)
       for (i2 = 1; i2 <= (mm2 - 1); i2++) {
-#pragma cetus private(i1)
 #pragma loop name interp #2 #1 #0
 #pragma cetus private(i1)
-#pragma loop name interp #2 #1 #0
+#pragma cetus private(i1)
         for (i1 = d1; i1 <= (mm1 - 1); i1++) {
           u[((2 * i3) - t3) - 1][((2 * i2) - t2) - 1][((2 * i1) - d1) - 1] =
               (u[((2 * i3) - t3) - 1][((2 * i2) - t2) - 1]
@@ -1060,10 +1023,9 @@ static void interp(void *oz, int mm1, int mm2, int mm3, void *ou, int n1,
                          z[i3 - 1][i2][i1 - 1]) +
                         z[i3 - 1][i2 - 1][i1 - 1])));
         }
-#pragma cetus private(i1)
 #pragma loop name interp #2 #1 #1
 #pragma cetus private(i1)
-#pragma loop name interp #2 #1 #1
+#pragma cetus private(i1)
         for (i1 = 1; i1 <= (mm1 - 1); i1++) {
           u[((2 * i3) - t3) - 1][((2 * i2) - t2) - 1][((2 * i1) - t1) - 1] =
               (u[((2 * i3) - t3) - 1][((2 * i2) - t2) - 1]
@@ -1111,20 +1073,17 @@ static void norm2u3(void * or, int n1, int n2, int n3, double *rnm2,
   dn = (((1.0 * nx) * ny) * nz);
   s = 0.0;
   (*rnmu) = 0.0;
-#pragma cetus private(a, i1, i2, i3)
 #pragma loop name norm2u3 #0
 #pragma cetus private(a, i1, i2, i3)
-#pragma loop name norm2u3 #0
+#pragma cetus private(a, i1, i2, i3)
   for (i3 = 1; i3 < (n3 - 1); i3++) {
-#pragma cetus private(a, i1, i2)
 #pragma loop name norm2u3 #0 #0
 #pragma cetus private(a, i1, i2)
-#pragma loop name norm2u3 #0 #0
+#pragma cetus private(a, i1, i2)
     for (i2 = 1; i2 < (n2 - 1); i2++) {
-#pragma cetus private(a, i1)
 #pragma loop name norm2u3 #0 #0 #0
 #pragma cetus private(a, i1)
-#pragma loop name norm2u3 #0 #0 #0
+#pragma cetus private(a, i1)
       for (i1 = 1; i1 < (n1 - 1); i1++) {
         s = (s + pow(r[i3][i2][i1], 2.0));
         a = fabs(r[i3][i2][i1]);
@@ -1160,49 +1119,43 @@ static void comm3(void *ou, int n1, int n2, int n3, int kk) {
     timer_start(9);
   }
 #pragma experimental section start
-#pragma cetus private(i2)
 #pragma loop name comm3 #0
 #pragma cetus parallel
+#pragma cetus private(i2)
 #pragma cetus private(i2, i3)
-#pragma loop name comm3 #0
 #pragma omp parallel for private(i2, i3)
   for (i3 = 1; i3 < (n3 - 1); i3++) {
-#pragma cetus private(i2)
 #pragma loop name comm3 #0 #0
 #pragma cetus private(i2)
-#pragma loop name comm3 #0 #0
+#pragma cetus private(i2)
     for (i2 = 1; i2 < (n2 - 1); i2++) {
       u[i3][i2][0] = u[i3][i2][n1 - 2];
       u[i3][i2][n1 - 1] = u[i3][i2][1];
     }
   }
-#pragma cetus private(i1)
 #pragma loop name comm3 #1
 #pragma cetus parallel
+#pragma cetus private(i1)
 #pragma cetus private(i1, i3)
-#pragma loop name comm3 #1
 #pragma omp parallel for private(i1, i3)
   for (i3 = 1; i3 < (n3 - 1); i3++) {
-#pragma cetus private(i1)
 #pragma loop name comm3 #1 #0
 #pragma cetus private(i1)
-#pragma loop name comm3 #1 #0
+#pragma cetus private(i1)
     for (i1 = 0; i1 < n1; i1++) {
       u[i3][0][i1] = u[i3][n2 - 2][i1];
       u[i3][n2 - 1][i1] = u[i3][1][i1];
     }
   }
-#pragma cetus private(i1)
 #pragma loop name comm3 #2
 #pragma cetus parallel
+#pragma cetus private(i1)
 #pragma cetus private(i1, i2)
-#pragma loop name comm3 #2
 #pragma omp parallel for private(i1, i2)
   for (i2 = 0; i2 < n2; i2++) {
-#pragma cetus private(i1)
 #pragma loop name comm3 #2 #0
 #pragma cetus private(i1)
-#pragma loop name comm3 #2 #0
+#pragma cetus private(i1)
     for (i1 = 0; i1 < n1; i1++) {
       u[0][i2][i1] = u[n3 - 2][i2][i1];
       u[n3 - 1][i2][i1] = u[1][i2][i1];
@@ -1232,12 +1185,6 @@ static void zran3(void *oz, int n1, int n2, int n3, int nx, int ny, int k) {
   int i, j1[mm][2], j2[mm][2], j3[mm][2];
   int jg[4][mm][2];
   double rdummy;
-  int cetus_tile_zran3_2_i1 = 1272;
-  int i1_cetus_cross;
-  int cetus_tile_zran3_2_i2 = 1272;
-  int i2_cetus_cross;
-  int cetus_tile_zran3_2_i3 = ((-2 + n3) / (4 * ((5085 + n3) / 5088)));
-  int i3_cetus_cross;
   a1 = power(a, nx);
   a2 = power(a, nx * ny);
   zero3(z, n1, n2, n3);
@@ -1250,16 +1197,14 @@ static void zran3(void *oz, int n1, int n2, int n3, int nx, int ny, int k) {
   x0 = x;
   rdummy = randlc(&x0, ai);
 #pragma experimental section start
-#pragma cetus private(i2, i3, rdummy)
 #pragma loop name zran3 #0
 #pragma cetus private(i2, i3, rdummy)
-#pragma loop name zran3 #0
+#pragma cetus private(i2, i3, rdummy)
   for (i3 = 1; i3 < e3; i3++) {
     x1 = x0;
-#pragma cetus private(i2, rdummy)
 #pragma loop name zran3 #0 #0
 #pragma cetus private(i2, rdummy)
-#pragma loop name zran3 #0 #0
+#pragma cetus private(i2, rdummy)
     for (i2 = 1; i2 < e2; i2++) {
       xx = x1;
       vranlc(d1, &xx, a, &z[i3][i2][1]);
@@ -1276,8 +1221,8 @@ static void zran3(void *oz, int n1, int n2, int n3, int nx, int ny, int k) {
 /* --------------------------------------------------------------------- */
 #pragma loop name zran3 #1
 #pragma cetus parallel
-#pragma loop name zran3 #1
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < mm; i++) {
     ten[i][1] = 0.0;
     j1[i][1] = 0;
@@ -1288,102 +1233,31 @@ static void zran3(void *oz, int n1, int n2, int n3, int nx, int ny, int k) {
     j2[i][0] = 0;
     j3[i][0] = 0;
   }
-  if (((((1 * (-2 + n3)) * (-2 + n2)) * (-2 + n1)) <= 100000) ||
-      (3276800 >= (8 * mm))) {
-#pragma cetus private(i1, i2, i3)
 #pragma loop name zran3 #2
 #pragma cetus private(i1, i2, i3)
-#pragma loop name zran3 #2
-    for (i3 = 1; i3 < (n3 - 1); i3++) {
-#pragma cetus private(i1, i2)
+#pragma cetus private(i1, i2, i3)
+  for (i3 = 1; i3 < (n3 - 1); i3++) {
 #pragma loop name zran3 #2 #0
 #pragma cetus private(i1, i2)
 #pragma cetus private(i1, i2)
-#pragma loop name zran3 #2 #0
-#pragma loop name zran3 #3 #0 #0 #0 #0
-      for (i2 = 1; i2 < (n2 - 1); i2++) {
-#pragma cetus private(i1)
+    for (i2 = 1; i2 < (n2 - 1); i2++) {
 #pragma loop name zran3 #2 #0 #0
 #pragma cetus private(i1)
 #pragma cetus private(i1)
-#pragma loop name zran3 #2 #0 #0
-#pragma loop name zran3 #3 #0 #0 #0 #0 #0
-        for (i1 = 1; i1 < (n1 - 1); i1++) {
-          if (z[i3][i2][i1] > ten[0][1]) {
-            ten[0][1] = z[i3][i2][i1];
-            j1[0][1] = i1;
-            j2[0][1] = i2;
-            j3[0][1] = i3;
-            bubble(ten, j1, j2, j3, mm, 1);
-          }
-          if (z[i3][i2][i1] < ten[0][0]) {
-            ten[0][0] = z[i3][i2][i1];
-            j1[0][0] = i1;
-            j2[0][0] = i2;
-            j3[0][0] = i3;
-            bubble(ten, j1, j2, j3, mm, 0);
-          }
+      for (i1 = 1; i1 < (n1 - 1); i1++) {
+        if (z[i3][i2][i1] > ten[0][1]) {
+          ten[0][1] = z[i3][i2][i1];
+          j1[0][1] = i1;
+          j2[0][1] = i2;
+          j3[0][1] = i3;
+          bubble(ten, j1, j2, j3, mm, 1);
         }
-      }
-    }
-  } else {
-#pragma cetus parallel
-#pragma cetus private(i1, i1_cetus_cross, i2, i2_cetus_cross, i3)
-#pragma loop name zran3 #3
-#pragma c_paw_tiling zran3 #3 = i1 #1272
-#pragma c_paw_tiling zran3 #3 = i2 #1272
-#pragma c_paw_tiling zran3 #3 = i3 #symbolic
-#pragma omp parallel for private(i1, i1_cetus_cross, i2, i2_cetus_cross, i3)
-    for (i3_cetus_cross = 1; i3_cetus_cross < (n3 - 1);
-         i3_cetus_cross += cetus_tile_zran3_2_i3) {
-#pragma cetus private(i1, i1_cetus_cross, i2, i2_cetus_cross, i3)
-#pragma loop name zran3 #3 #0
-      for (i2_cetus_cross = 1; i2_cetus_cross < (n2 - 1);
-           i2_cetus_cross += cetus_tile_zran3_2_i2) {
-#pragma cetus private(i1, i1_cetus_cross, i2, i3)
-#pragma loop name zran3 #3 #0 #0
-        for (i1_cetus_cross = 1; i1_cetus_cross < (n1 - 1);
-             i1_cetus_cross += cetus_tile_zran3_2_i1) {
-#pragma cetus private(i1, i2, i3)
-#pragma loop name zran3 #3 #0 #0 #0
-          for (i3 = i3_cetus_cross;
-               i3 < MIN((n3 - 1), (cetus_tile_zran3_2_i3 + i3_cetus_cross));
-               i3++) {
-#pragma cetus private(i1, i2)
-#pragma loop name zran3 #2 #0
-#pragma cetus private(i1, i2)
-#pragma cetus private(i1, i2)
-#pragma loop name zran3 #2 #0
-#pragma loop name zran3 #3 #0 #0 #0 #0
-            for (i2 = i2_cetus_cross;
-                 i2 < MIN((n2 - 1), (cetus_tile_zran3_2_i2 + i2_cetus_cross));
-                 i2++) {
-#pragma cetus private(i1)
-#pragma loop name zran3 #2 #0 #0
-#pragma cetus private(i1)
-#pragma cetus private(i1)
-#pragma loop name zran3 #2 #0 #0
-#pragma loop name zran3 #3 #0 #0 #0 #0 #0
-              for (i1 = i1_cetus_cross;
-                   i1 < MIN((n1 - 1), (cetus_tile_zran3_2_i1 + i1_cetus_cross));
-                   i1++) {
-                if (z[i3][i2][i1] > ten[0][1]) {
-                  ten[0][1] = z[i3][i2][i1];
-                  j1[0][1] = i1;
-                  j2[0][1] = i2;
-                  j3[0][1] = i3;
-                  bubble(ten, j1, j2, j3, mm, 1);
-                }
-                if (z[i3][i2][i1] < ten[0][0]) {
-                  ten[0][0] = z[i3][i2][i1];
-                  j1[0][0] = i1;
-                  j2[0][0] = i2;
-                  j3[0][0] = i3;
-                  bubble(ten, j1, j2, j3, mm, 0);
-                }
-              }
-            }
-          }
+        if (z[i3][i2][i1] < ten[0][0]) {
+          ten[0][0] = z[i3][i2][i1];
+          j1[0][0] = i1;
+          j2[0][0] = i2;
+          j3[0][0] = i3;
+          bubble(ten, j1, j2, j3, mm, 0);
         }
       }
     }
@@ -1393,10 +1267,9 @@ static void zran3(void *oz, int n1, int n2, int n3, int nx, int ny, int k) {
   /* --------------------------------------------------------------------- */
   i1 = (mm - 1);
   i0 = (mm - 1);
-#pragma cetus private(best, i)
 #pragma loop name zran3 #3
 #pragma cetus private(best, i)
-#pragma loop name zran3 #4
+#pragma cetus private(best, i)
   for (i = (mm - 1); i >= 0; i--) {
     best = 0.0;
     if (best < ten[i1][1]) {
@@ -1479,34 +1352,31 @@ static void zran3(void *oz, int n1, int n2, int n3, int nx, int ny, int k) {
 #pragma loop name zran3 #4
 #pragma cetus parallel
 #pragma cetus private(i1, i2, i3)
-#pragma loop name zran3 #5
+#pragma cetus private(i1, i2, i3)
 #pragma omp parallel for private(i1, i2, i3)
   for (i3 = 0; i3 < n3; i3++) {
-#pragma cetus private(i1, i2)
 #pragma loop name zran3 #4 #0
 #pragma cetus private(i1, i2)
-#pragma loop name zran3 #5 #0
+#pragma cetus private(i1, i2)
     for (i2 = 0; i2 < n2; i2++) {
-#pragma cetus private(i1)
 #pragma loop name zran3 #4 #0 #0
 #pragma cetus private(i1)
-#pragma loop name zran3 #5 #0 #0
+#pragma cetus private(i1)
       for (i1 = 0; i1 < n1; i1++) {
         z[i3][i2][i1] = 0.0;
       }
     }
   }
-#pragma cetus private(i)
 #pragma loop name zran3 #5
 #pragma cetus private(i)
-#pragma loop name zran3 #6
+#pragma cetus private(i)
   for (i = (mm - 1); i >= m0; i--) {
     z[jg[3][i][0]][jg[2][i][0]][jg[1][i][0]] = (-1.0);
   }
 #pragma cetus private(i)
 #pragma loop name zran3 #6
 #pragma cetus private(i)
-#pragma loop name zran3 #7
+#pragma cetus private(i)
   for (i = (mm - 1); i >= m1; i--) {
     z[jg[3][i][1]][jg[2][i][1]][jg[1][i][1]] = (+1.0);
   }
@@ -1526,20 +1396,17 @@ static void showall(void *oz, int n1, int n2, int n3) {
   m2 = ((n2 < 14) ? n2 : 14);
   m3 = ((n3 < 18) ? n3 : 18);
   printf("   \n");
-#pragma cetus private(i1, i2, i3)
 #pragma loop name showall #0
 #pragma cetus private(i1, i2, i3)
-#pragma loop name showall #0
+#pragma cetus private(i1, i2, i3)
   for (i3 = 0; i3 < m3; i3++) {
-#pragma cetus private(i1, i2)
 #pragma loop name showall #0 #0
 #pragma cetus private(i1, i2)
-#pragma loop name showall #0 #0
+#pragma cetus private(i1, i2)
     for (i1 = 0; i1 < m1; i1++) {
-#pragma cetus private(i2)
 #pragma loop name showall #0 #0 #0
 #pragma cetus private(i2)
-#pragma loop name showall #0 #0 #0
+#pragma cetus private(i2)
       for (i2 = 0; i2 < m2; i2++) {
         printf("%6.3f", z[i3][i2][i1]);
       }
@@ -1581,7 +1448,6 @@ static void bubble(double ten[][2], int j1[][2], int j2[][2], int j3[][2],
   int i, j_temp;
   if (ind == 1) {
 #pragma loop name bubble #0
-#pragma loop name bubble #0
     for (i = 0; i < (m - 1); i++) {
       if (ten[i][ind] > ten[i + 1][ind]) {
         temp = ten[i + 1][ind];
@@ -1601,7 +1467,6 @@ static void bubble(double ten[][2], int j1[][2], int j2[][2], int j3[][2],
       }
     }
   } else {
-#pragma loop name bubble #1
 #pragma loop name bubble #1
     for (i = 0; i < (m - 1); i++) {
       if (ten[i][ind] < ten[i + 1][ind]) {
@@ -1627,22 +1492,19 @@ static void bubble(double ten[][2], int j1[][2], int j2[][2], int j3[][2],
 static void zero3(void *oz, int n1, int n2, int n3) {
   double(*z)[n2][n1] = (double(*)[n2][n1])oz;
   int i1, i2, i3;
-#pragma cetus private(i1, i2)
 #pragma loop name zero3 #0
 #pragma cetus parallel
+#pragma cetus private(i1, i2)
 #pragma cetus private(i1, i2, i3)
-#pragma loop name zero3 #0
 #pragma omp parallel for private(i1, i2, i3)
   for (i3 = 0; i3 < n3; i3++) {
-#pragma cetus private(i1, i2)
 #pragma loop name zero3 #0 #0
 #pragma cetus private(i1, i2)
-#pragma loop name zero3 #0 #0
+#pragma cetus private(i1, i2)
     for (i2 = 0; i2 < n2; i2++) {
-#pragma cetus private(i1)
 #pragma loop name zero3 #0 #0 #0
 #pragma cetus private(i1)
-#pragma loop name zero3 #0 #0 #0
+#pragma cetus private(i1)
       for (i1 = 0; i1 < n1; i1++) {
         z[i3][i2][i1] = 0.0;
       }

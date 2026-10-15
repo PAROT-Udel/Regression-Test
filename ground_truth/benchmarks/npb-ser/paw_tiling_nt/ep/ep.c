@@ -5,7 +5,6 @@
 #define FLOOR(x) ((int)((x) - 0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
-#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -165,7 +164,6 @@ int main() {
   /*  Compute AN = A ^ (2 NK) (mod 2^46). */
   /* -------------------------------------------------------------------- */
   t1 = 1.220703125E9;
-#pragma cetus private(i, t2)
 #pragma loop name main #1
   for (i = 0; i < (16 + 1); i++) {
     t2 = randlc(&t1, t1);
@@ -187,7 +185,6 @@ int main() {
   /*  have more numbers to generate than others */
   /* -------------------------------------------------------------------- */
   k_offset = (-1);
-#pragma cetus private(i, ik, k, kk, l, t3, t4, x1, x2)
 #pragma loop name main #3
   /* #pragma cetus reduction(+: q[l], sx, sy)  */
   for (k = 1; k <= np; k++) {

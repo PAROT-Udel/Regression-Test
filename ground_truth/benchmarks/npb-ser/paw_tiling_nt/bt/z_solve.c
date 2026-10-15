@@ -108,19 +108,21 @@ void z_solve() {
 /* Compute the indices for storing the block-diagonal matrix; */
 /* determine c (labeled f) and s jacobians */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, k, m, n)
 #pragma loop name z_solve #0
 #pragma cetus private(i, j, k, m, n)
+#pragma cetus private(i, j, k, m, n)
   for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, k, m, n)
 #pragma loop name z_solve #0 #0
+#pragma cetus private(i, k, m, n)
 #pragma cetus private(i, k, m, n)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
 #pragma cetus lastprivate(tmp1, tmp2, tmp3)
 #pragma loop name z_solve #0 #0 #0
 #pragma cetus parallel
 #pragma cetus lastprivate(tmp1, tmp2, tmp3)
-#pragma omp parallel for lastprivate(tmp1, tmp2, tmp3)
+#pragma cetus private(k)
+#pragma cetus lastprivate(tmp1, tmp2, tmp3)
+#pragma omp parallel for private(k) lastprivate(tmp1, tmp2, tmp3)
       for (k = 0; k <= ksize; k++) {
         tmp1 = (1.0 / u[k][j][i][0]);
         tmp2 = (tmp1 * tmp1);
@@ -197,7 +199,9 @@ void z_solve() {
 #pragma loop name z_solve #0 #0 #1
 #pragma cetus parallel
 #pragma cetus lastprivate(tmp1, tmp2)
-#pragma omp parallel for lastprivate(tmp1, tmp2)
+#pragma cetus private(k)
+#pragma cetus lastprivate(tmp1, tmp2)
+#pragma omp parallel for private(k) lastprivate(tmp1, tmp2)
       for (k = 1; k <= (ksize - 1); k++) {
         tmp1 = (dt * tz1);
         tmp2 = (dt * tz2);
@@ -373,8 +377,8 @@ void z_solve() {
 /* begin inner most do loop */
 /* do all the elements of the cell unless last  */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(k)
 #pragma loop name z_solve #0 #0 #2
+#pragma cetus private(k)
 #pragma cetus private(k)
       for (k = 1; k <= (ksize - 1); k++) {
         /* -------------------------------------------------------------------
@@ -433,18 +437,19 @@ void z_solve() {
 /* so just use it */
 /* after u(kstart) will be sent to next cell */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(k, m, n)
 #pragma loop name z_solve #0 #0 #3
+#pragma cetus private(k, m, n)
 #pragma cetus private(k, m, n)
       for (k = (ksize - 1); k >= 0; k--) {
 #pragma cetus private(n)
 #pragma loop name z_solve #0 #0 #3 #0
 #pragma cetus parallel
 #pragma cetus private(m, n)
+#pragma cetus private(m, n)
 #pragma omp parallel for private(m, n)
         for (m = 0; m < 5; m++) {
-#pragma cetus private(n)
 #pragma loop name z_solve #0 #0 #3 #0 #0
+#pragma cetus private(n)
 #pragma cetus private(n)
           for (n = 0; n < 5; n++) {
             rhs[k][j][i][m] =

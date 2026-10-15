@@ -67,19 +67,19 @@ static void init_array(int m, int n, double *alpha,
                        double B[(20 + 0)][(30 + 0)]) {
   int i, j;
   (*alpha) = 1.5;
-#pragma cetus private(j)
+#pragma cetus private(i, j)
 #pragma loop name init_array #0
-#pragma cetus parallel
-#pragma omp parallel for private(j)
   for (i = 0; i < m; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus parallel
+#pragma omp parallel for
     for (j = 0; j < i; j++) {
       A[i][j] = (((double)((i + j) % m)) / m);
     }
     A[i][i] = 1.0;
-#pragma cetus private(j)
 #pragma loop name init_array #0 #1
+#pragma cetus parallel
+#pragma omp parallel for
     for (j = 0; j < n; j++) {
       B[i][j] = (((double)((n + (i - j)) % n)) / n);
     }

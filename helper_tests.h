@@ -7,11 +7,9 @@
 #define MAX_PATH_LENGTH 1024 // Maximum length for file paths
 #define GROUND_TRUTH_SUFFIX "_gt.c" // Suffix for ground truth files
 
-// Paths to external tools
-// IMPORTANT: Update these paths to match your system's installation
-#define CETUS_PATH       "/mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus"
+/* Preprocessor for kernel snippets. CETUS and CLANG_FORMAT come from
+   benchmarks/config/paths.env (environment variables override the file). */
 #define CLANG_PATH       "clang"          // Or "/usr/bin/clang"
-#define CLANG_FORMAT_PATH "clang-format" // Or "/usr/bin/clang-format"
 
 
 // --- Enums for Test Configuration ---
@@ -98,6 +96,8 @@ extern ExpectedOutcome string_to_expected_outcome(const char* str);
 extern void log_test_outcome(TestOutcome outcome, const char* category, const char* input_file_base_name,
                              const char* reason_message, const char* command_executed);
 extern int run_test_case(const char* category, const char* input_file_base_name, TestMode mode,
-                         TransformationType transform_type, ExpectedOutcome expected_outcome, const char* custom_cetus_flags);
+                         TransformationType transform_type, ExpectedOutcome expected_outcome,
+                         const char* custom_cetus_flags, const char* cetus_path,
+                         const char* clang_format_path);
 
 #endif // HELPER_TESTS_H

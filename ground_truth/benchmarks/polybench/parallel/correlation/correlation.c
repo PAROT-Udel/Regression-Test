@@ -178,6 +178,7 @@ static void kernel_correlation(int m, int n, double float_n,
       corr[i][j] = 0.0;
 #pragma cetus private(k)
 #pragma loop name kernel_correlation #3 #0 #0
+      /* #pragma cetus reduction(+: corr[i][j])  */
       for (k = 0; k < n; k++) {
         corr[i][j] += (data[k][i] * data[k][j]);
       }

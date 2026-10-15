@@ -107,8 +107,11 @@
     \bottomrule
   \end{tabular}\par
   \vspace{0.4em}
-  Paths to Cetus, NPB, and PolyBench come from \texttt{paths.env}.
-  \note{Say the JSON lives in benchmarks/config. Suites pick kernels, class or dataset, and which profiles apply. Profiles are a separate file of Cetus flags. Kernel snippets are benchmarks/config/kernels. Six unit-test programs check the harness itself and are not Cetus runs.}
+  Cetus, clang-format, NPB, and PolyBench come from \texttt{paths.env}.
+  \texttt{paths.example.env} is a template and is not loaded.
+  Kernel snippets use that same Cetus path.
+  Their flags are in \texttt{kernels/*.json}, not \texttt{profiles.json}.
+  \note{Say the JSON lives in benchmarks/config. Suites pick kernels, class or dataset, and which profiles apply. Profiles are a separate file of Cetus flags. Kernel snippets are benchmarks/config/kernels and share CETUS from paths.env. The harness does not read paths.example.env. Environment variables override the file. Six unit-test programs check the harness itself and are not Cetus runs.}
 \end{frame}
 
 \begin{frame}{What is tested}
@@ -123,22 +126,24 @@
     PolyBench & data mining, linear algebra, stencils, medley & 30 \\
     \bottomrule
   \end{tabular}\par
-  \vspace{0.55em}
+  \vspace{0.3em}
   Every profile starts from dependence analysis, privatization, reduction, and OpenMP output
   (\texttt{-ddt=2 -privatize=2 -reduction=2 -ompGen=1}).
-  \vspace{0.35em}
-  \begin{tabular}{@{}p{0.22\textwidth}p{0.22\textwidth}p{0.48\textwidth}@{}}
+  \vspace{0.25em}
+  \footnotesize
+  \begin{tabular}{@{}p{0.22\textwidth}p{0.36\textwidth}p{0.38\textwidth}@{}}
     \toprule
     Profile & Where & What is added \\
     \midrule
-    parallel & NPB and PolyBench & OpenMP only. No tiling. \\
-    paw\_tiling\_nt & NPB and PolyBench & PAW on. NT tile sizes, 4 cores, 25\,600\,KiB shared cache, 64-byte lines. \\
-    paw\_tiling\_lrw & NPB and PolyBench & PAW on. LRW (FindB) tile sizes. Same cache model. \\
-    paw\_tiling\_fixed32 & NPB and PolyBench & PAW on. Every tiled loop uses size 32. \\
-    reuse\_analysis & NPB only & Reuse-vector analysis on. No tiling. \\
+    parallel & NPB serial, PolyBench, opt-in NPB OpenMP & OpenMP only. No tiling. \\
+    paw\_tiling\_nt & NPB serial and PolyBench & PAW on. NT tile sizes, 4 cores, 25\,600\,KiB shared cache, 64-byte lines. \\
+    paw\_tiling\_lrw & NPB serial and PolyBench & PAW on. LRW (FindB) tile sizes. Same cache model. \\
+    paw\_tiling\_fixed32 & NPB serial and PolyBench & PAW on. Every tiled loop uses size 32. \\
+    reuse\_analysis & NPB serial only & Reuse-vector analysis on. No tiling. \\
     \bottomrule
   \end{tabular}\par
-  \note{Tiling snippets use the PAW flags, not these benchmark profiles. Subscript tests turn OpenMP generation off. The three PAW profiles differ only in tile-size selection. reuse\_analysis is NPB only because that is how the suite JSON is written. cacheSize is in kibibytes. The parallel profile is not stock Cetus: alias is 3 rather than 1, and profitable-omp is off.}
+  \normalsize
+  \note{Tiling snippets use the PAW flags in kernels/tiling.json, not these benchmark profiles. Subscript tests turn OpenMP generation off. The three PAW profiles differ only in tile-size selection. reuse\_analysis is NPB serial only because that is how the suite JSON is written. cacheSize is in kibibytes. The parallel profile is not stock Cetus: alias is 3 rather than 1, and profitable-omp is off. npb-omp is opt-in and uses parallel only. Cetus fails on ua/adapt.c, a ClassCastException from IntegerLiteral to RangeExpression, so that kernel has no ground truth.}
 \end{frame}
 
 \end{document}

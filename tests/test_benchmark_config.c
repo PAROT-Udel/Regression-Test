@@ -84,6 +84,7 @@ static int test_loads_owned_models_and_precedence(void)
 
     CHECK(mkdtemp(root) != NULL);
     CHECK(make_fixture(root) == 0);
+    CHECK(unsetenv("CPP") == 0);
     CHECK(setenv("CETUS", "/env/cetus", 1) == 0);
     CHECK(setenv("CUSTOM_ROOT", "/env/custom", 1) == 0);
     CHECK(setenv("NPB_ROOT", "/env/npb", 1) == 0);
@@ -100,6 +101,7 @@ static int test_loads_owned_models_and_precedence(void)
     CHECK(strcmp(benchmark_config_path(&config, "GCC"), "local-gcc") == 0);
     CHECK(strcmp(benchmark_config_path(&config, "CUSTOM_ROOT"), "/env/custom") == 0);
     CHECK(strcmp(benchmark_config_path(&config, "NPB_ROOT"), "/env/npb") == 0);
+    CHECK(benchmark_config_path(&config, "CPP") == NULL);
 
     CHECK(config.suites[0].adapter == BENCHMARK_ADAPTER_GENERIC);
     CHECK(config.suites[0].kernel_count == 1);
@@ -263,27 +265,102 @@ static int test_template_expansion(void)
     return 0;
 }
 
+static int profile_has_flag(const BenchmarkConfig *config,
+                            const char *name,
+                            const char *flag)
+{
+    size_t profile;
+    size_t index;
+    for (profile = 0; profile < config->profile_count; ++profile) {
+        if (strcmp(config->profiles[profile].name, name) != 0) {
+            continue;
+        }
+        for (index = 0; index < config->profiles[profile].flags.length;
+             ++index) {
+            if (strcmp(config->profiles[profile].flags.items[index], flag) ==
+                0) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+    return 0;
+}
+
+static int test_load_paths_without_suites(void)
+{
+    char root[] = "/tmp/cetus-paths-only-XXXXXX";
+    char *example = NULL;
+    char *local = NULL;
+    BenchmarkConfig config;
+    char error[512];
+
+    CHECK(mkdtemp(root) != NULL);
+    example = runner_path_join(root, "paths.example.env");
+    local = runner_path_join(root, "paths.env");
+    CHECK(example != NULL && local != NULL);
+    CHECK(write_text(example,
+                     "CETUS=/example/cetus\nCLANG_FORMAT=example-format\n"
+                     "EXAMPLE_ONLY=/from-example\n") ==
+          0);
+    CHECK(write_text(local, "CETUS=/local/cetus\n") == 0);
+    CHECK(unsetenv("CETUS") == 0);
+    CHECK(setenv("CLANG_FORMAT", "env-format", 1) == 0);
+
+    benchmark_config_init(&config);
+    CHECK(benchmark_config_load_paths(root, &config, error, sizeof(error)) ==
+          0);
+    CHECK(strcmp(benchmark_config_path(&config, "CETUS"), "/local/cetus") == 0);
+    CHECK(strcmp(benchmark_config_path(&config, "CLANG_FORMAT"),
+                 "env-format") == 0);
+    CHECK(benchmark_config_path(&config, "EXAMPLE_ONLY") == NULL);
+    CHECK(config.profile_count == 0);
+    CHECK(config.suite_count == 0);
+    benchmark_config_free(&config);
+    CHECK(unsetenv("CLANG_FORMAT") == 0);
+    CHECK(runner_remove_recursive(root) == 0);
+    free(local);
+    free(example);
+    return 0;
+}
+
 static int test_repository_configuration(void)
 {
     BenchmarkConfig config;
     char error[512];
+    size_t index;
+    int listed = 0;
 
     benchmark_config_init(&config);
     CHECK(benchmark_config_load(
               "benchmarks/config", &config, error, sizeof(error)) == 0);
     CHECK(config.profile_count == 5);
+    CHECK(profile_has_flag(&config, "parallel", "-alias=3"));
+    CHECK(profile_has_flag(&config, "paw_tiling_nt", "-paw_tiling=1"));
+    CHECK(profile_has_flag(&config, "paw_tiling_fixed32", "-tileSizes=32"));
+    CHECK(benchmark_config_path(&config, "CETUS") != NULL);
+    CHECK(benchmark_config_path(&config, "CETUS")[0] != '\0');
+    CHECK(benchmark_config_path(&config, "CLANG_FORMAT") != NULL);
     CHECK(config.suite_count == 4);
     CHECK(strcmp(config.suites[0].id, "generic-example") == 0);
     CHECK(strcmp(config.suites[1].id, "npb-omp") == 0);
     CHECK(strcmp(config.suites[2].id, "npb-ser") == 0);
     CHECK(strcmp(config.suites[3].id, "polybench") == 0);
     CHECK(config.suites[3].kernel_count == 30);
+    for (index = 0; index < config.suites[3].profiles.length; ++index) {
+        if (strcmp(config.suites[3].profiles.items[index], "paw_tiling_nt") ==
+            0) {
+            listed = 1;
+        }
+    }
+    CHECK(listed);
     benchmark_config_free(&config);
     return 0;
 }
 
 int main(void)
 {
+    CHECK(test_load_paths_without_suites() == 0);
     CHECK(test_loads_owned_models_and_precedence() == 0);
     CHECK(test_template_expansion() == 0);
     CHECK(test_validation_errors() == 0);

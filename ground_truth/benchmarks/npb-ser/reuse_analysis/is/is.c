@@ -343,7 +343,7 @@ void rank(int iteration) {
   }
 /*  Determine the number of keys in each bucket */
 #pragma loop name rank #2
-  /* #pragma cetus reduction(+: bucket_size[(key_array[i]>>shift)])  */
+  /* #pragma cetus reduction(+: )  */
   for (i = 0; i < (1 << 16); i++) {
     bucket_size[key_array[i] >> shift]++;
   }
@@ -375,7 +375,7 @@ void rank(int iteration) {
     individual population
 */
 #pragma loop name rank #6
-  /* #pragma cetus reduction(+: key_buff_ptr[key_buff_ptr2[i]])  */
+  /* #pragma cetus reduction(+: )  */
   for (i = 0; i < (1 << 16); i++) {
     key_buff_ptr[key_buff_ptr2[i]]++;
   }

@@ -173,6 +173,7 @@ static void kernel_gramschmidt(int m, int n, double A[(20 + 0)][(30 + 0)],
       R[k][j] = 0.0;
 #pragma cetus private(i)
 #pragma loop name kernel_gramschmidt #0 #2 #0
+      /* #pragma cetus reduction(+: R[k][j])  */
       for (i = 0; i < m; i++) {
         R[k][j] += (Q[i][k] * A[i][j]);
       }

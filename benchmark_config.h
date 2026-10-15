@@ -135,6 +135,12 @@ int benchmark_config_load(const char *config_directory,
                           BenchmarkConfig *config,
                           char *error,
                           size_t error_size);
+/* Loads paths.env, then CETUS/CLANG_FORMAT/GCC/DIFF/CPP from the environment.
+   paths.example.env is not read. Does not read profiles.json or suite JSON. */
+int benchmark_config_load_paths(const char *config_directory,
+                                BenchmarkConfig *config,
+                                char *error,
+                                size_t error_size);
 void benchmark_config_free(BenchmarkConfig *config);
 const char *benchmark_config_path(const BenchmarkConfig *config,
                                   const char *name);

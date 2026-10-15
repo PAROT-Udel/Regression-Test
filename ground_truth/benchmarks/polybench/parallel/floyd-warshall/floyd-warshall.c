@@ -115,7 +115,7 @@ static void kernel_floyd_warshall(int n, int path[(60 + 0)][(60 + 0)]) {
 #pragma experimental section start
 #pragma cetus private(i, j)
 #pragma loop name kernel_floyd_warshall #0
-  /* #pragma cetus reduction(min: path[i][j])  */
+  /* #pragma cetus reduction(min: )  */
   for (k = 0; k < n; k++) {
 #pragma cetus private(i, j)
 #pragma loop name kernel_floyd_warshall #0 #0

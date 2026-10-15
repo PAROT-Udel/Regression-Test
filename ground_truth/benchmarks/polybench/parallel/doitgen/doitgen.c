@@ -136,16 +136,16 @@ void kernel_doitgen(int nr, int nq, int np,
 #pragma cetus private(p, q, s)
 #pragma cetus lastprivate(sum)
 #pragma loop name kernel_doitgen #0
-#pragma cetus parallel
-#pragma omp parallel for private(p, q, s) firstprivate(sum) lastprivate(sum)
   for (r = 0; r < nr; r++) {
 #pragma cetus firstprivate(sum)
-#pragma cetus private(p, q, s)
+#pragma cetus private(p, s)
 #pragma cetus lastprivate(sum)
 #pragma loop name kernel_doitgen #0 #0
     for (q = 0; q < nq; q++) {
-#pragma cetus private(p, s)
+#pragma cetus private(s)
 #pragma loop name kernel_doitgen #0 #0 #0
+#pragma cetus parallel
+#pragma omp parallel for private(s)
       for (p = 0; p < np; p++) {
         sum[p] = 0.0;
 #pragma cetus private(s)
@@ -155,8 +155,9 @@ void kernel_doitgen(int nr, int nq, int np,
           sum[p] += (A[r][q][s] * C4[s][p]);
         }
       }
-#pragma cetus private(p)
 #pragma loop name kernel_doitgen #0 #0 #1
+#pragma cetus parallel
+#pragma omp parallel for
       for (p = 0; p < np; p++) {
         A[r][q][p] = sum[p];
       }

@@ -92,43 +92,45 @@ static void com_dpc(int iside, int iel, int enumber, int n, int isize);
 void setuppc() {
   double dxtm1_2[5][5], rdtime;
   int ie, k, i, j, q, isize;
-#pragma cetus private(i)
 #pragma loop name setuppc #0
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name setuppc #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 5; i++) {
       dxtm1_2[j][i] = (dxtm1[j][i] * dxtm1[j][i]);
     }
   }
   rdtime = (1.0 / dtime);
-#pragma cetus private(i, ie, isize, j, k, q)
 #pragma loop name setuppc #1
+#pragma cetus private(i, ie, isize, j, k, q)
 #pragma cetus private(i, ie, isize, j, k, q)
   for (ie = 0; ie < nelt; ie++) {
     r_init(dpcelm[ie][0][0], (5 * 5) * 5, 0.0);
     isize = size_e[ie];
-#pragma cetus private(i, j, q)
 #pragma loop name setuppc #1 #0
 #pragma cetus parallel
+#pragma cetus private(i, j, q)
 #pragma cetus private(i, j, k, q)
 #pragma omp parallel for private(i, j, k, q)
     for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j, q)
 #pragma loop name setuppc #1 #0 #0
 #pragma cetus private(i, j, q)
+#pragma cetus private(i, j, q)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(i, q)
 #pragma loop name setuppc #1 #0 #0 #0
 #pragma cetus private(i, q)
+#pragma cetus private(i, q)
         for (i = 0; i < 5; i++) {
-#pragma cetus private(q)
 #pragma loop name setuppc #1 #0 #0 #0 #0
+/* #pragma cetus reduction(+: dpcelm[ie][k][j][i])  */
 #pragma cetus private(q)
+#pragma cetus private(q)
+#pragma cetus reduction(+ : dpcelm[ie][k][j][i])
           for (q = 0; q < 5; q++) {
             dpcelm[ie][k][j][i] = (((dpcelm[ie][k][j][i] +
                                      (g1m1_s[isize][k][j][q] * dxtm1_2[q][i])) +
@@ -149,7 +151,8 @@ void setuppc() {
 /* nonconforming cases will be corrected in subroutine setpcmo  */
 #pragma loop name setuppc #2
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < nmor; i++) {
     dpcmor[i] = (1.0 / dpcmor[i]);
   }
@@ -172,40 +175,44 @@ void setpcmo_pre() {
 /* tcpre results from mapping a unit spike field (unity at  */
 /* collocation point (0,0), zero elsewhere) on an entire element */
 /* face to the (0,0) segment of a nonconforming face */
-#pragma cetus private(j)
 #pragma loop name setpcmo_pre #0
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 1; i < (5 - 1); i++) {
-#pragma cetus private(j)
 #pragma loop name setpcmo_pre #0 #0
+/* #pragma cetus reduction(+: tmp[0][i])  */
 #pragma cetus private(j)
+#pragma cetus private(j)
+#pragma cetus reduction(+ : tmp[0][i])
     for (j = 0; j < 5; j++) {
       tmp[0][i] = (tmp[0][i] + (qbnew[0][j][i - 1] * tig[j]));
     }
   }
-#pragma cetus private(i, j)
 #pragma loop name setpcmo_pre #1
 #pragma cetus parallel
+#pragma cetus private(i, j)
 #pragma cetus private(col, i, j)
 #pragma omp parallel for private(col, i, j)
   for (col = 0; col < 5; col++) {
     tcpre[0][col] = tmp[0][col];
-#pragma cetus private(i, j)
 #pragma loop name setpcmo_pre #1 #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
     for (j = 1; j < (5 - 1); j++) {
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #1 #0 #0
+/* #pragma cetus reduction(+: tcpre[j][col])  */
 #pragma cetus private(i)
+#pragma cetus private(i)
+#pragma cetus reduction(+ : tcpre[j][col])
       for (i = 0; i < 5; i++) {
         tcpre[j][col] = (tcpre[j][col] + (qbnew[0][i][j - 1] * tmp[i][col]));
       }
     }
   }
-#pragma cetus private(element_size, i, ii, j, jj)
 #pragma loop name setpcmo_pre #2
+#pragma cetus private(element_size, i, ii, j, jj)
 #pragma cetus private(element_size, i, ii, j, jj)
   for (element_size = 0; element_size < 4; element_size++) {
 /* for conforming cases */
@@ -213,12 +220,12 @@ void setpcmo_pre() {
 /* (preconditioner=1pcmor_c) of the preconditor on collocation  */
 /* point (i,j) on a conforming face of an element of size  */
 /* element_size. */
-#pragma cetus private(i, j)
 #pragma loop name setpcmo_pre #2 #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
     for (j = 0; j < ((5 / 2) + 1); j++) {
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = j; i < ((5 / 2) + 1); i++) {
         r_init((double *)p, (5 * 5) * 5, 0.0);
@@ -240,12 +247,12 @@ void setpcmo_pre() {
 /* preconditioner value on collocation point (i,j) on mortar  */
 /* (ii,jj)  on a nonconforming face of an element of size element_ */
 /* size */
-#pragma cetus private(i, j)
 #pragma loop name setpcmo_pre #2 #1
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
     for (j = 1; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #1 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = j; i < 5; i++) {
         r_init((double *)mtemp, 5 * 5, 0.0);
@@ -277,8 +284,8 @@ void setpcmo_pre() {
         (pcmor_nc1[element_size][0][0][5 - 1][5 - 1] * 2.0);
     /* nonconforming edges */
     j = 0;
-#pragma cetus private(i, ii, jj)
 #pragma loop name setpcmo_pre #2 #2
+#pragma cetus private(i, ii, jj)
 #pragma cetus private(i, ii, jj)
     for (i = 1; i < 5; i++) {
       r_init((double *)mtemp, 5 * 5, 0.0);
@@ -293,17 +300,17 @@ void setpcmo_pre() {
       transfb_nc1(temp1, (double(*)[5])temp);
       pcmor_nc1[element_size][0][0][j][i] = temp1[j][i];
       pcmor_nc1[element_size][0][0][i][j] = temp1[j][i];
-#pragma cetus private(jj)
 #pragma loop name setpcmo_pre #2 #2 #0
 #pragma cetus parallel
+#pragma cetus private(jj)
 #pragma cetus private(ii, jj)
 #pragma omp parallel for private(ii, jj)
       for (ii = 0; ii < 5; ii++) {
         /* p0 is for the case that a nonconforming edge is shared by */
         /* two conforming faces */
         p0[0][0][ii] = p[0][0][ii];
-#pragma cetus private(jj)
 #pragma loop name setpcmo_pre #2 #2 #0 #0
+#pragma cetus private(jj)
 #pragma cetus private(jj)
         for (jj = 0; jj < 5; jj++) {
           /* now p is for the case that a nonconforming edge is shared */
@@ -340,8 +347,8 @@ void setpcmo_pre() {
     pcmor_nc0[element_size][0][0][5 - 1][j] =
         pcmor_nc0[element_size][0][0][j][5 - 1];
 /* symmetrical copy */
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #3
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < (5 - 1); i++) {
       pcmor_nc1[element_size][1][0][j][i] =
@@ -351,14 +358,14 @@ void setpcmo_pre() {
       pcmor_nc2[element_size][1][0][j][i] =
           pcmor_nc2[element_size][0][0][j][(5 - 1) - i];
     }
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #4
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
     for (j = 1; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #4 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < (5 - 1); i++) {
         pcmor_nc1[element_size][1][0][j][i] =
@@ -380,8 +387,8 @@ void setpcmo_pre() {
         pcmor_nc0[element_size][0][0][(5 - 1) - j][i];
     pcmor_nc2[element_size][0][1][j][i] =
         pcmor_nc2[element_size][0][0][(5 - 1) - j][i];
-#pragma cetus private(i, j)
 #pragma loop name setpcmo_pre #2 #5
+#pragma cetus private(i, j)
 #pragma cetus private(i, j)
     for (j = 1; j < (5 - 1); j++) {
       i = 0;
@@ -393,7 +400,8 @@ void setpcmo_pre() {
           pcmor_nc2[element_size][0][0][(5 - 1) - j][i];
 #pragma loop name setpcmo_pre #2 #5 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
       for (i = 1; i < 5; i++) {
         pcmor_nc1[element_size][0][1][j][i] =
             pcmor_nc1[element_size][0][0][(5 - 1) - j][i];
@@ -402,7 +410,8 @@ void setpcmo_pre() {
     j = (5 - 1);
 #pragma loop name setpcmo_pre #2 #6
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
     for (i = 1; i < 5; i++) {
       pcmor_nc1[element_size][0][1][j][i] =
           pcmor_nc1[element_size][0][0][(5 - 1) - j][i];
@@ -419,12 +428,12 @@ void setpcmo_pre() {
         pcmor_nc0[element_size][0][0][(5 - 1) - j][(5 - 1) - i];
     pcmor_nc2[element_size][1][1][j][i] =
         pcmor_nc2[element_size][0][0][(5 - 1) - j][(5 - 1) - i];
-#pragma cetus private(i, j)
 #pragma loop name setpcmo_pre #2 #7
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
     for (j = 1; j < (5 - 1); j++) {
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #7 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 1; i < (5 - 1); i++) {
         pcmor_nc1[element_size][1][1][j][i] =
@@ -439,8 +448,8 @@ void setpcmo_pre() {
           pcmor_nc2[element_size][0][0][(5 - 1) - j][(5 - 1) - i];
     }
     j = (5 - 1);
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #8
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 1; i < (5 - 1); i++) {
       pcmor_nc1[element_size][1][1][j][i] =
@@ -467,7 +476,8 @@ void setpcmo_pre() {
     r_init((double *)p0, (5 * 5) * 5, 0.0);
 #pragma loop name setpcmo_pre #2 #9
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
     for (i = 0; i < 5; i++) {
       p0[0][0][i] = tcpre[0][i];
     }
@@ -475,8 +485,8 @@ void setpcmo_pre() {
     transfb_cor_e(1, &pcmor_cor[element_size][0], temp);
     /* situation 2 */
     r_init((double *)p0, (5 * 5) * 5, 0.0);
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #10
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 5; i++) {
       p0[0][0][i] = tcpre[0][i];
@@ -486,8 +496,8 @@ void setpcmo_pre() {
     transfb_cor_e(2, &pcmor_cor[element_size][1], temp);
     /* situation 3 */
     r_init((double *)p0, (5 * 5) * 5, 0.0);
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #11
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 5; i++) {
       p0[0][0][i] = tcpre[0][i];
@@ -498,14 +508,14 @@ void setpcmo_pre() {
     transfb_cor_e(3, &pcmor_cor[element_size][2], temp);
     /* situation 4 */
     r_init((double *)p0, (5 * 5) * 5, 0.0);
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #12
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
     for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #12 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < 5; i++) {
         p0[0][j][i] = tcpre[j][i];
@@ -515,14 +525,14 @@ void setpcmo_pre() {
     transfb_cor_f(4, &pcmor_cor[element_size][3], temp);
     /* situation 5 */
     r_init((double *)p0, (5 * 5) * 5, 0.0);
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #13
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
     for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #13 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < 5; i++) {
         p0[0][j][i] = tcpre[j][i];
@@ -530,7 +540,8 @@ void setpcmo_pre() {
     }
 #pragma loop name setpcmo_pre #2 #14
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
     for (i = 0; i < 5; i++) {
       p0[i][0][0] = tcpre[0][i];
     }
@@ -538,13 +549,14 @@ void setpcmo_pre() {
     transfb_cor_f(5, &pcmor_cor[element_size][4], temp);
     /* situation 6 */
     r_init((double *)p0, (5 * 5) * 5, 0.0);
-#pragma cetus private(i, j)
 #pragma loop name setpcmo_pre #2 #15
+#pragma cetus private(i, j)
 #pragma cetus private(i, j)
     for (j = 0; j < 5; j++) {
 #pragma loop name setpcmo_pre #2 #15 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
       for (i = 0; i < 5; i++) {
         p0[0][j][i] = tcpre[j][i];
         p0[j][0][i] = tcpre[j][i];
@@ -553,12 +565,12 @@ void setpcmo_pre() {
     laplacian(temp, p0, element_size);
     transfb_cor_f(6, &pcmor_cor[element_size][5], temp);
 /* situation 7 */
-#pragma cetus private(i, j)
 #pragma loop name setpcmo_pre #2 #16
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
     for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name setpcmo_pre #2 #16 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < 5; i++) {
         p0[0][j][i] = tcpre[j][i];
@@ -579,15 +591,15 @@ void setpcmo() {
   int face2, nb1, nb2, sizei, imor, _enum, i, j, iel, iside, nn1, nn2;
   l_init(ifpcmor, nvertex, false);
   l_init((logical *)edgevis, 24 * nelt, false);
-#pragma cetus private(_enum, face2, i, iel, imor, iside, j, nb1, nb2, nn1,     \
-                      nn2, sizei)
 #pragma loop name setpcmo #0
 #pragma cetus private(_enum, face2, i, iel, imor, iside, j, nb1, nb2, nn1,     \
                       nn2, sizei)
+#pragma cetus private(_enum, face2, i, iel, imor, iside, j, nb1, nb2, nn1,     \
+                      nn2, sizei)
   for (iel = 0; iel < nelt; iel++) {
+#pragma loop name setpcmo #0 #0
 #pragma cetus private(_enum, face2, i, imor, iside, j, nb1, nb2, nn1, nn2,     \
                       sizei)
-#pragma loop name setpcmo #0 #0
 #pragma cetus private(_enum, face2, i, imor, iside, j, nb1, nb2, nn1, nn2,     \
                       sizei)
     for (iside = 0; iside < 6; iside++) {
@@ -619,8 +631,8 @@ void setpcmo() {
           ifpcmor[imor] = true;
         }
 /* edges on nonconforming faces, _enum is local edge number */
-#pragma cetus private(_enum, face2, nb1, nb2)
 #pragma loop name setpcmo #0 #0 #0
+#pragma cetus private(_enum, face2, nb1, nb2)
 #pragma cetus private(_enum, face2, nb1, nb2)
         for (_enum = 0; _enum < 4; _enum++) {
           /* edgevis[iel][iside][_enum]=true indicates that local edge  */
@@ -669,20 +681,20 @@ void setpcmo() {
           }
         }
 /* mortar element interior (not edge of mortar)  */
-#pragma cetus private(i, imor, j, nn1, nn2)
 #pragma loop name setpcmo #0 #0 #1
 #pragma cetus private(i, imor, j, nn1, nn2)
+#pragma cetus private(i, imor, j, nn1, nn2)
         for (nn1 = 0; nn1 < 2; nn1++) {
-#pragma cetus private(i, imor, j, nn2)
 #pragma loop name setpcmo #0 #0 #1 #0
 #pragma cetus private(i, imor, j, nn2)
+#pragma cetus private(i, imor, j, nn2)
           for (nn2 = 0; nn2 < 2; nn2++) {
-#pragma cetus private(i, imor, j)
 #pragma loop name setpcmo #0 #0 #1 #0 #0
 #pragma cetus private(i, imor, j)
+#pragma cetus private(i, imor, j)
             for (j = 1; j < (5 - 1); j++) {
-#pragma cetus private(i, imor)
 #pragma loop name setpcmo #0 #0 #1 #0 #0 #0
+#pragma cetus private(i, imor)
 #pragma cetus private(i, imor)
               for (i = 1; i < (5 - 1); i++) {
                 imor = idmo[iel][iside][nn2][nn1][j][i];
@@ -695,8 +707,8 @@ void setpcmo() {
         /* for i,j=LX1-1 there are duplicated mortar points, so  */
         /* pcmor_c needs to be doubled or quadrupled */
         i = (5 - 1);
-#pragma cetus private(imor, j)
 #pragma loop name setpcmo #0 #0 #2
+#pragma cetus private(imor, j)
 #pragma cetus private(imor, j)
         for (j = 1; j < (5 - 1); j++) {
           imor = idmo[iel][iside][0][0][j][i];
@@ -710,8 +722,8 @@ void setpcmo() {
         imor = idmo[iel][iside][0][0][j][i];
         dpcmor[imor] = (1.0 / (pcmor_nc1[sizei][0][0][j][i] +
                                (pcmor_c[sizei + 1][j][i] * 4.0)));
-#pragma cetus private(i, imor)
 #pragma loop name setpcmo #0 #0 #3
+#pragma cetus private(i, imor)
 #pragma cetus private(i, imor)
         for (i = 1; i < (5 - 1); i++) {
           imor = idmo[iel][iside][0][0][j][i];
@@ -735,10 +747,10 @@ static void pc_corner(int imor) {
   int sface, sedge, iiface, iface, iiedge, iedge, n = 0;
   tmortemp = 0.0;
 /* loop over all elements sharing this vertex */
-#pragma cetus private(cornernumber, ie, iedge, iface, iiedge, iiface, inemo,   \
-                      sedge, sface, sizei)
 #pragma loop name pc_corner #0
 /* #pragma cetus reduction(+: tmortemp)  */
+#pragma cetus private(cornernumber, ie, iedge, iface, iiedge, iiface, inemo,   \
+                      sedge, sface, sizei)
 #pragma cetus private(cornernumber, ie, iedge, iface, iiedge, iiface, inemo,   \
                       sedge, sface, sizei)
 #pragma cetus reduction(+ : tmortemp)
@@ -748,10 +760,10 @@ static void pc_corner(int imor) {
     cornernumber = emo[imor][inemo][1];
     sface = 0;
     sedge = 0;
-#pragma cetus private(iface)
 #pragma loop name pc_corner #0 #0
 #pragma cetus reduction(+ : sface)
 #pragma cetus parallel
+#pragma cetus private(iface)
 #pragma cetus private(iface, iiface)
 #pragma cetus reduction(+ : sface)
 #pragma omp parallel for private(iface, iiface) reduction(+ : sface)
@@ -765,10 +777,10 @@ static void pc_corner(int imor) {
     }
 /* sedge sums the number of nonconforming edges sharing this vertex on */
 /* one element */
-#pragma cetus private(iedge)
 #pragma loop name pc_corner #0 #1
 #pragma cetus reduction(+ : sedge)
 #pragma cetus parallel
+#pragma cetus private(iedge)
 #pragma cetus private(iedge, iiedge)
 #pragma cetus reduction(+ : sedge)
 #pragma omp parallel for private(iedge, iiedge) reduction(+ : sedge)
@@ -951,27 +963,31 @@ static void com_dpc(int iside, int iel, int enumber, int n, int isize) {
     }
   }
 /* edge interior */
-#pragma cetus private(i, j, nn1, nn2)
 #pragma cetus lastprivate(imor, temp)
 #pragma loop name com_dpc #0
 #pragma cetus private(i, j, nn1, nn2)
 #pragma cetus lastprivate(imor, temp)
+#pragma cetus private(i, j, nn1, nn2)
+#pragma cetus lastprivate(imor, temp)
   for (nn2 = (nn2start - 1); nn2 < nn2end; nn2++) {
-#pragma cetus private(i, j, nn1)
 #pragma cetus lastprivate(imor, temp)
 #pragma loop name com_dpc #0 #0
 #pragma cetus private(i, j, nn1)
 #pragma cetus lastprivate(imor, temp)
+#pragma cetus private(i, j, nn1)
+#pragma cetus lastprivate(imor, temp)
     for (nn1 = (nn1start - 1); nn1 < nn1end; nn1++) {
-#pragma cetus private(i, j)
 #pragma cetus lastprivate(imor, temp)
 #pragma loop name com_dpc #0 #0 #0
 #pragma cetus private(i, j)
 #pragma cetus lastprivate(imor, temp)
+#pragma cetus private(i, j)
+#pragma cetus lastprivate(imor, temp)
       for (j = (jstart - 1); j < jend; j++) {
-#pragma cetus private(i)
 #pragma cetus lastprivate(imor, temp)
 #pragma loop name com_dpc #0 #0 #0 #0
+#pragma cetus private(i)
+#pragma cetus lastprivate(imor, temp)
 #pragma cetus private(i)
 #pragma cetus lastprivate(imor, temp)
         for (i = (istart - 1); i < iend; i++) {

@@ -383,6 +383,7 @@ void setdef() {
     for (j = 0; j < 5; j++) {
 #pragma cetus private(ip)
 #pragma loop name setdef #0 #0 #0
+      /* #pragma cetus reduction(+: wdtdr[j][i])  */
       for (ip = 0; ip < 5; ip++) {
         wdtdr[j][i] = (wdtdr[j][i] + ((wxm1[ip] * dxm1[i][ip]) * dxm1[j][ip]));
       }

@@ -96,8 +96,8 @@ void appft(int niter, double *total_time, logical *verified) {
   int i, j, k, kt, n12, n22, n32, ii, jj, kk, ii2, ik2;
   double ap;
   dcomplex exp1[64], exp2[64], exp3[64];
-#pragma cetus private(i)
 #pragma loop name appft #0
+#pragma cetus private(i)
   for (i = 1; i <= 15; i++) {
     timer_clear(i);
   }
@@ -116,20 +116,20 @@ void appft(int niter, double *total_time, logical *verified) {
   n22 = (64 / 2);
   n32 = (64 / 2);
   ap = (((-4.0) * 1.0E-6) * (3.141592653589793 * 3.141592653589793));
-#pragma cetus private(ii, ii2, ik2, j, jj, k, kk)
 #pragma loop name appft #1
 #pragma cetus parallel
-#pragma omp parallel for private(ii, ii2, ik2, j, jj, k, kk)
+#pragma cetus private(i, ii, ii2, ik2, j, jj, k, kk)
+#pragma omp parallel for private(i, ii, ii2, ik2, j, jj, k, kk)
   for (i = 0; i < 64; i++) {
     ii = (i - ((i / n32) * 64));
     ii2 = (ii * ii);
-#pragma cetus private(ik2, j, jj, k, kk)
 #pragma loop name appft #1 #0
+#pragma cetus private(ik2, j, jj, k, kk)
     for (k = 0; k < 64; k++) {
       kk = (k - ((k / n22) * 64));
       ik2 = (ii2 + (kk * kk));
-#pragma cetus private(j, jj)
 #pragma loop name appft #1 #0 #0
+#pragma cetus private(j, jj)
       for (j = 0; j < 64; j++) {
         jj = (j - ((j / n12) * 64));
         twiddle[i][k][j] = exp(ap * ((double)((jj * jj) + ik2)));
@@ -153,8 +153,8 @@ void appft(int niter, double *total_time, logical *verified) {
   if (timers_enabled) {
     timer_stop(15);
   }
-#pragma cetus private(kt)
 #pragma loop name appft #2
+#pragma cetus private(kt)
   for (kt = 1; kt <= niter; kt++) {
     if (timers_enabled) {
       timer_start(11);

@@ -5,7 +5,6 @@
 #define FLOOR(x) ((int)((x) - 0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
-#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -102,7 +101,6 @@ void l2norm(int ldx, int ldy, int ldz, int nx0, int ny0, int nz0, int ist,
   int k_cetus_cross;
 #pragma loop name l2norm #0
 #pragma cetus parallel
-#pragma loop name l2norm #0
 #pragma omp parallel for
   for (m = 0; m < 5; m++) {
     sum[m] = 0.0;
@@ -115,96 +113,31 @@ void l2norm(int ldx, int ldy, int ldz, int nx0, int ny0, int nz0, int ist,
     int reduce_span_0;
     int cetus_tile_l2norm_1_i;
     int cetus_tile_l2norm_1_j;
-    int cetus_tile_l2norm_1_k = 808;
+    int cetus_tile_l2norm_1_k = 400;
 #pragma cetus private(reduce_span_0)
-#pragma loop name l2norm #1
     for (reduce_span_0 = 0; reduce_span_0 < 5; reduce_span_0++) {
       reduce[reduce_span_0] = 0;
     }
-    if ((((((1 * (-2 + nz0)) * (-1 + jend)) * (-1 + iend)) * 4) <= 100000) ||
-        (3276800 >= (((5 + (10 * (ldx / 2))) + (10 * (ldy / 2))) +
-                     ((20 * (ldx / 2)) * (ldy / 2))))) {
 #pragma loop name l2norm #1
 #pragma cetus for
 #pragma cetus private(i, j, m)
 #pragma cetus
-#pragma loop name l2norm #2
 #pragma omp for private(i, j, m)
-      for (k = 1; k < (nz0 - 1); k++) {
-#pragma cetus private(i, j, m)
+    for (k = 1; k < (nz0 - 1); k++) {
 #pragma loop name l2norm #1 #0
 /* #pragma cetus reduction(+: sum[m])  */
 #pragma cetus private(i, j, m)
-#pragma cetus private(i, j, m)
 #pragma cetus reduction(+ : reduce[m])
-#pragma cetus reduction(+ : reduce[m])
-#pragma loop name l2norm #2 #0
-#pragma loop name l2norm #3 #0 #0
-        for (j = jst; j < jend; j++) {
-#pragma cetus private(i, m)
+      for (j = jst; j < jend; j++) {
 #pragma loop name l2norm #1 #0 #0
 /* #pragma cetus reduction(+: sum[m])  */
 #pragma cetus private(i, m)
-#pragma cetus private(i, m)
 #pragma cetus reduction(+ : reduce[m])
-#pragma cetus reduction(+ : reduce[m])
-#pragma loop name l2norm #2 #0 #0
-#pragma loop name l2norm #3 #0 #0 #0
-          for (i = ist; i < iend; i++) {
+        for (i = ist; i < iend; i++) {
 #pragma loop name l2norm #1 #0 #0 #0
-#pragma cetus parallel
 #pragma cetus private(m)
-#pragma loop name l2norm #2 #0 #0 #0
-#pragma loop name l2norm #3 #0 #0 #0 #0
-#pragma omp parallel for private(m)
-            for (m = 0; m < 5; m++) {
-              reduce[m] = (reduce[m] + (v[k][j][i][m] * v[k][j][i][m]));
-            }
-          }
-        }
-      }
-    } else {
-#pragma cetus private(i, j, k, k_cetus_cross, m)
-#pragma cetus reduction(+ : reduce[m])
-#pragma loop name l2norm #3
-#pragma c_paw_tiling l2norm #3 = k #808
-      for (k_cetus_cross = 1; k_cetus_cross < (nz0 - 1);
-           k_cetus_cross += cetus_tile_l2norm_1_k) {
-#pragma cetus private(i, j, k, m)
-#pragma cetus reduction(+ : reduce[m])
-#pragma loop name l2norm #3 #0
-        for (k = k_cetus_cross;
-             k < MIN((nz0 - 1), (cetus_tile_l2norm_1_k + k_cetus_cross)); k++) {
-#pragma cetus private(i, j, m)
-#pragma loop name l2norm #1 #0
-/* #pragma cetus reduction(+: sum[m])  */
-#pragma cetus private(i, j, m)
-#pragma cetus private(i, j, m)
-#pragma cetus reduction(+ : reduce[m])
-#pragma cetus reduction(+ : reduce[m])
-#pragma loop name l2norm #2 #0
-#pragma loop name l2norm #3 #0 #0
-          for (j = jst; j < jend; j++) {
-#pragma cetus private(i, m)
-#pragma loop name l2norm #1 #0 #0
-/* #pragma cetus reduction(+: sum[m])  */
-#pragma cetus private(i, m)
-#pragma cetus private(i, m)
-#pragma cetus reduction(+ : reduce[m])
-#pragma cetus reduction(+ : reduce[m])
-#pragma loop name l2norm #2 #0 #0
-#pragma loop name l2norm #3 #0 #0 #0
-            for (i = ist; i < iend; i++) {
-#pragma loop name l2norm #1 #0 #0 #0
-#pragma cetus parallel
-#pragma cetus private(m)
-#pragma loop name l2norm #2 #0 #0 #0
-#pragma loop name l2norm #3 #0 #0 #0 #0
-#pragma omp parallel for private(m)
-              for (m = 0; m < 5; m++) {
-                reduce[m] = (reduce[m] + (v[k][j][i][m] * v[k][j][i][m]));
-              }
-            }
+          for (m = 0; m < 5; m++) {
+            reduce[m] = (reduce[m] + (v[k][j][i][m] * v[k][j][i][m]));
           }
         }
       }
@@ -213,7 +146,6 @@ void l2norm(int ldx, int ldy, int ldz, int nx0, int ny0, int nz0, int ist,
 #pragma omp critical
     {
 #pragma cetus private(reduce_span_0)
-#pragma loop name l2norm #4
       for (reduce_span_0 = 0; reduce_span_0 < 5; reduce_span_0++) {
         sum[reduce_span_0] += reduce[reduce_span_0];
       }
@@ -221,7 +153,6 @@ void l2norm(int ldx, int ldy, int ldz, int nx0, int ny0, int nz0, int ist,
   }
 #pragma loop name l2norm #2
 #pragma cetus parallel
-#pragma loop name l2norm #5
 #pragma omp parallel for
   for (m = 0; m < 5; m++) {
     sum[m] = sqrt(sum[m] / (((nx0 - 2) * (ny0 - 2)) * (nz0 - 2)));

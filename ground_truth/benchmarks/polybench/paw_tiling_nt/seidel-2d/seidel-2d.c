@@ -71,13 +71,11 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Array initialization. */
 static void init_array(int n, double A[(40 + 0)][(40 + 0)]) {
   int i, j;
-#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
-  for (i = 0; i < n; i++) {
 #pragma cetus private(j)
+#pragma omp parallel for private(j)
+  for (i = 0; i < n; i++) {
 #pragma loop name init_array #0 #0
 #pragma cetus private(j)
     for (j = 0; j < n; j++) {
@@ -94,11 +92,9 @@ static void print_array(int n, double A[(40 + 0)][(40 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "A");
-#pragma cetus private(i, j)
 #pragma loop name print_array #0
 #pragma cetus private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name print_array #0 #0
 #pragma cetus private(j)
     for (j = 0; j < n; j++) {
@@ -119,15 +115,12 @@ Main computational kernel. The whole function will be timed,
 static void kernel_seidel_2d(int tsteps, int n, double A[(40 + 0)][(40 + 0)]) {
   int t, i, j;
 #pragma scop
-#pragma cetus private(i, j, t)
 #pragma loop name kernel_seidel_2d #0
 #pragma cetus private(i, j, t)
   for (t = 0; t <= (tsteps - 1); t++) {
-#pragma cetus private(i, j)
 #pragma loop name kernel_seidel_2d #0 #0
 #pragma cetus private(i, j)
     for (i = 1; i <= (n - 2); i++) {
-#pragma cetus private(j)
 #pragma loop name kernel_seidel_2d #0 #0 #0
 #pragma cetus private(j)
       for (j = 1; j <= (n - 2); j++) {

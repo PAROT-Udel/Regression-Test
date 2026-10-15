@@ -101,7 +101,8 @@ void verify(int no_time_steps, char *Class, logical *verified) {
   rhs_norm(xcr);
 #pragma loop name verify #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
   for (m = 0; m < 5; m++) {
     xcr[m] = (xcr[m] / dt);
   }
@@ -109,7 +110,8 @@ void verify(int no_time_steps, char *Class, logical *verified) {
   (*verified) = true;
 #pragma loop name verify #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
   for (m = 0; m < 5; m++) {
     xcrref[m] = 1.0;
     xceref[m] = 1.0;
@@ -348,7 +350,8 @@ void verify(int no_time_steps, char *Class, logical *verified) {
 /* --------------------------------------------------------------------- */
 #pragma loop name verify #2
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
   for (m = 0; m < 5; m++) {
     xcrdif[m] = fabs((xcr[m] - xcrref[m]) / xcrref[m]);
     xcedif[m] = fabs((xce[m] - xceref[m]) / xceref[m]);
@@ -372,8 +375,8 @@ void verify(int no_time_steps, char *Class, logical *verified) {
   } else {
     printf(" RMS-norms of residual\n");
   }
-#pragma cetus private(m)
 #pragma loop name verify #3
+#pragma cetus private(m)
   for (m = 0; m < 5; m++) {
     if ((*Class) == 'U') {
       printf("          %2d%20.13E\n", m + 1, xcr[m]);
@@ -393,8 +396,8 @@ void verify(int no_time_steps, char *Class, logical *verified) {
   } else {
     printf(" RMS-norms of solution error\n");
   }
-#pragma cetus private(m)
 #pragma loop name verify #4
+#pragma cetus private(m)
   for (m = 0; m < 5; m++) {
     if ((*Class) == 'U') {
       printf("          %2d%20.13E\n", m + 1, xce[m]);

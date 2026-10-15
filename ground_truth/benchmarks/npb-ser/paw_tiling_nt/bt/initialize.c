@@ -94,22 +94,22 @@ void initialize() {
 /* values are nonzero by initializing the whole thing here. */
 /* --------------------------------------------------------------------- */
 #pragma experimental section start
-#pragma cetus private(i, j, m)
 #pragma loop name initialize #0
 #pragma cetus parallel
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, k, m)
 #pragma omp parallel for private(i, j, k, m)
   for (k = 0; k <= (grid_points[2] - 1); k++) {
-#pragma cetus private(i, j, m)
 #pragma loop name initialize #0 #0
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
     for (j = 0; j <= (grid_points[1] - 1); j++) {
-#pragma cetus private(i, m)
 #pragma loop name initialize #0 #0 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
       for (i = 0; i <= (grid_points[0] - 1); i++) {
-#pragma cetus private(m)
 #pragma loop name initialize #0 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           u[k][j][i][m] = 1.0;
@@ -120,42 +120,42 @@ void initialize() {
 /* --------------------------------------------------------------------- */
 /* first store the "interpolated" values everywhere on the grid */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(Peta, Pxi, Pzeta, eta, i, ix, iy, iz, j, k, m, xi, zeta)
 #pragma loop name initialize #1
+#pragma cetus private(Peta, Pxi, Pzeta, eta, i, ix, iy, iz, j, k, m, xi, zeta)
 #pragma cetus private(Peta, Pxi, Pzeta, eta, i, ix, iy, iz, j, k, m, xi, zeta)
   for (k = 0; k <= (grid_points[2] - 1); k++) {
     zeta = (((double)k) * dnzm1);
-#pragma cetus private(Peta, Pxi, Pzeta, eta, i, ix, iy, iz, j, m, xi)
 #pragma loop name initialize #1 #0
+#pragma cetus private(Peta, Pxi, Pzeta, eta, i, ix, iy, iz, j, m, xi)
 #pragma cetus private(Peta, Pxi, Pzeta, eta, i, ix, iy, iz, j, m, xi)
     for (j = 0; j <= (grid_points[1] - 1); j++) {
       eta = (((double)j) * dnym1);
-#pragma cetus private(Peta, Pxi, Pzeta, i, ix, iy, iz, m, xi)
 #pragma loop name initialize #1 #0 #0
+#pragma cetus private(Peta, Pxi, Pzeta, i, ix, iy, iz, m, xi)
 #pragma cetus private(Peta, Pxi, Pzeta, i, ix, iy, iz, m, xi)
       for (i = 0; i <= (grid_points[0] - 1); i++) {
         xi = (((double)i) * dnxm1);
-#pragma cetus private(ix)
 #pragma loop name initialize #1 #0 #0 #0
+#pragma cetus private(ix)
 #pragma cetus private(ix)
         for (ix = 0; ix < 2; ix++) {
           exact_solution((double)ix, eta, zeta, &Pface[ix][0][0]);
         }
-#pragma cetus private(iy)
 #pragma loop name initialize #1 #0 #0 #1
+#pragma cetus private(iy)
 #pragma cetus private(iy)
         for (iy = 0; iy < 2; iy++) {
           exact_solution(xi, (double)iy, zeta, &Pface[iy][1][0]);
         }
-#pragma cetus private(iz)
 #pragma loop name initialize #1 #0 #0 #2
+#pragma cetus private(iz)
 #pragma cetus private(iz)
         for (iz = 0; iz < 2; iz++) {
           exact_solution(xi, eta, (double)iz, &Pface[iz][2][0]);
         }
-#pragma cetus private(Peta, Pxi, Pzeta)
 #pragma loop name initialize #1 #0 #0 #3
 #pragma cetus parallel
+#pragma cetus private(Peta, Pxi, Pzeta)
 #pragma cetus private(Peta, Pxi, Pzeta, m)
 #pragma omp parallel for private(Peta, Pxi, Pzeta, m)
         for (m = 0; m < 5; m++) {
@@ -178,20 +178,21 @@ void initialize() {
   /* --------------------------------------------------------------------- */
   i = 0;
   xi = 0.0;
-#pragma cetus private(eta, j, k, m, zeta)
 #pragma loop name initialize #2
+#pragma cetus private(eta, j, k, m, zeta)
 #pragma cetus private(eta, j, k, m, zeta)
   for (k = 0; k <= (grid_points[2] - 1); k++) {
     zeta = (((double)k) * dnzm1);
-#pragma cetus private(eta, j, m)
 #pragma loop name initialize #2 #0
+#pragma cetus private(eta, j, m)
 #pragma cetus private(eta, j, m)
     for (j = 0; j <= (grid_points[1] - 1); j++) {
       eta = (((double)j) * dnym1);
       exact_solution(xi, eta, zeta, temp);
 #pragma loop name initialize #2 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -202,20 +203,21 @@ void initialize() {
   /* --------------------------------------------------------------------- */
   i = (grid_points[0] - 1);
   xi = 1.0;
-#pragma cetus private(eta, j, k, m, zeta)
 #pragma loop name initialize #3
+#pragma cetus private(eta, j, k, m, zeta)
 #pragma cetus private(eta, j, k, m, zeta)
   for (k = 0; k <= (grid_points[2] - 1); k++) {
     zeta = (((double)k) * dnzm1);
-#pragma cetus private(eta, j, m)
 #pragma loop name initialize #3 #0
+#pragma cetus private(eta, j, m)
 #pragma cetus private(eta, j, m)
     for (j = 0; j <= (grid_points[1] - 1); j++) {
       eta = (((double)j) * dnym1);
       exact_solution(xi, eta, zeta, temp);
 #pragma loop name initialize #3 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -226,20 +228,21 @@ void initialize() {
   /* --------------------------------------------------------------------- */
   j = 0;
   eta = 0.0;
-#pragma cetus private(i, k, m, xi, zeta)
 #pragma loop name initialize #4
+#pragma cetus private(i, k, m, xi, zeta)
 #pragma cetus private(i, k, m, xi, zeta)
   for (k = 0; k <= (grid_points[2] - 1); k++) {
     zeta = (((double)k) * dnzm1);
-#pragma cetus private(i, m, xi)
 #pragma loop name initialize #4 #0
+#pragma cetus private(i, m, xi)
 #pragma cetus private(i, m, xi)
     for (i = 0; i <= (grid_points[0] - 1); i++) {
       xi = (((double)i) * dnxm1);
       exact_solution(xi, eta, zeta, temp);
 #pragma loop name initialize #4 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -250,20 +253,21 @@ void initialize() {
   /* --------------------------------------------------------------------- */
   j = (grid_points[1] - 1);
   eta = 1.0;
-#pragma cetus private(i, k, m, xi, zeta)
 #pragma loop name initialize #5
+#pragma cetus private(i, k, m, xi, zeta)
 #pragma cetus private(i, k, m, xi, zeta)
   for (k = 0; k <= (grid_points[2] - 1); k++) {
     zeta = (((double)k) * dnzm1);
-#pragma cetus private(i, m, xi)
 #pragma loop name initialize #5 #0
+#pragma cetus private(i, m, xi)
 #pragma cetus private(i, m, xi)
     for (i = 0; i <= (grid_points[0] - 1); i++) {
       xi = (((double)i) * dnxm1);
       exact_solution(xi, eta, zeta, temp);
 #pragma loop name initialize #5 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -274,20 +278,21 @@ void initialize() {
   /* --------------------------------------------------------------------- */
   k = 0;
   zeta = 0.0;
-#pragma cetus private(eta, i, j, m, xi)
 #pragma loop name initialize #6
+#pragma cetus private(eta, i, j, m, xi)
 #pragma cetus private(eta, i, j, m, xi)
   for (j = 0; j <= (grid_points[1] - 1); j++) {
     eta = (((double)j) * dnym1);
-#pragma cetus private(i, m, xi)
 #pragma loop name initialize #6 #0
+#pragma cetus private(i, m, xi)
 #pragma cetus private(i, m, xi)
     for (i = 0; i <= (grid_points[0] - 1); i++) {
       xi = (((double)i) * dnxm1);
       exact_solution(xi, eta, zeta, temp);
 #pragma loop name initialize #6 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -298,20 +303,21 @@ void initialize() {
   /* --------------------------------------------------------------------- */
   k = (grid_points[2] - 1);
   zeta = 1.0;
-#pragma cetus private(eta, i, j, m, xi)
 #pragma loop name initialize #7
+#pragma cetus private(eta, i, j, m, xi)
 #pragma cetus private(eta, i, j, m, xi)
   for (j = 0; j <= (grid_points[1] - 1); j++) {
     eta = (((double)j) * dnym1);
-#pragma cetus private(i, m, xi)
 #pragma loop name initialize #7 #0
+#pragma cetus private(i, m, xi)
 #pragma cetus private(i, m, xi)
     for (i = 0; i <= (grid_points[0] - 1); i++) {
       xi = (((double)i) * dnxm1);
       exact_solution(xi, eta, zeta, temp);
 #pragma loop name initialize #7 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         u[k][j][i][m] = temp[m];
       }
@@ -327,14 +333,14 @@ void lhsinit(double lhs[][3][5][5], int size) {
 /* --------------------------------------------------------------------- */
 /* zero the whole left hand side for starters */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(m)
 #pragma loop name lhsinit #0
 #pragma cetus parallel
+#pragma cetus private(m)
 #pragma cetus private(m, n)
 #pragma omp parallel for private(m, n)
   for (n = 0; n < 5; n++) {
-#pragma cetus private(m)
 #pragma loop name lhsinit #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
     for (m = 0; m < 5; m++) {
       lhs[0][0][n][m] = 0.0;
@@ -350,7 +356,8 @@ void lhsinit(double lhs[][3][5][5], int size) {
 /* --------------------------------------------------------------------- */
 #pragma loop name lhsinit #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
   for (m = 0; m < 5; m++) {
     lhs[0][1][m][m] = 1.0;
     lhs[i][1][m][m] = 1.0;

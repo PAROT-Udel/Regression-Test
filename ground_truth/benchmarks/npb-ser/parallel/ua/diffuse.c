@@ -287,6 +287,7 @@ void laplacian(double r[5][5][5], double u[5][5][5], int sizei) {
   for (iz = 0; iz < 5; iz++) {
 #pragma cetus private(i, j, k)
 #pragma loop name laplacian #0 #0
+    /* #pragma cetus reduction(+: tm1[iz][j][i])  */
     for (k = 0; k < 5; k++) {
 #pragma cetus private(i, j)
 #pragma loop name laplacian #0 #0 #0
@@ -307,6 +308,7 @@ void laplacian(double r[5][5][5], double u[5][5][5], int sizei) {
   for (iz = 0; iz < 5; iz++) {
 #pragma cetus private(i, j, k)
 #pragma loop name laplacian #1 #0
+    /* #pragma cetus reduction(+: tm2[iz][j][i])  */
     for (k = 0; k < 5; k++) {
 #pragma cetus private(i, j)
 #pragma loop name laplacian #1 #0 #0
@@ -320,21 +322,48 @@ void laplacian(double r[5][5][5], double u[5][5][5], int sizei) {
     }
   }
   r_init((double *)r, (5 * 5) * 5, 0.0);
-#pragma cetus private(i, iz, j, k)
-#pragma loop name laplacian #2
-  for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j)
-#pragma loop name laplacian #2 #0
 #pragma cetus parallel
-#pragma omp parallel for private(i, j)
-    for (iz = 0; iz < 5; iz++) {
+#pragma cetus private(i, iz, j)
+#pragma omp parallel private(i, iz, j)
+  {
+    double(*reduce)[5][5] = (double(*)[5][5])malloc(125 * sizeof(double));
+    int reduce_span_0;
+    int reduce_span_1;
+    int reduce_span_2;
+    for (reduce_span_0 = 0; reduce_span_0 < 5; reduce_span_0++) {
+      for (reduce_span_1 = 0; reduce_span_1 < 5; reduce_span_1++) {
+        for (reduce_span_2 = 0; reduce_span_2 < 5; reduce_span_2++) {
+          reduce[reduce_span_0][reduce_span_1][reduce_span_2] = 0;
+        }
+      }
+    }
+#pragma loop name laplacian #2
+#pragma cetus for
+#pragma omp for
+    for (k = 0; k < 5; k++) {
+#pragma cetus private(i, iz, j)
+#pragma loop name laplacian #2 #0
+      for (iz = 0; iz < 5; iz++) {
 #pragma cetus private(i, j)
 #pragma loop name laplacian #2 #0 #0
-      for (j = 0; j < 5; j++) {
+        for (j = 0; j < 5; j++) {
 #pragma cetus private(i)
 #pragma loop name laplacian #2 #0 #0 #0
-        for (i = 0; i < 5; i++) {
-          r[iz][j][i] = (r[iz][j][i] + (u[k][j][i] * wdtdr[iz][k]));
+          for (i = 0; i < 5; i++) {
+            reduce[iz][j][i] = (reduce[iz][j][i] + (u[k][j][i] * wdtdr[iz][k]));
+          }
+        }
+      }
+    }
+#pragma cetus critical
+#pragma omp critical
+    {
+      for (reduce_span_0 = 0; reduce_span_0 < 5; reduce_span_0++) {
+        for (reduce_span_1 = 0; reduce_span_1 < 5; reduce_span_1++) {
+          for (reduce_span_2 = 0; reduce_span_2 < 5; reduce_span_2++) {
+            r[reduce_span_0][reduce_span_1][reduce_span_2] +=
+                reduce[reduce_span_0][reduce_span_1][reduce_span_2];
+          }
         }
       }
     }

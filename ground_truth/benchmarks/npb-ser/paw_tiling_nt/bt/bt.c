@@ -186,8 +186,8 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   set_constants();
-#pragma cetus private(i)
 #pragma loop name main #0
+#pragma cetus private(i)
   for (i = 1; i <= 11; i++) {
     timer_clear(i);
   }
@@ -201,14 +201,14 @@ int main(int argc, char *argv[]) {
   adi();
   /* How can I reconfigure carv to measure a specific call instance. */
   initialize();
-#pragma cetus private(i)
 #pragma loop name main #1
+#pragma cetus private(i)
   for (i = 1; i <= 11; i++) {
     timer_clear(i);
   }
   timer_start(1);
-#pragma cetus private(step)
 #pragma loop name main #2
+#pragma cetus private(step)
   for (step = 1; step <= niter; step++) {
     if (((step % 20) == 0) || (step == 1)) {
       printf(" Time step %4d\n", step);
@@ -237,8 +237,8 @@ int main(int argc, char *argv[]) {
   /* More timers */
   /* --------------------------------------------------------------------- */
   if (timeron) {
-#pragma cetus private(i)
 #pragma loop name main #3
+#pragma cetus private(i)
     for (i = 1; i <= 11; i++) {
       trecs[i] = timer_read(i);
     }
@@ -246,8 +246,8 @@ int main(int argc, char *argv[]) {
       tmax = 1.0;
     }
     printf("  SECTION   Time (secs)\n");
-#pragma cetus private(i, t)
 #pragma loop name main #4
+#pragma cetus private(i, t)
     for (i = 1; i <= 11; i++) {
       printf("  %-8s:%9.3f  (%6.2f%%)\n", t_names[i], trecs[i],
              (trecs[i] * 100.0) / tmax);

@@ -1,4 +1,3 @@
-#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -688,6 +687,7 @@ int main() {
   int i, n, p, x;
   int j, k;
   int _ret_val_0;
+  int k_0;
   p = 1;
   n = 30000;
 #pragma loop name main #0
@@ -723,7 +723,6 @@ int main() {
 #pragma loop name main #2
 #pragma cetus for
     for (j = 0; j < n; j++) {
-      int k_0;
 /* Normalized Loop */
 #pragma cetus lastprivate(k_0)
 #pragma loop name main #2 #0

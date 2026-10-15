@@ -5,7 +5,6 @@
 #define FLOOR(x) ((int)((x) - 0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
-#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -81,12 +80,8 @@ static void init_array(int m, int n, double A[(38 + 0)][(42 + 0)],
   for (i = 0; i < n; i++) {
     x[i] = (1 + (i / fn));
   }
-#pragma cetus private(j)
 #pragma loop name init_array #1
-#pragma cetus parallel
-#pragma omp parallel for private(j)
   for (i = 0; i < m; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #1 #0
     for (j = 0; j < n; j++) {
       A[i][j] = (((double)((i + j) % n)) / (5 * m));
@@ -102,7 +97,6 @@ static void print_array(int n, double y[(42 + 0)]) {
   int i;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "y");
-#pragma cetus private(i)
 #pragma loop name print_array #0
   for (i = 0; i < n; i++) {
     if ((i % 20) == 0) {
@@ -144,13 +138,11 @@ static void kernel_atax(int m, int n, double A[(38 + 0)][(42 + 0)],
 #pragma omp for
     for (i = 0; i < m; i++) {
       tmp[i] = 0.0;
-#pragma cetus private(j)
 #pragma loop name kernel_atax #1 #0
       /* #pragma cetus reduction(+: tmp[i])  */
       for (j = 0; j < n; j++) {
         tmp[i] = (tmp[i] + (A[i][j] * x[j]));
       }
-#pragma cetus private(j)
 #pragma loop name kernel_atax #1 #1
       for (j = 0; j < n; j++) {
         reduce[j] = (reduce[j] + (A[i][j] * tmp[i]));

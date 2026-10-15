@@ -71,14 +71,14 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
 /* Array initialization. */
 static void init_array(int n, int path[(60 + 0)][(60 + 0)]) {
   int i, j;
-#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < n; j++) {
       path[i][j] = (((i * j) % 7) + 1);
@@ -98,12 +98,12 @@ static void print_array(int n, int path[(60 + 0)][(60 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "path");
-#pragma cetus private(i, j)
 #pragma loop name print_array #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name print_array #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < n; j++) {
       if ((((i * n) + j) % 20) == 0) {
@@ -124,18 +124,18 @@ static void kernel_floyd_warshall(int n, int path[(60 + 0)][(60 + 0)]) {
   int i, j, k;
 #pragma scop
 #pragma experimental section start
-#pragma cetus private(i, j)
 #pragma loop name kernel_floyd_warshall #0
-/* #pragma cetus reduction(min: path[i][j])  */
+/* #pragma cetus reduction(min: )  */
+#pragma cetus private(i, j, k)
 #pragma cetus private(i, j, k)
 #pragma cetus reduction(min : path[i][j])
   for (k = 0; k < n; k++) {
-#pragma cetus private(i, j)
 #pragma loop name kernel_floyd_warshall #0 #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
     for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name kernel_floyd_warshall #0 #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
       for (j = 0; j < n; j++) {
         path[i][j] = ((path[i][j] < (path[i][k] + path[k][j]))

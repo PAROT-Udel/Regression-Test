@@ -74,19 +74,21 @@ static void init_array(int m, int n, double *alpha,
                        double B[(20 + 0)][(30 + 0)]) {
   int i, j;
   (*alpha) = 1.5;
-#pragma cetus private(j)
 #pragma loop name init_array #0
-#pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma cetus private(i, j)
   for (i = 0; i < m; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus parallel
+#pragma cetus private(j)
+#pragma omp parallel for private(j)
     for (j = 0; j < i; j++) {
       A[i][j] = (((double)((i + j) % m)) / m);
     }
     A[i][i] = 1.0;
-#pragma cetus private(j)
 #pragma loop name init_array #0 #1
+#pragma cetus parallel
+#pragma cetus private(j)
+#pragma omp parallel for private(j)
     for (j = 0; j < n; j++) {
       B[i][j] = (((double)((n + (i - j)) % n)) / n);
     }
@@ -101,11 +103,11 @@ static void print_array(int m, int n, double B[(20 + 0)][(30 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "B");
-#pragma cetus private(i, j)
 #pragma loop name print_array #0
+#pragma cetus private(i, j)
   for (i = 0; i < m; i++) {
-#pragma cetus private(j)
 #pragma loop name print_array #0 #0
+#pragma cetus private(j)
     for (j = 0; j < n; j++) {
       if ((((i * m) + j) % 20) == 0) {
         fprintf(stderr, "\n");
@@ -134,16 +136,16 @@ static void kernel_trmm(int m, int n, double alpha,
 /* A is MxM */
 /* B is MxN */
 #pragma scop
-#pragma cetus private(i, j, k)
 #pragma loop name kernel_trmm #0
+#pragma cetus private(i, j, k)
   for (i = 0; i < m; i++) {
-#pragma cetus private(k)
 #pragma loop name kernel_trmm #0 #0
 #pragma cetus parallel
-#pragma omp parallel for private(k)
+#pragma cetus private(j, k)
+#pragma omp parallel for private(j, k)
     for (j = 0; j < n; j++) {
-#pragma cetus private(k)
 #pragma loop name kernel_trmm #0 #0 #0
+#pragma cetus private(k)
       for (k = (i + 1); k < m; k++) {
         B[i][j] += (A[k][i] * B[k][j]);
       }

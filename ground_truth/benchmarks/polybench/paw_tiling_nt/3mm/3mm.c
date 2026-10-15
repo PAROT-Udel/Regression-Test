@@ -75,46 +75,46 @@ static void init_array(int ni, int nj, int nk, int nl, int nm,
                        double C[(18 + 0)][(24 + 0)],
                        double D[(24 + 0)][(22 + 0)]) {
   int i, j;
-#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (i = 0; i < ni; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus private(j)
     for (j = 0; j < nk; j++) {
       A[i][j] = (((double)(((i * j) + 1) % ni)) / (5 * ni));
     }
   }
-#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (i = 0; i < nk; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #1 #0
+#pragma cetus private(j)
     for (j = 0; j < nj; j++) {
       B[i][j] = (((double)(((i * (j + 1)) + 2) % nj)) / (5 * nj));
     }
   }
-#pragma cetus private(j)
 #pragma loop name init_array #2
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (i = 0; i < nj; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #2 #0
+#pragma cetus private(j)
     for (j = 0; j < nm; j++) {
       C[i][j] = (((double)((i * (j + 3)) % nl)) / (5 * nl));
     }
   }
-#pragma cetus private(j)
 #pragma loop name init_array #3
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (i = 0; i < nm; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #3 #0
+#pragma cetus private(j)
     for (j = 0; j < nl; j++) {
       D[i][j] = (((double)(((i * (j + 2)) + 2) % nk)) / (5 * nk));
     }
@@ -129,11 +129,11 @@ static void print_array(int ni, int nl, double G[(16 + 0)][(22 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "G");
-#pragma cetus private(i, j)
 #pragma loop name print_array #0
+#pragma cetus private(i, j)
   for (i = 0; i < ni; i++) {
-#pragma cetus private(j)
 #pragma loop name print_array #0 #0
+#pragma cetus private(j)
     for (j = 0; j < nl; j++) {
       if ((((i * ni) + j) % 20) == 0) {
         fprintf(stderr, "\n");
@@ -158,57 +158,66 @@ kernel_3mm(int ni, int nj, int nk, int nl, int nm, double E[(16 + 0)][(18 + 0)],
 #pragma scop
 #pragma experimental section start
 /* E := AB */
-#pragma cetus private(j, k)
 #pragma loop name kernel_3mm #0
-#pragma cetus parallel
-#pragma omp parallel for private(j, k)
+#pragma cetus firstprivate(E)
+#pragma cetus private(i, j, k)
+#pragma cetus lastprivate(E)
   for (i = 0; i < ni; i++) {
+#pragma cetus firstprivate(E)
+#pragma cetus lastprivate(E)
+#pragma loop name kernel_3mm #0 #0
 #pragma cetus firstprivate(E)
 #pragma cetus private(j, k)
 #pragma cetus lastprivate(E)
-#pragma loop name kernel_3mm #0 #0
     for (j = 0; j < nj; j++) {
       E[i][j] = 0.0;
-#pragma cetus private(k)
 #pragma loop name kernel_3mm #0 #0 #0
+/* #pragma cetus reduction(+: E[i][j])  */
+#pragma cetus private(k)
       for (k = 0; k < nk; ++k) {
         E[i][j] += (A[i][k] * B[k][j]);
       }
     }
   }
 /* F := CD */
-#pragma cetus private(j, k)
 #pragma loop name kernel_3mm #1
-#pragma cetus parallel
-#pragma omp parallel for private(j, k)
+#pragma cetus firstprivate(F)
+#pragma cetus private(i, j, k)
+#pragma cetus lastprivate(F)
   for (i = 0; i < nj; i++) {
+#pragma cetus firstprivate(F)
+#pragma cetus lastprivate(F)
+#pragma loop name kernel_3mm #1 #0
 #pragma cetus firstprivate(F)
 #pragma cetus private(j, k)
 #pragma cetus lastprivate(F)
-#pragma loop name kernel_3mm #1 #0
     for (j = 0; j < nl; j++) {
       F[i][j] = 0.0;
-#pragma cetus private(k)
 #pragma loop name kernel_3mm #1 #0 #0
+/* #pragma cetus reduction(+: F[i][j])  */
+#pragma cetus private(k)
       for (k = 0; k < nm; ++k) {
         F[i][j] += (C[i][k] * D[k][j]);
       }
     }
   }
 /* G := EF */
-#pragma cetus private(j, k)
 #pragma loop name kernel_3mm #2
-#pragma cetus parallel
-#pragma omp parallel for private(j, k)
+#pragma cetus firstprivate(G)
+#pragma cetus private(i, j, k)
+#pragma cetus lastprivate(G)
   for (i = 0; i < ni; i++) {
+#pragma cetus firstprivate(G)
+#pragma cetus lastprivate(G)
+#pragma loop name kernel_3mm #2 #0
 #pragma cetus firstprivate(G)
 #pragma cetus private(j, k)
 #pragma cetus lastprivate(G)
-#pragma loop name kernel_3mm #2 #0
     for (j = 0; j < nl; j++) {
       G[i][j] = 0.0;
-#pragma cetus private(k)
 #pragma loop name kernel_3mm #2 #0 #0
+/* #pragma cetus reduction(+: G[i][j])  */
+#pragma cetus private(k)
       for (k = 0; k < nj; ++k) {
         G[i][j] += (E[i][k] * F[k][j]);
       }

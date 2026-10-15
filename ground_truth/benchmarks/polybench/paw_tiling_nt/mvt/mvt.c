@@ -73,9 +73,9 @@ static void init_array(int n, double x1[(40 + 0)], double x2[(40 + 0)],
                        double y_1[(40 + 0)], double y_2[(40 + 0)],
                        double A[(40 + 0)][(40 + 0)]) {
   int i, j;
-#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
@@ -83,8 +83,8 @@ static void init_array(int n, double x1[(40 + 0)], double x2[(40 + 0)],
     x2[i] = (((double)((i + 1) % n)) / n);
     y_1[i] = (((double)((i + 3) % n)) / n);
     y_2[i] = (((double)((i + 4) % n)) / n);
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < n; j++) {
       A[i][j] = (((double)((i * j) % n)) / n);
@@ -100,8 +100,8 @@ static void print_array(int n, double x1[(40 + 0)], double x2[(40 + 0)]) {
   int i;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "x1");
-#pragma cetus private(i)
 #pragma loop name print_array #0
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 0; i < n; i++) {
     if ((i % 20) == 0) {
@@ -111,8 +111,8 @@ static void print_array(int n, double x1[(40 + 0)], double x2[(40 + 0)]) {
   }
   fprintf(stderr, "\nend   dump: %s\n", "x1");
   fprintf(stderr, "begin dump: %s", "x2");
-#pragma cetus private(i)
 #pragma loop name print_array #1
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 0; i < n; i++) {
     if ((i % 20) == 0) {
@@ -133,30 +133,30 @@ static void kernel_mvt(int n, double x1[(40 + 0)], double x2[(40 + 0)],
                        double A[(40 + 0)][(40 + 0)]) {
   int i, j;
 #pragma scop
-#pragma cetus private(j)
 #pragma loop name kernel_mvt #0
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name kernel_mvt #0 #0
 /* #pragma cetus reduction(+: x1[i])  */
+#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma cetus reduction(+ : x1[i])
     for (j = 0; j < n; j++) {
       x1[i] = (x1[i] + (A[i][j] * y_1[j]));
     }
   }
-#pragma cetus private(j)
 #pragma loop name kernel_mvt #1
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name kernel_mvt #1 #0
 /* #pragma cetus reduction(+: x2[i])  */
+#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma cetus reduction(+ : x2[i])
     for (j = 0; j < n; j++) {

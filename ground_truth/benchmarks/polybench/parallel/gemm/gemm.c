@@ -157,6 +157,7 @@ static void kernel_gemm(int ni, int nj, int nk, double alpha, double beta,
     }
 #pragma cetus private(j, k)
 #pragma loop name kernel_gemm #0 #1
+    /* #pragma cetus reduction(+: C[i][j])  */
     for (k = 0; k < nk; k++) {
 #pragma cetus private(j)
 #pragma loop name kernel_gemm #0 #1 #0

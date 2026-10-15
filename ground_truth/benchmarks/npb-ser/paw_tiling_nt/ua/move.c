@@ -89,8 +89,8 @@ void move() {
   n1 = (n2 * 2);
   nr_init((int *)sje_new, n1, -1);
   nr_init((int *)ijel_new, n2, -1);
-#pragma cetus private(cb, i, iel, ii1, ii2, iside, jface, ntemp)
 #pragma loop name move #0
+#pragma cetus private(cb, i, iel, ii1, ii2, iside, jface, ntemp)
 #pragma cetus private(cb, i, iel, ii1, ii2, iside, jface, ntemp)
   for (iel = 0; iel < nelt; iel++) {
     i = mt_to_id[iel];
@@ -98,11 +98,14 @@ void move() {
     copy(xc_new[iel], xc[i], 8);
     copy(yc_new[iel], yc[i], 8);
     copy(zc_new[iel], zc[i], 8);
-#pragma cetus private(cb, ii1, ii2, jface, ntemp)
 #pragma loop name move #0 #0
 #pragma cetus parallel
+#pragma cetus private(cb, ii1, ii2, jface, ntemp)
+#pragma cetus firstprivate(ijel_new)
 #pragma cetus private(cb, ii1, ii2, iside, jface, ntemp)
-#pragma omp parallel for private(cb, ii1, ii2, iside, jface, ntemp)
+#pragma cetus lastprivate(ijel_new)
+#pragma omp parallel for private(cb, ii1, ii2, iside, jface, ntemp)            \
+    firstprivate(ijel_new) lastprivate(ijel_new)
     for (iside = 0; iside < 6; iside++) {
       jface = jjface[iside];
       cb = cbc[i][iside];
@@ -124,17 +127,21 @@ void move() {
         } else {
           if (cb == 3) {
 #pragma cetus firstprivate(ijel_new)
-#pragma cetus private(ii1, ii2, ntemp)
 #pragma cetus lastprivate(ijel_new)
 #pragma loop name move #0 #0 #0
 #pragma cetus firstprivate(ijel_new)
 #pragma cetus private(ii1, ii2, ntemp)
 #pragma cetus lastprivate(ijel_new)
+#pragma cetus firstprivate(ijel_new)
+#pragma cetus private(ii1, ii2, ntemp)
+#pragma cetus lastprivate(ijel_new)
             for (ii2 = 0; ii2 < 2; ii2++) {
+#pragma cetus firstprivate(ijel_new)
+#pragma cetus lastprivate(ijel_new)
+#pragma loop name move #0 #0 #0 #0
 #pragma cetus firstprivate(ijel_new)
 #pragma cetus private(ii1, ntemp)
 #pragma cetus lastprivate(ijel_new)
-#pragma loop name move #0 #0 #0 #0
 #pragma cetus firstprivate(ijel_new)
 #pragma cetus private(ii1, ntemp)
 #pragma cetus lastprivate(ijel_new)
@@ -168,7 +175,8 @@ void move() {
   copy((double *)ta1, (double *)ta2, ((5 * 5) * 5) * nelt);
 #pragma loop name move #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(iel)
+#pragma omp parallel for private(iel)
   for (iel = 0; iel < nelt; iel++) {
     mt_to_id[iel] = iel;
     id_to_mt[iel] = iel;

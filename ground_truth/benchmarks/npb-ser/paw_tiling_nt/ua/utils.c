@@ -87,7 +87,8 @@ void reciprocal(double a[], int n) {
   int i;
 #pragma loop name reciprocal #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     a[i] = (1.0 / a[i]);
   }
@@ -100,7 +101,8 @@ void r_init(double a[], int n, double _const) {
   int i;
 #pragma loop name r_init #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     a[i] = _const;
   }
@@ -113,7 +115,8 @@ void nr_init(int a[], int n, int _const) {
   int i;
 #pragma loop name nr_init #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     a[i] = _const;
   }
@@ -126,7 +129,8 @@ void l_init(logical a[], int n, logical _const) {
   int i;
 #pragma loop name l_init #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     a[i] = _const;
   }
@@ -139,7 +143,8 @@ void ncopy(int a[], int b[], int n) {
   int i;
 #pragma loop name ncopy #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     a[i] = b[i];
   }
@@ -152,7 +157,8 @@ void copy(double a[], double b[], int n) {
   int i;
 #pragma loop name copy #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     a[i] = b[i];
   }
@@ -165,7 +171,8 @@ void adds2m1(double a[], double b[], double c1, int n) {
   int i;
 #pragma loop name adds2m1 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     a[i] = (a[i] + (c1 * b[i]));
   }
@@ -178,7 +185,8 @@ void adds1m1(double a[], double b[], double c1, int n) {
   int i;
 #pragma loop name adds1m1 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     a[i] = ((c1 * a[i]) + b[i]);
   }
@@ -191,7 +199,8 @@ void col2(double a[], double b[], int n) {
   int i;
 #pragma loop name col2 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     a[i] = (a[i] * b[i]);
   }
@@ -204,7 +213,8 @@ void nrzero(int na[], int n) {
   int i;
 #pragma loop name nrzero #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     na[i] = 0;
   }
@@ -217,7 +227,8 @@ void add2(double a[], double b[], int n) {
   int i;
 #pragma loop name add2 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < n; i++) {
     a[i] = (a[i] + b[i]);
   }
@@ -230,10 +241,10 @@ double calc_norm() {
   double total, ieltotal;
   int iel, k, j, i, isize;
   total = 0.0;
-#pragma cetus private(i, ieltotal, isize, j, k)
 #pragma loop name calc_norm #0
 #pragma cetus reduction(+ : total)
 #pragma cetus parallel
+#pragma cetus private(i, ieltotal, isize, j, k)
 #pragma cetus private(i, iel, ieltotal, isize, j, k)
 #pragma cetus reduction(+ : total)
 #pragma omp parallel for private(i, iel, ieltotal, isize, j, k)                \
@@ -241,21 +252,21 @@ double calc_norm() {
   for (iel = 0; iel < nelt; iel++) {
     ieltotal = 0.0;
     isize = size_e[iel];
-#pragma cetus private(i, j, k)
 #pragma loop name calc_norm #0 #0
 /* #pragma cetus reduction(+: ieltotal)  */
 #pragma cetus private(i, j, k)
+#pragma cetus private(i, j, k)
 #pragma cetus reduction(+ : ieltotal)
     for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j)
 #pragma loop name calc_norm #0 #0 #0
 /* #pragma cetus reduction(+: ieltotal)  */
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
 #pragma cetus reduction(+ : ieltotal)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name calc_norm #0 #0 #0 #0
 /* #pragma cetus reduction(+: ieltotal)  */
+#pragma cetus private(i)
 #pragma cetus private(i)
 #pragma cetus reduction(+ : ieltotal)
         for (i = 0; i < 5; i++) {
@@ -286,22 +297,24 @@ void parallel_add(int frontier[]) {
   } while (iel < nelt);
 
   ntemp = 1;
-#pragma cetus private(ahead, i, iel, ii, n1, n2, ntemp1)
 #pragma loop name parallel_add #0
+#pragma cetus private(ahead, i, iel, ii, n1, n2, ntemp1)
 #pragma cetus private(ahead, i, iel, ii, n1, n2, ntemp1)
   for (i = 0; i < nellog; i++) {
     n1 = (ntemp * 2);
     n2 = n1;
-#pragma cetus private(ahead, iel, ii)
 #pragma cetus lastprivate(n2)
 #pragma loop name parallel_add #0 #0
+#pragma cetus private(ahead, iel, ii)
+#pragma cetus lastprivate(n2)
 #pragma cetus private(ahead, iel, ii)
 #pragma cetus lastprivate(n2)
     for (iel = n1; iel <= nelt; iel += n1) {
       ahead = frontier[(iel - ntemp) - 1];
 #pragma loop name parallel_add #0 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(ii)
+#pragma omp parallel for private(ii)
       for (ii = (ntemp - 1); ii >= 0; ii--) {
         frontier[(iel - ii) - 1] = (frontier[(iel - ii) - 1] + ahead);
       }
@@ -315,7 +328,8 @@ void parallel_add(int frontier[]) {
       ahead = frontier[(n2 - ntemp) - 1];
 #pragma loop name parallel_add #0 #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(ii)
+#pragma omp parallel for private(ii)
       for (ii = (ntemp - 1); ii >= ntemp1; ii--) {
         frontier[(n2 - ii) - 1] = (frontier[(n2 - ii) - 1] + ahead);
       }
@@ -361,16 +375,18 @@ void facev(double a[5][5][5], int iface, double val) {
   if (iface == 5) {
     kz2 = 1;
   }
-#pragma cetus private(iy)
 #pragma loop name facev #0
+#pragma cetus parallel
+#pragma cetus private(ix, iy)
 #pragma cetus private(ix, iy, iz)
+#pragma omp parallel for private(ix, iy, iz)
   for (iz = (kz1 - 1); iz < kz2; iz++) {
-#pragma cetus private(iy, iz)
 #pragma loop name facev #0 #0
 #pragma cetus private(ix, iy)
+#pragma cetus private(ix, iy)
     for (iy = (ky1 - 1); iy < ky2; iy++) {
-#pragma cetus private(iz)
 #pragma loop name facev #0 #0 #0
+#pragma cetus private(ix)
 #pragma cetus private(ix)
       for (ix = (kx1 - 1); ix < kx2; ix++) {
         a[iz][iy][ix] = val;

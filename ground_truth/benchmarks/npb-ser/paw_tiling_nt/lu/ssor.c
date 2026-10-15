@@ -102,22 +102,22 @@ void ssor(int niter) {
 /* initialize a,b,c,d to zero (guarantees that page tables have been */
 /* formed, if applicable on given architecture, before timestepping). */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, m, n)
 #pragma loop name ssor #0
 #pragma cetus parallel
+#pragma cetus private(i, m, n)
 #pragma cetus private(i, j, m, n)
 #pragma omp parallel for private(i, j, m, n)
   for (j = 0; j < 12; j++) {
-#pragma cetus private(i, m, n)
 #pragma loop name ssor #0 #0
 #pragma cetus private(i, m, n)
+#pragma cetus private(i, m, n)
     for (i = 0; i < 12; i++) {
-#pragma cetus private(m, n)
 #pragma loop name ssor #0 #0 #0
 #pragma cetus private(m, n)
+#pragma cetus private(m, n)
       for (n = 0; n < 5; n++) {
-#pragma cetus private(m)
 #pragma loop name ssor #0 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           a[j][i][n][m] = 0.0;
@@ -128,8 +128,8 @@ void ssor(int niter) {
       }
     }
   }
-#pragma cetus private(i)
 #pragma loop name ssor #1
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 1; i <= 11; i++) {
     timer_clear(i);
@@ -162,8 +162,8 @@ void ssor(int niter) {
   }
 
 */
-#pragma cetus private(i)
 #pragma loop name ssor #2
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 1; i <= 11; i++) {
     timer_clear(i);
@@ -172,9 +172,11 @@ void ssor(int niter) {
 /* --------------------------------------------------------------------- */
 /* the timestep loop */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, k, m)
 #pragma loop name ssor #3
+/* #pragma cetus reduction(+: u[k][j][i][m])  */
 #pragma cetus private(i, j, k, m)
+#pragma cetus private(i, j, k, m)
+#pragma cetus reduction(+ : u[k][j][i][m])
   for (istep = 1; istep <= niter; istep++) {
     /* if ( ( (istep % inorm) == 0 ) && ipr == 1 ) { */
     /*  printf(" \n     pseudo-time SSOR iteration no.=%4d\n\n", istep); */
@@ -190,22 +192,22 @@ void ssor(int niter) {
     if (timeron) {
       timer_start(5);
     }
-#pragma cetus private(i, j, m)
 #pragma loop name ssor #3 #0
 #pragma cetus parallel
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, k, m)
 #pragma omp parallel for private(i, j, k, m)
     for (k = 1; k < (nz - 1); k++) {
-#pragma cetus private(i, j, m)
 #pragma loop name ssor #3 #0 #0
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
       for (j = jst; j < jend; j++) {
-#pragma cetus private(i, m)
 #pragma loop name ssor #3 #0 #0 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
         for (i = ist; i < iend; i++) {
-#pragma cetus private(m)
 #pragma loop name ssor #3 #0 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
           for (m = 0; m < 5; m++) {
             rsd[k][j][i][m] = (dt * rsd[k][j][i][m]);
@@ -216,8 +218,8 @@ void ssor(int niter) {
     if (timeron) {
       timer_stop(5);
     }
-#pragma cetus private(k)
 #pragma loop name ssor #3 #1
+#pragma cetus private(k)
 #pragma cetus private(k)
     for (k = 1; k < (nz - 1); k++) {
       /* ---------------------------------------------------------------------
@@ -246,8 +248,8 @@ void ssor(int niter) {
         timer_stop(7);
       }
     }
-#pragma cetus private(k)
 #pragma loop name ssor #3 #2
+#pragma cetus private(k)
 #pragma cetus private(k)
     for (k = (nz - 2); k > 0; k--) {
       /* ---------------------------------------------------------------------
@@ -286,18 +288,19 @@ void ssor(int niter) {
 #pragma loop name ssor #3 #3
 #pragma cetus parallel
 #pragma cetus private(i, j, k, m)
+#pragma cetus private(i, j, k, m)
 #pragma omp parallel for private(i, j, k, m)
     for (k = 1; k < (nz - 1); k++) {
-#pragma cetus private(i, j, m)
 #pragma loop name ssor #3 #3 #0
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
       for (j = jst; j < jend; j++) {
-#pragma cetus private(i, m)
 #pragma loop name ssor #3 #3 #0 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
         for (i = ist; i < iend; i++) {
-#pragma cetus private(m)
 #pragma loop name ssor #3 #3 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
           for (m = 0; m < 5; m++) {
             u[k][j][i][m] = (u[k][j][i][m] + (tmp * rsd[k][j][i][m]));

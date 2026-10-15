@@ -73,25 +73,25 @@ static void init_array(int m, int n, double A[(20 + 0)][(30 + 0)],
                        double R[(30 + 0)][(30 + 0)],
                        double Q[(20 + 0)][(30 + 0)]) {
   int i, j;
-#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (i = 0; i < m; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus private(j)
     for (j = 0; j < n; j++) {
       A[i][j] = (((((double)((i * j) % m)) / m) * 100) + 10);
       Q[i][j] = 0.0;
     }
   }
-#pragma cetus private(j)
 #pragma loop name init_array #1
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #1 #0
+#pragma cetus private(j)
     for (j = 0; j < n; j++) {
       R[i][j] = 0.0;
     }
@@ -108,11 +108,11 @@ static void print_array(int m, int n, double A[(20 + 0)][(30 + 0)],
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "R");
-#pragma cetus private(i, j)
 #pragma loop name print_array #0
+#pragma cetus private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name print_array #0 #0
+#pragma cetus private(j)
     for (j = 0; j < n; j++) {
       if ((((i * n) + j) % 20) == 0) {
         fprintf(stderr, "\n");
@@ -122,11 +122,11 @@ static void print_array(int m, int n, double A[(20 + 0)][(30 + 0)],
   }
   fprintf(stderr, "\nend   dump: %s\n", "R");
   fprintf(stderr, "begin dump: %s", "Q");
-#pragma cetus private(i, j)
 #pragma loop name print_array #1
+#pragma cetus private(i, j)
   for (i = 0; i < m; i++) {
-#pragma cetus private(j)
 #pragma loop name print_array #1 #0
+#pragma cetus private(j)
     for (j = 0; j < n; j++) {
       if ((((i * n) + j) % 20) == 0) {
         fprintf(stderr, "\n");
@@ -153,38 +153,43 @@ static void kernel_gramschmidt(int m, int n, double A[(20 + 0)][(30 + 0)],
   double nrm;
 #pragma scop
 #pragma cetus firstprivate(R)
-#pragma cetus private(i, j, k, nrm)
 #pragma cetus lastprivate(R)
 #pragma loop name kernel_gramschmidt #0
+#pragma cetus firstprivate(R)
+#pragma cetus private(i, j, k, nrm)
+#pragma cetus lastprivate(R)
   for (k = 0; k < n; k++) {
     nrm = 0.0;
 #pragma loop name kernel_gramschmidt #0 #0
 #pragma cetus reduction(+ : nrm)
 #pragma cetus parallel
-#pragma omp parallel for reduction(+ : nrm)
+#pragma cetus private(i)
+#pragma omp parallel for private(i) reduction(+ : nrm)
     for (i = 0; i < m; i++) {
       nrm += (A[i][k] * A[i][k]);
     }
     R[k][k] = sqrt(nrm);
 #pragma loop name kernel_gramschmidt #0 #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
     for (i = 0; i < m; i++) {
       Q[i][k] = (A[i][k] / R[k][k]);
     }
-#pragma cetus private(i)
 #pragma loop name kernel_gramschmidt #0 #2
-#pragma cetus parallel
-#pragma omp parallel for private(i)
+#pragma cetus firstprivate(R)
+#pragma cetus private(i, j)
+#pragma cetus lastprivate(R)
     for (j = (k + 1); j < n; j++) {
       R[k][j] = 0.0;
-#pragma cetus private(i)
 #pragma loop name kernel_gramschmidt #0 #2 #0
+/* #pragma cetus reduction(+: R[k][j])  */
+#pragma cetus private(i)
       for (i = 0; i < m; i++) {
         R[k][j] += (Q[i][k] * A[i][j]);
       }
-#pragma cetus private(i)
 #pragma loop name kernel_gramschmidt #0 #2 #1
+#pragma cetus private(i)
       for (i = 0; i < m; i++) {
         A[i][j] = (A[i][j] - (Q[i][k] * R[k][j]));
       }

@@ -5,7 +5,6 @@
 #define FLOOR(x) ((int)((x) - 0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
-#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -91,14 +90,10 @@ void transf(double tmor[], double tx[]) {
   int nnje, ije1, ije2, col, i, j, ig, il;
   /* zero out tx on element boundaries */
   col2(tx, (double *)tmult, ntot);
-#pragma cetus private(col, i, ie, iface, ig, ig1, ig2, ig3, ig4, ije1, ije2,   \
-                      il, il1, il2, il3, il4, j, nnje)
 #pragma loop name transf #0
 #pragma cetus private(col, i, ie, iface, ig, ig1, ig2, ig3, ig4, ije1, ije2,   \
                       il, il1, il2, il3, il4, j, nnje)
   for (ie = 0; ie < nelt; ie++) {
-#pragma cetus private(col, i, iface, ig, ig1, ig2, ig3, ig4, ije1, ije2, il,   \
-                      il1, il2, il3, il4, j, nnje)
 #pragma loop name transf #0 #0
 #pragma cetus private(col, i, iface, ig, ig1, ig2, ig3, ig4, ije1, ije2, il,   \
                       il1, il2, il3, il4, j, nnje)
@@ -134,17 +129,14 @@ void transf(double tmor[], double tx[]) {
         /* nonconforming faces have four pieces of mortar, first map them to */
         /* two intermediate mortars, stored in tmp */
         r_init((double *)tmp, (5 * 5) * 2, 0.0);
-#pragma cetus private(col, i, ig, ije2, il, j)
 #pragma loop name transf #0 #0 #0
 #pragma cetus parallel
-#pragma cetus private(col, i, ig, ije1, ije2, il, j)
-#pragma omp parallel for private(col, i, ig, ije1, ije2, il, j)
-        for (ije1 = 0; ije1 < nnje; ije1++) {
 #pragma cetus private(col, i, ig, ije2, il, j)
+#pragma omp parallel for private(col, i, ig, ije2, il, j)
+        for (ije1 = 0; ije1 < nnje; ije1++) {
 #pragma loop name transf #0 #0 #0 #0
 #pragma cetus private(col, i, ig, ije2, il, j)
           for (ije2 = 0; ije2 < nnje; ije2++) {
-#pragma cetus private(col, i, ig, il, j)
 #pragma loop name transf #0 #0 #0 #0 #0
 #pragma cetus private(col, i, ig, il, j)
             for (col = 0; col < 5; col++) {
@@ -155,14 +147,14 @@ void transf(double tmor[], double tx[]) {
               tmp[ije1][col][i] = tmor[ig];
 /* in each row col, value in the interior three collocation */
 /* points is computed by apply mapping matrix qbnew to tmor */
-#pragma cetus private(i, ig, il, j)
 #pragma loop name transf #0 #0 #0 #0 #0 #0
 #pragma cetus private(i, ig, il, j)
               for (i = 1; i < (5 - 1); i++) {
                 il = idel[ie][iface][col][i];
-#pragma cetus private(ig, j)
 #pragma loop name transf #0 #0 #0 #0 #0 #0 #0
+/* #pragma cetus reduction(+: tmp[ije1][col][i])  */
 #pragma cetus private(ig, j)
+#pragma cetus reduction(+ : tmp[ije1][col][i])
                 for (j = 0; j < 5; j++) {
                   ig = idmo[ie][iface][ije2][ije1][col][j];
                   tmp[ije1][col][i] =
@@ -174,9 +166,8 @@ void transf(double tmor[], double tx[]) {
         }
 /* mapping from two pieces of intermediate mortar tmp to element */
 /* face tx */
-#pragma cetus private(col, i, il, j)
 #pragma loop name transf #0 #0 #1
-/* #pragma cetus reduction(+: tx[il])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(col, i, ije1, il, j)
 #pragma cetus reduction(+ : tx[il])
         for (ije1 = 0; ije1 < nnje; ije1++) {
@@ -186,14 +177,12 @@ void transf(double tmor[], double tx[]) {
           /* the mapping result is divided by 2, because there will be */
           /* duplicated contribution from another face sharing this edge. */
           col = 0;
-#pragma cetus private(i, il, j)
 #pragma loop name transf #0 #0 #1 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(i, il, j)
 #pragma cetus reduction(+ : tx[il])
           for (i = 1; i < (5 - 1); i++) {
             il = idel[ie][iface][i][col];
-#pragma cetus private(j)
 #pragma loop name transf #0 #0 #1 #0 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(j)
@@ -204,7 +193,6 @@ void transf(double tmor[], double tx[]) {
             }
           }
 /* for column 1 ~ lx-2 */
-#pragma cetus private(col, i, il, j)
 #pragma loop name transf #0 #0 #1 #1
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(col, i, il, j)
@@ -218,14 +206,12 @@ void transf(double tmor[], double tx[]) {
             tx[il] = (tx[il] + (tmp[ije1][i][col] * 0.5));
 /* compute the value at interior collocation points in */
 /* columns 1 ~ LX1-1 */
-#pragma cetus private(i, il, j)
 #pragma loop name transf #0 #0 #1 #1 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(i, il, j)
 #pragma cetus reduction(+ : tx[il])
             for (i = 1; i < (5 - 1); i++) {
               il = idel[ie][iface][i][col];
-#pragma cetus private(j)
 #pragma loop name transf #0 #0 #1 #1 #0 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(j)
@@ -237,14 +223,12 @@ void transf(double tmor[], double tx[]) {
           }
           /* same as col=0 */
           col = (5 - 1);
-#pragma cetus private(i, il, j)
 #pragma loop name transf #0 #0 #1 #2
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(i, il, j)
 #pragma cetus reduction(+ : tx[il])
           for (i = 1; i < (5 - 1); i++) {
             il = idel[ie][iface][i][col];
-#pragma cetus private(j)
 #pragma loop name transf #0 #0 #1 #2 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(j)
@@ -258,11 +242,9 @@ void transf(double tmor[], double tx[]) {
         /* for conforming faces */
       } else {
 /* face interior */
-#pragma cetus private(col, i, ig, il)
 #pragma loop name transf #0 #0 #2
 #pragma cetus private(col, i, ig, il)
         for (col = 1; col < (5 - 1); col++) {
-#pragma cetus private(i, ig, il)
 #pragma loop name transf #0 #0 #2 #0
 #pragma cetus private(i, ig, il)
           for (i = 1; i < (5 - 1); i++) {
@@ -274,20 +256,17 @@ void transf(double tmor[], double tx[]) {
         /* edges of conforming faces */
         /* if local edge 0 is a nonconforming edge */
         if (idmo[ie][iface][0][0][0][5 - 1] != (-1)) {
-#pragma cetus private(ig, ije1, il, j)
 #pragma loop name transf #0 #0 #3
-/* #pragma cetus reduction(+: tx[il])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(i, ig, ije1, il, j)
 #pragma cetus reduction(+ : tx[il])
           for (i = 1; i < (5 - 1); i++) {
             il = idel[ie][iface][0][i];
-#pragma cetus private(ig, ije1, j)
 #pragma loop name transf #0 #0 #3 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(ig, ije1, j)
 #pragma cetus reduction(+ : tx[il])
             for (ije1 = 0; ije1 < 2; ije1++) {
-#pragma cetus private(ig, j)
 #pragma loop name transf #0 #0 #3 #0 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(ig, j)
@@ -300,7 +279,6 @@ void transf(double tmor[], double tx[]) {
           }
           /* if local edge 0 is a conforming edge */
         } else {
-#pragma cetus private(i, ig, il)
 #pragma loop name transf #0 #0 #4
 #pragma cetus private(i, ig, il)
           for (i = 1; i < (5 - 1); i++) {
@@ -311,20 +289,17 @@ void transf(double tmor[], double tx[]) {
         }
         /* if local edge 1 is a nonconforming edge */
         if (idmo[ie][iface][1][0][1][5 - 1] != (-1)) {
-#pragma cetus private(ig, ije1, il, j)
 #pragma loop name transf #0 #0 #5
-/* #pragma cetus reduction(+: tx[il])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(i, ig, ije1, il, j)
 #pragma cetus reduction(+ : tx[il])
           for (i = 1; i < (5 - 1); i++) {
             il = idel[ie][iface][i][5 - 1];
-#pragma cetus private(ig, ije1, j)
 #pragma loop name transf #0 #0 #5 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(ig, ije1, j)
 #pragma cetus reduction(+ : tx[il])
             for (ije1 = 0; ije1 < 2; ije1++) {
-#pragma cetus private(ig, j)
 #pragma loop name transf #0 #0 #5 #0 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(ig, j)
@@ -337,7 +312,6 @@ void transf(double tmor[], double tx[]) {
           }
           /* if local edge 1 is a conforming edge */
         } else {
-#pragma cetus private(i, ig, il)
 #pragma loop name transf #0 #0 #6
 #pragma cetus private(i, ig, il)
           for (i = 1; i < (5 - 1); i++) {
@@ -348,20 +322,17 @@ void transf(double tmor[], double tx[]) {
         }
         /* if local edge 2 is a nonconforming edge */
         if (idmo[ie][iface][0][1][5 - 1][1] != (-1)) {
-#pragma cetus private(ig, ije1, il, j)
 #pragma loop name transf #0 #0 #7
-/* #pragma cetus reduction(+: tx[il])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(i, ig, ije1, il, j)
 #pragma cetus reduction(+ : tx[il])
           for (i = 1; i < (5 - 1); i++) {
             il = idel[ie][iface][5 - 1][i];
-#pragma cetus private(ig, ije1, j)
 #pragma loop name transf #0 #0 #7 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(ig, ije1, j)
 #pragma cetus reduction(+ : tx[il])
             for (ije1 = 0; ije1 < 2; ije1++) {
-#pragma cetus private(ig, j)
 #pragma loop name transf #0 #0 #7 #0 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(ig, j)
@@ -374,7 +345,6 @@ void transf(double tmor[], double tx[]) {
           }
           /* if local edge 2 is a conforming edge */
         } else {
-#pragma cetus private(i, ig, il)
 #pragma loop name transf #0 #0 #8
 #pragma cetus private(i, ig, il)
           for (i = 1; i < (5 - 1); i++) {
@@ -385,20 +355,17 @@ void transf(double tmor[], double tx[]) {
         }
         /* if local edge 3 is a nonconforming edge */
         if (idmo[ie][iface][0][0][5 - 1][0] != (-1)) {
-#pragma cetus private(ig, ije1, il, j)
 #pragma loop name transf #0 #0 #9
-/* #pragma cetus reduction(+: tx[il])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(i, ig, ije1, il, j)
 #pragma cetus reduction(+ : tx[il])
           for (i = 1; i < (5 - 1); i++) {
             il = idel[ie][iface][i][0];
-#pragma cetus private(ig, ije1, j)
 #pragma loop name transf #0 #0 #9 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(ig, ije1, j)
 #pragma cetus reduction(+ : tx[il])
             for (ije1 = 0; ije1 < 2; ije1++) {
-#pragma cetus private(ig, j)
 #pragma loop name transf #0 #0 #9 #0 #0
 /* #pragma cetus reduction(+: tx[il])  */
 #pragma cetus private(ig, j)
@@ -411,7 +378,6 @@ void transf(double tmor[], double tx[]) {
           }
           /* if local edge 3 is a conforming edge */
         } else {
-#pragma cetus private(i, ig, il)
 #pragma loop name transf #0 #0 #10
 #pragma cetus private(i, ig, il)
           for (i = 1; i < (5 - 1); i++) {
@@ -436,8 +402,6 @@ void transfb(double tmor[], double tx[]) {
   int il1, il2, il3, il4, ig1, ig2, ig3, ig4, ie, iface, nnje;
   int ije1, ije2, col, i, j, ije, ig, il;
   r_init(tmor, nmor, 0.0);
-#pragma cetus private(col, i, ie, iface, ig, ig1, ig2, ig3, ig4, ije, ije1,    \
-                      ije2, il, il1, il2, il3, il4, j, nnje, shift, tmp, tmp1)
 #pragma loop name transfb #0
 /* #pragma cetus reduction(+: tmor[ig1], tmor[ig2], tmor[ig3], tmor[ig4],
  * tmor[ig])  */
@@ -446,8 +410,6 @@ void transfb(double tmor[], double tx[]) {
 #pragma cetus reduction(+ : tmor[ig1], tmor[ig2], tmor[ig3], tmor[ig4],        \
                         tmor[ig])
   for (ie = 0; ie < nelt; ie++) {
-#pragma cetus private(col, i, iface, ig, ig1, ig2, ig3, ig4, ije, ije1, ije2,  \
-                      il, il1, il2, il3, il4, j, nnje, shift, tmp, tmp1)
 #pragma loop name transfb #0 #0
 /* #pragma cetus reduction(+: tmor[ig1], tmor[ig2], tmor[ig3], tmor[ig4],
  * tmor[ig])  */
@@ -484,14 +446,12 @@ void transfb(double tmor[], double tx[]) {
         r_init((double *)temp, (5 * 5) * 2, 0.0);
 /* nonconforming faces have four pieces of mortar, first map tx to */
 /* two intermediate mortars stored in temp */
-#pragma cetus private(col, i, il, j, shift, tmp)
 #pragma loop name transfb #0 #0 #0
 #pragma cetus parallel
-#pragma cetus private(col, i, ije2, il, j, shift, tmp)
-#pragma omp parallel for private(col, i, ije2, il, j, shift, tmp)
+#pragma cetus private(col, i, il, j, shift, tmp)
+#pragma omp parallel for private(col, i, il, j, shift, tmp)
         for (ije2 = 0; ije2 < nnje; ije2++) {
           shift = ije2;
-#pragma cetus private(col, i, il, j, tmp)
 #pragma loop name transfb #0 #0 #0 #0
 #pragma cetus private(col, i, il, j, tmp)
           for (col = 0; col < 5; col++) {
@@ -503,7 +463,6 @@ void transfb(double tmor[], double tx[]) {
             /* the interior points' contribution to them, i.e. top() */
             j = v_end[ije2];
             tmp = 0.0;
-#pragma cetus private(i, il)
 #pragma loop name transfb #0 #0 #0 #0 #0
 /* #pragma cetus reduction(+: tmp)  */
 #pragma cetus private(i, il)
@@ -515,12 +474,10 @@ void transfb(double tmor[], double tx[]) {
             top[ije2][col] = tmp;
 /* Use mapping matrices qbnew to map the value from tx to temp */
 /* for mortar points not on the top bottom face edge. */
-#pragma cetus private(i, il, j, tmp)
 #pragma loop name transfb #0 #0 #0 #0 #1
 #pragma cetus private(i, il, j, tmp)
             for (j = ((2 - shift) - 1); j < (5 - shift); j++) {
               tmp = 0.0;
-#pragma cetus private(i, il)
 #pragma loop name transfb #0 #0 #0 #0 #1 #0
 /* #pragma cetus reduction(+: tmp)  */
 #pragma cetus private(i, il)
@@ -534,21 +491,18 @@ void transfb(double tmor[], double tx[]) {
           }
         }
 /* mapping from temp to tmor */
-#pragma cetus private(col, i, ig, ije2, j, shift, tmp, tmp1)
 #pragma loop name transfb #0 #0 #1
-/* #pragma cetus reduction(+: tmor[ig])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(col, i, ig, ije1, ije2, j, shift, tmp, tmp1)
 #pragma cetus reduction(+ : tmor[ig])
         for (ije1 = 0; ije1 < nnje; ije1++) {
           shift = ije1;
-#pragma cetus private(col, i, ig, ije2, j, tmp, tmp1)
 #pragma loop name transfb #0 #0 #1 #0
 /* #pragma cetus reduction(+: tmor[ig])  */
 #pragma cetus private(col, i, ig, ije2, j, tmp, tmp1)
 #pragma cetus reduction(+ : tmor[ig])
           for (ije2 = 0; ije2 < nnje; ije2++) {
 /* for each column of collocation points on a piece of mortar */
-#pragma cetus private(col, i, ig, j, tmp)
 #pragma loop name transfb #0 #0 #1 #0 #0
 /* #pragma cetus reduction(+: tmor[ig])  */
 #pragma cetus private(col, i, ig, j, tmp)
@@ -562,14 +516,12 @@ void transfb(double tmor[], double tx[]) {
 /* In each row of collocation points on a piece of mortar, */
 /* sum the contributions from interior collocation points */
 /* (i=1,LX1-2) */
-#pragma cetus private(i, ig, j, tmp)
 #pragma loop name transfb #0 #0 #1 #0 #0 #0
 /* #pragma cetus reduction(+: tmor[ig])  */
 #pragma cetus private(i, ig, j, tmp)
 #pragma cetus reduction(+ : tmor[ig])
               for (j = 0; j < 5; j++) {
                 tmp = 0.0;
-#pragma cetus private(i)
 #pragma loop name transfb #0 #0 #1 #0 #0 #0 #0
 /* #pragma cetus reduction(+: tmp)  */
 #pragma cetus private(i)
@@ -588,7 +540,6 @@ void transfb(double tmor[], double tx[]) {
             col = v_end[ije1];
             ig = idmo[ie][iface][ije2][ije1][col][v_end[ije2]];
             tmor[ig] = (tmor[ig] + (top[ije1][v_end[ije2]] * 0.5));
-#pragma cetus private(i, ig, j, tmp, tmp1)
 #pragma loop name transfb #0 #0 #1 #0 #1
 /* #pragma cetus reduction(+: tmor[ig])  */
 #pragma cetus private(i, ig, j, tmp, tmp1)
@@ -596,7 +547,6 @@ void transfb(double tmor[], double tx[]) {
             for (j = 0; j < 5; j++) {
               tmp = 0.0;
               tmp1 = 0.0;
-#pragma cetus private(i)
 #pragma loop name transfb #0 #0 #1 #0 #1 #0
 /* #pragma cetus reduction(+: tmp, tmp1)  */
 #pragma cetus private(i)
@@ -613,13 +563,11 @@ void transfb(double tmor[], double tx[]) {
         /* for conforming faces */
       } else {
 /* face interior */
-#pragma cetus private(ig, il, j)
 #pragma loop name transfb #0 #0 #2
-/* #pragma cetus reduction(+: tmor[ig])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(col, ig, il, j)
 #pragma cetus reduction(+ : tmor[ig])
         for (col = 1; col < (5 - 1); col++) {
-#pragma cetus private(ig, il, j)
 #pragma loop name transfb #0 #0 #2 #0
 /* #pragma cetus reduction(+: tmor[ig])  */
 #pragma cetus private(ig, il, j)
@@ -633,20 +581,17 @@ void transfb(double tmor[], double tx[]) {
         /* edges of conforming faces */
         /* if local edge 0 is a nonconforming edge */
         if (idmo[ie][iface][0][0][0][5 - 1] != (-1)) {
-#pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #3
-/* #pragma cetus reduction(+: tmor[ig])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(i, ig, ije, il, j, tmp)
 #pragma cetus reduction(+ : tmor[ig])
           for (ije = 0; ije < 2; ije++) {
-#pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #3 #0
 /* #pragma cetus reduction(+: tmor[ig])  */
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma cetus reduction(+ : tmor[ig])
             for (j = 0; j < 5; j++) {
               tmp = 0.0;
-#pragma cetus private(i, il)
 #pragma loop name transfb #0 #0 #3 #0 #0
 /* #pragma cetus reduction(+: tmp)  */
 #pragma cetus private(i, il)
@@ -661,9 +606,8 @@ void transfb(double tmor[], double tx[]) {
           }
           /* if local edge 0 is a conforming edge */
         } else {
-#pragma cetus private(ig, il)
 #pragma loop name transfb #0 #0 #4
-/* #pragma cetus reduction(+: tmor[ig])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(ig, il, j)
 #pragma cetus reduction(+ : tmor[ig])
           for (j = 1; j < (5 - 1); j++) {
@@ -674,20 +618,17 @@ void transfb(double tmor[], double tx[]) {
         }
         /* if local edge 1 is a nonconforming edge */
         if (idmo[ie][iface][1][0][1][5 - 1] != (-1)) {
-#pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #5
-/* #pragma cetus reduction(+: tmor[ig])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(i, ig, ije, il, j, tmp)
 #pragma cetus reduction(+ : tmor[ig])
           for (ije = 0; ije < 2; ije++) {
-#pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #5 #0
 /* #pragma cetus reduction(+: tmor[ig])  */
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma cetus reduction(+ : tmor[ig])
             for (j = 0; j < 5; j++) {
               tmp = 0.0;
-#pragma cetus private(i, il)
 #pragma loop name transfb #0 #0 #5 #0 #0
 /* #pragma cetus reduction(+: tmp)  */
 #pragma cetus private(i, il)
@@ -702,9 +643,8 @@ void transfb(double tmor[], double tx[]) {
           }
           /* if local edge 1 is a conforming edge */
         } else {
-#pragma cetus private(ig, il)
 #pragma loop name transfb #0 #0 #6
-/* #pragma cetus reduction(+: tmor[ig])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(ig, il, j)
 #pragma cetus reduction(+ : tmor[ig])
           for (j = 1; j < (5 - 1); j++) {
@@ -715,20 +655,17 @@ void transfb(double tmor[], double tx[]) {
         }
         /* if local edge 2 is a nonconforming edge */
         if (idmo[ie][iface][0][1][5 - 1][1] != (-1)) {
-#pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #7
-/* #pragma cetus reduction(+: tmor[ig])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(i, ig, ije, il, j, tmp)
 #pragma cetus reduction(+ : tmor[ig])
           for (ije = 0; ije < 2; ije++) {
-#pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #7 #0
 /* #pragma cetus reduction(+: tmor[ig])  */
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma cetus reduction(+ : tmor[ig])
             for (j = 0; j < 5; j++) {
               tmp = 0.0;
-#pragma cetus private(i, il)
 #pragma loop name transfb #0 #0 #7 #0 #0
 /* #pragma cetus reduction(+: tmp)  */
 #pragma cetus private(i, il)
@@ -743,9 +680,8 @@ void transfb(double tmor[], double tx[]) {
           }
           /* if local edge 2 is a conforming edge */
         } else {
-#pragma cetus private(ig, il)
 #pragma loop name transfb #0 #0 #8
-/* #pragma cetus reduction(+: tmor[ig])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(ig, il, j)
 #pragma cetus reduction(+ : tmor[ig])
           for (j = 1; j < (5 - 1); j++) {
@@ -756,20 +692,17 @@ void transfb(double tmor[], double tx[]) {
         }
         /* if local edge 3 is a nonconforming edge */
         if (idmo[ie][iface][0][0][5 - 1][0] != (-1)) {
-#pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #9
-/* #pragma cetus reduction(+: tmor[ig])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(i, ig, ije, il, j, tmp)
 #pragma cetus reduction(+ : tmor[ig])
           for (ije = 0; ije < 2; ije++) {
-#pragma cetus private(i, ig, il, j, tmp)
 #pragma loop name transfb #0 #0 #9 #0
 /* #pragma cetus reduction(+: tmor[ig])  */
 #pragma cetus private(i, ig, il, j, tmp)
 #pragma cetus reduction(+ : tmor[ig])
             for (j = 0; j < 5; j++) {
               tmp = 0.0;
-#pragma cetus private(i, il)
 #pragma loop name transfb #0 #0 #9 #0 #0
 /* #pragma cetus reduction(+: tmp)  */
 #pragma cetus private(i, il)
@@ -784,9 +717,8 @@ void transfb(double tmor[], double tx[]) {
           }
           /* if local edge 3 is a conforming edge */
         } else {
-#pragma cetus private(ig, il)
 #pragma loop name transfb #0 #0 #10
-/* #pragma cetus reduction(+: tmor[ig])  */
+/* #pragma cetus reduction(+: )  */
 #pragma cetus private(ig, il, j)
 #pragma cetus reduction(+ : tmor[ig])
           for (j = 1; j < (5 - 1); j++) {
@@ -858,14 +790,12 @@ void transfb_cor_f(int n, double *tmor, double tx[5][5][5]) {
   double temp[5], tmp;
   int col, i;
   r_init(temp, 5, 0.0);
-#pragma cetus private(i)
 #pragma loop name transfb_cor_f #0
 #pragma cetus parallel
-#pragma cetus private(col, i)
-#pragma omp parallel for private(col, i)
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (col = 0; col < 5; col++) {
     temp[col] = tx[0][0][col];
-#pragma cetus private(i)
 #pragma loop name transfb_cor_f #0 #0
 /* #pragma cetus reduction(+: temp[col])  */
 #pragma cetus private(i)
@@ -896,14 +826,15 @@ void transfb_cor_f(int n, double *tmor, double tx[5][5][5]) {
   if (n >= 6) {
     r_init(temp, 5, 0.0);
 #pragma loop name transfb_cor_f #3
-#pragma cetus private(col, i)
-#pragma cetus reduction(+ : temp[col])
-    for (i = 1; i < (5 - 1); i++) {
+#pragma cetus parallel
 #pragma cetus private(i)
+#pragma omp parallel for private(i)
+    for (col = 0; col < 5; col++) {
 #pragma loop name transfb_cor_f #3 #0
 /* #pragma cetus reduction(+: temp[col])  */
-#pragma cetus private(col)
-      for (col = 0; col < 5; col++) {
+#pragma cetus private(i)
+#pragma cetus reduction(+ : temp[col])
+      for (i = 1; i < (5 - 1); i++) {
         temp[col] = (temp[col] + (qbnew[0][0][i - 1] * tx[i][0][col]));
       }
     }
@@ -920,14 +851,15 @@ void transfb_cor_f(int n, double *tmor, double tx[5][5][5]) {
   if (n == 7) {
     r_init(temp, 5, 0.0);
 #pragma loop name transfb_cor_f #5
-#pragma cetus private(col, i)
-#pragma cetus reduction(+ : temp[col])
-    for (i = 1; i < (5 - 1); i++) {
+#pragma cetus parallel
 #pragma cetus private(i)
+#pragma omp parallel for private(i)
+    for (col = 1; col < (5 - 1); col++) {
 #pragma loop name transfb_cor_f #5 #0
 /* #pragma cetus reduction(+: temp[col])  */
-#pragma cetus private(col)
-      for (col = 1; col < (5 - 1); col++) {
+#pragma cetus private(i)
+#pragma cetus reduction(+ : temp[col])
+      for (i = 1; i < (5 - 1); i++) {
         temp[col] = (temp[col] + (qbnew[0][0][i - 1] * tx[i][col][0]));
       }
     }
@@ -954,41 +886,39 @@ void transf_nc(double tmor[5][5], double tx[5][5]) {
   double tmp[5][5];
   int col, i, j;
   r_init((double *)tmp, 5 * 5, 0.0);
-#pragma cetus private(i, j)
 #pragma loop name transf_nc #0
 #pragma cetus parallel
-#pragma cetus private(col, i, j)
-#pragma omp parallel for private(col, i, j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (col = 0; col < 5; col++) {
     i = 0;
     tmp[col][i] = tmor[col][i];
-#pragma cetus private(i, j)
 #pragma loop name transf_nc #0 #0
 #pragma cetus private(i, j)
     for (i = 1; i < (5 - 1); i++) {
-#pragma cetus private(j)
 #pragma loop name transf_nc #0 #0 #0
+/* #pragma cetus reduction(+: tmp[col][i])  */
 #pragma cetus private(j)
+#pragma cetus reduction(+ : tmp[col][i])
       for (j = 0; j < 5; j++) {
         tmp[col][i] = (tmp[col][i] + (qbnew[0][j][i - 1] * tmor[col][j]));
       }
     }
   }
-#pragma cetus private(i, j)
 #pragma loop name transf_nc #1
 #pragma cetus parallel
-#pragma cetus private(col, i, j)
-#pragma omp parallel for private(col, i, j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (col = 0; col < 5; col++) {
     i = 0;
     tx[i][col] = (tx[i][col] + tmp[i][col]);
-#pragma cetus private(i, j)
 #pragma loop name transf_nc #1 #0
 #pragma cetus private(i, j)
     for (i = 1; i < (5 - 1); i++) {
-#pragma cetus private(j)
 #pragma loop name transf_nc #1 #0 #0
+/* #pragma cetus reduction(+: tx[i][col])  */
 #pragma cetus private(j)
+#pragma cetus reduction(+ : tx[i][col])
       for (j = 0; j < 5; j++) {
         tx[i][col] = (tx[i][col] + (qbnew[0][j][i - 1] * tmp[j][col]));
       }
@@ -1004,12 +934,15 @@ void transfb_nc0(double tmor[5][5], double tx[5][5][5]) {
   int i, j;
   r_init((double *)tmor, 5 * 5, 0.0);
 #pragma loop name transfb_nc0 #0
-#pragma cetus private(i, j)
-  for (i = 1; i < (5 - 1); i++) {
+#pragma cetus parallel
 #pragma cetus private(i)
+#pragma omp parallel for private(i)
+  for (j = 0; j < 5; j++) {
 #pragma loop name transfb_nc0 #0 #0
-#pragma cetus private(j)
-    for (j = 0; j < 5; j++) {
+/* #pragma cetus reduction(+: tmor[0][j])  */
+#pragma cetus private(i)
+#pragma cetus reduction(+ : tmor[0][j])
+    for (i = 1; i < (5 - 1); i++) {
       tmor[0][j] = (tmor[0][j] + (qbnew[0][j][i - 1] * tx[0][0][i]));
     }
   }
@@ -1029,17 +962,15 @@ void transfb_nc2(double tmor[5][5], double tx[5][5]) {
   r_init((double *)temp, 5 * 5, 0.0);
   tmor[0][0] = tx[0][0];
 /* mapping from tx to intermediate mortar temp + bottom */
-#pragma cetus private(i, j)
 #pragma loop name transfb_nc2 #0
 #pragma cetus parallel
-#pragma cetus private(col, i, j)
-#pragma omp parallel for private(col, i, j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (col = 0; col < 5; col++) {
     temp[0][col] = tx[0][col];
     j = 0;
     bottom[col] = 0.0;
     ;
-#pragma cetus private(i)
 #pragma loop name transfb_nc2 #0 #0
 /* #pragma cetus reduction(+: bottom[col])  */
 #pragma cetus private(i)
@@ -1047,13 +978,13 @@ void transfb_nc2(double tmor[5][5], double tx[5][5]) {
     for (i = 1; i < (5 - 1); i++) {
       bottom[col] = (bottom[col] + (qbnew[0][j][i - 1] * tx[i][col]));
     }
-#pragma cetus private(i, j)
 #pragma loop name transfb_nc2 #0 #1
 #pragma cetus private(i, j)
     for (j = 1; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name transfb_nc2 #0 #1 #0
+/* #pragma cetus reduction(+: temp[j][col])  */
 #pragma cetus private(i)
+#pragma cetus reduction(+ : temp[j][col])
       for (i = 1; i < (5 - 1); i++) {
         temp[j][col] = (temp[j][col] + (qbnew[0][j][i - 1] * tx[i][col]));
       }
@@ -1063,34 +994,33 @@ void transfb_nc2(double tmor[5][5], double tx[5][5]) {
   /* On the nonconforming edge, temp is divided by 2 as there will be */
   /* a duplicate contribution from another face sharing this edge */
   col = 0;
-#pragma cetus private(i)
 #pragma loop name transfb_nc2 #1
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name transfb_nc2 #1 #0
+/* #pragma cetus reduction(+: tmor[col][j])  */
 #pragma cetus private(i)
+#pragma cetus reduction(+ : tmor[col][j])
     for (i = 1; i < (5 - 1); i++) {
       tmor[col][j] = ((tmor[col][j] + (qbnew[0][j][i - 1] * bottom[i])) +
                       ((qbnew[0][j][i - 1] * temp[col][i]) * 0.5));
     }
   }
-#pragma cetus private(i, j)
 #pragma loop name transfb_nc2 #2
 #pragma cetus parallel
-#pragma cetus private(col, i, j)
-#pragma omp parallel for private(col, i, j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (col = 1; col < 5; col++) {
     tmor[col][0] = (tmor[col][0] + temp[col][0]);
-#pragma cetus private(i, j)
 #pragma loop name transfb_nc2 #2 #0
 #pragma cetus private(i, j)
     for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name transfb_nc2 #2 #0 #0
+/* #pragma cetus reduction(+: tmor[col][j])  */
 #pragma cetus private(i)
+#pragma cetus reduction(+ : tmor[col][j])
       for (i = 1; i < (5 - 1); i++) {
         tmor[col][j] = (tmor[col][j] + (qbnew[0][j][i - 1] * temp[col][i]));
       }
@@ -1111,16 +1041,14 @@ void transfb_nc1(double tmor[5][5], double tx[5][5]) {
 /* Contribution from the nonconforming faces */
 /* Since the calling subroutine is only interested in the value on the */
 /* mortar (location (0,0)), only this piece of mortar is calculated. */
-#pragma cetus private(i, j)
 #pragma loop name transfb_nc1 #0
 #pragma cetus parallel
-#pragma cetus private(col, i, j)
-#pragma omp parallel for private(col, i, j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (col = 0; col < 5; col++) {
     temp[0][col] = tx[0][col];
     j = 0;
     bottom[col] = 0.0;
-#pragma cetus private(i)
 #pragma loop name transfb_nc1 #0 #0
 /* #pragma cetus reduction(+: bottom[col])  */
 #pragma cetus private(i)
@@ -1128,13 +1056,13 @@ void transfb_nc1(double tmor[5][5], double tx[5][5]) {
     for (i = 1; i < (5 - 1); i++) {
       bottom[col] = (bottom[col] + (qbnew[0][j][i - 1] * tx[i][col]));
     }
-#pragma cetus private(i, j)
 #pragma loop name transfb_nc1 #0 #1
 #pragma cetus private(i, j)
     for (j = 1; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name transfb_nc1 #0 #1 #0
+/* #pragma cetus reduction(+: temp[j][col])  */
 #pragma cetus private(i)
+#pragma cetus reduction(+ : temp[j][col])
       for (i = 1; i < (5 - 1); i++) {
         temp[j][col] = (temp[j][col] + (qbnew[0][j][i - 1] * tx[i][col]));
       }
@@ -1142,15 +1070,15 @@ void transfb_nc1(double tmor[5][5], double tx[5][5]) {
   }
   col = 0;
   tmor[col][0] = (tmor[col][0] + bottom[0]);
-#pragma cetus private(i)
 #pragma loop name transfb_nc1 #1
 #pragma cetus parallel
-#pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name transfb_nc1 #1 #0
+/* #pragma cetus reduction(+: tmor[col][j])  */
 #pragma cetus private(i)
+#pragma cetus reduction(+ : tmor[col][j])
     for (i = 1; i < (5 - 1); i++) {
       /* temp is not divided by 2 here. It includes the contribution */
       /* from the other conforming face. */
@@ -1158,20 +1086,19 @@ void transfb_nc1(double tmor[5][5], double tx[5][5]) {
                       (qbnew[0][j][i - 1] * temp[col][i]));
     }
   }
-#pragma cetus private(i, j)
 #pragma loop name transfb_nc1 #2
 #pragma cetus parallel
-#pragma cetus private(col, i, j)
-#pragma omp parallel for private(col, i, j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (col = 1; col < 5; col++) {
     tmor[col][0] = (tmor[col][0] + temp[col][0]);
-#pragma cetus private(i, j)
 #pragma loop name transfb_nc1 #2 #0
 #pragma cetus private(i, j)
     for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name transfb_nc1 #2 #0 #0
+/* #pragma cetus reduction(+: tmor[col][j])  */
 #pragma cetus private(i)
+#pragma cetus reduction(+ : tmor[col][j])
       for (i = 1; i < (5 - 1); i++) {
         tmor[col][j] = (tmor[col][j] + (qbnew[0][j][i - 1] * temp[col][i]));
       }
@@ -1195,33 +1122,9 @@ void transfb_c(double tx[]) {
   {
     double *reduce = (double *)malloc(11600 * sizeof(double));
     int reduce_span_0;
-    double *reduce0 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_1;
-    double *reduce1 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_2;
-    double *reduce2 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_3;
-    double *reduce3 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_4;
 #pragma cetus private(reduce_span_0)
     for (reduce_span_0 = 0; reduce_span_0 < 11600; reduce_span_0++) {
       reduce[reduce_span_0] = 0;
-    }
-#pragma cetus private(reduce_span_1)
-    for (reduce_span_1 = 0; reduce_span_1 < 11600; reduce_span_1++) {
-      reduce0[reduce_span_1] = 0;
-    }
-#pragma cetus private(reduce_span_2)
-    for (reduce_span_2 = 0; reduce_span_2 < 11600; reduce_span_2++) {
-      reduce1[reduce_span_2] = 0;
-    }
-#pragma cetus private(reduce_span_3)
-    for (reduce_span_3 = 0; reduce_span_3 < 11600; reduce_span_3++) {
-      reduce2[reduce_span_3] = 0;
-    }
-#pragma cetus private(reduce_span_4)
-    for (reduce_span_4 = 0; reduce_span_4 < 11600; reduce_span_4++) {
-      reduce3[reduce_span_4] = 0;
     }
 #pragma loop name transfb_c #0
 #pragma cetus for
@@ -1231,15 +1134,13 @@ void transfb_c(double tx[]) {
 #pragma omp for private(col, iface, ig, ig1, ig2, ig3, ig4, il, il1, il2, il3, \
                             il4, j)
     for (ie = 0; ie < nelt; ie++) {
-#pragma cetus private(col, iface, ig, ig1, ig2, ig3, ig4, il, il1, il2, il3,   \
-                      il4, j)
 #pragma loop name transfb_c #0 #0
 /* #pragma cetus reduction(+: tmort[ig1], tmort[ig2], tmort[ig3], tmort[ig4],
  * tmort[ig])  */
 #pragma cetus private(col, iface, ig, ig1, ig2, ig3, ig4, il, il1, il2, il3,   \
                       il4, j)
-#pragma cetus reduction(+ : reduce0[ig3], reduce1[ig4], reduce2[ig1],          \
-                        reduce3[ig2], reduce[ig])
+#pragma cetus reduction(+ : reduce[ig1], reduce[ig2], reduce[ig3],             \
+                        reduce[ig4], reduce[ig])
       for (iface = 0; iface < 6; iface++) {
         if (cbc[ie][iface] != 3) {
           il1 = idel[ie][iface][0][0];
@@ -1250,17 +1151,15 @@ void transfb_c(double tx[]) {
           ig2 = idmo[ie][iface][1][0][0][5 - 1];
           ig3 = idmo[ie][iface][0][1][5 - 1][0];
           ig4 = idmo[ie][iface][1][1][5 - 1][5 - 1];
-          reduce2[ig1] = (reduce2[ig1] + (tx[il1] * third));
-          reduce3[ig2] = (reduce3[ig2] + (tx[il2] * third));
-          reduce0[ig3] = (reduce0[ig3] + (tx[il3] * third));
-          reduce1[ig4] = (reduce1[ig4] + (tx[il4] * third));
-#pragma cetus private(col, ig, il, j)
+          reduce[ig1] = (reduce[ig1] + (tx[il1] * third));
+          reduce[ig2] = (reduce[ig2] + (tx[il2] * third));
+          reduce[ig3] = (reduce[ig3] + (tx[il3] * third));
+          reduce[ig4] = (reduce[ig4] + (tx[il4] * third));
 #pragma loop name transfb_c #0 #0 #0
 /* #pragma cetus reduction(+: tmort[ig])  */
 #pragma cetus private(col, ig, il, j)
 #pragma cetus reduction(+ : reduce[ig])
           for (col = 1; col < (5 - 1); col++) {
-#pragma cetus private(ig, il, j)
 #pragma loop name transfb_c #0 #0 #0 #0
 /* #pragma cetus reduction(+: tmort[ig])  */
 #pragma cetus private(ig, il, j)
@@ -1272,7 +1171,6 @@ void transfb_c(double tx[]) {
             }
           }
           if (idmo[ie][iface][0][0][0][5 - 1] == (-1)) {
-#pragma cetus private(ig, il, j)
 #pragma loop name transfb_c #0 #0 #1
 /* #pragma cetus reduction(+: tmort[ig])  */
 #pragma cetus private(ig, il, j)
@@ -1284,7 +1182,6 @@ void transfb_c(double tx[]) {
             }
           }
           if (idmo[ie][iface][1][0][1][5 - 1] == (-1)) {
-#pragma cetus private(ig, il, j)
 #pragma loop name transfb_c #0 #0 #2
 /* #pragma cetus reduction(+: tmort[ig])  */
 #pragma cetus private(ig, il, j)
@@ -1296,7 +1193,6 @@ void transfb_c(double tx[]) {
             }
           }
           if (idmo[ie][iface][0][1][5 - 1][1] == (-1)) {
-#pragma cetus private(ig, il, j)
 #pragma loop name transfb_c #0 #0 #3
 /* #pragma cetus reduction(+: tmort[ig])  */
 #pragma cetus private(ig, il, j)
@@ -1308,7 +1204,6 @@ void transfb_c(double tx[]) {
             }
           }
           if (idmo[ie][iface][0][0][5 - 1][0] == (-1)) {
-#pragma cetus private(ig, il, j)
 #pragma loop name transfb_c #0 #0 #4
 /* #pragma cetus reduction(+: tmort[ig])  */
 #pragma cetus private(ig, il, j)
@@ -1328,22 +1223,6 @@ void transfb_c(double tx[]) {
 #pragma cetus private(reduce_span_0)
       for (reduce_span_0 = 0; reduce_span_0 < 11600; reduce_span_0++) {
         tmort[reduce_span_0] += reduce[reduce_span_0];
-      }
-#pragma cetus private(reduce_span_1)
-      for (reduce_span_1 = 0; reduce_span_1 < 11600; reduce_span_1++) {
-        tmort[reduce_span_1] += reduce0[reduce_span_1];
-      }
-#pragma cetus private(reduce_span_2)
-      for (reduce_span_2 = 0; reduce_span_2 < 11600; reduce_span_2++) {
-        tmort[reduce_span_2] += reduce1[reduce_span_2];
-      }
-#pragma cetus private(reduce_span_3)
-      for (reduce_span_3 = 0; reduce_span_3 < 11600; reduce_span_3++) {
-        tmort[reduce_span_3] += reduce2[reduce_span_3];
-      }
-#pragma cetus private(reduce_span_4)
-      for (reduce_span_4 = 0; reduce_span_4 < 11600; reduce_span_4++) {
-        tmort[reduce_span_4] += reduce3[reduce_span_4];
       }
     }
   }
@@ -1369,22 +1248,6 @@ void transfb_c_2(double tx[]) {
     int reduce_span_0;
     double *reduce0 = (double *)malloc(11600 * sizeof(double));
     int reduce_span_1;
-    double *reduce1 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_2;
-    double *reduce2 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_3;
-    double *reduce3 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_4;
-    double *reduce4 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_5;
-    double *reduce5 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_6;
-    double *reduce6 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_7;
-    double *reduce7 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_8;
-    double *reduce8 = (double *)malloc(11600 * sizeof(double));
-    int reduce_span_9;
 #pragma cetus private(reduce_span_0)
     for (reduce_span_0 = 0; reduce_span_0 < 11600; reduce_span_0++) {
       reduce[reduce_span_0] = 0;
@@ -1392,38 +1255,6 @@ void transfb_c_2(double tx[]) {
 #pragma cetus private(reduce_span_1)
     for (reduce_span_1 = 0; reduce_span_1 < 11600; reduce_span_1++) {
       reduce0[reduce_span_1] = 0;
-    }
-#pragma cetus private(reduce_span_2)
-    for (reduce_span_2 = 0; reduce_span_2 < 11600; reduce_span_2++) {
-      reduce1[reduce_span_2] = 0;
-    }
-#pragma cetus private(reduce_span_3)
-    for (reduce_span_3 = 0; reduce_span_3 < 11600; reduce_span_3++) {
-      reduce2[reduce_span_3] = 0;
-    }
-#pragma cetus private(reduce_span_4)
-    for (reduce_span_4 = 0; reduce_span_4 < 11600; reduce_span_4++) {
-      reduce3[reduce_span_4] = 0;
-    }
-#pragma cetus private(reduce_span_5)
-    for (reduce_span_5 = 0; reduce_span_5 < 11600; reduce_span_5++) {
-      reduce4[reduce_span_5] = 0;
-    }
-#pragma cetus private(reduce_span_6)
-    for (reduce_span_6 = 0; reduce_span_6 < 11600; reduce_span_6++) {
-      reduce5[reduce_span_6] = 0;
-    }
-#pragma cetus private(reduce_span_7)
-    for (reduce_span_7 = 0; reduce_span_7 < 11600; reduce_span_7++) {
-      reduce6[reduce_span_7] = 0;
-    }
-#pragma cetus private(reduce_span_8)
-    for (reduce_span_8 = 0; reduce_span_8 < 11600; reduce_span_8++) {
-      reduce7[reduce_span_8] = 0;
-    }
-#pragma cetus private(reduce_span_9)
-    for (reduce_span_9 = 0; reduce_span_9 < 11600; reduce_span_9++) {
-      reduce8[reduce_span_9] = 0;
     }
 #pragma loop name transfb_c_2 #0
 #pragma cetus for
@@ -1441,9 +1272,9 @@ void transfb_c_2(double tx[]) {
  * tmort[ig])  */
 #pragma cetus private(col, iface, ig, ig1, ig2, ig3, ig4, il, il1, il2, il3,   \
                       il4, j)
-#pragma cetus reduction(+ : reduce0[ig], reduce1[ig1], reduce2[ig3],           \
-                        reduce3[ig4], reduce4[ig1], reduce5[ig2],              \
-                        reduce6[ig4], reduce7[ig], reduce8[ig3], reduce[ig2])
+#pragma cetus reduction(+ : reduce0[ig1], reduce0[ig2], reduce0[ig3],          \
+                        reduce0[ig4], reduce0[ig], reduce[ig1], reduce[ig2],   \
+                        reduce[ig3], reduce[ig4], reduce[ig])
       for (iface = 0; iface < 6; iface++) {
         if (cbc[ie][iface] != 3) {
           il1 = idel[ie][iface][0][0];
@@ -1454,30 +1285,30 @@ void transfb_c_2(double tx[]) {
           ig2 = idmo[ie][iface][1][0][0][5 - 1];
           ig3 = idmo[ie][iface][0][1][5 - 1][0];
           ig4 = idmo[ie][iface][1][1][5 - 1][5 - 1];
-          reduce4[ig1] = (reduce4[ig1] + (tx[il1] * third));
-          reduce5[ig2] = (reduce5[ig2] + (tx[il2] * third));
-          reduce2[ig3] = (reduce2[ig3] + (tx[il3] * third));
-          reduce3[ig4] = (reduce3[ig4] + (tx[il4] * third));
-          reduce1[ig1] = (reduce1[ig1] + third);
+          reduce0[ig1] = (reduce0[ig1] + (tx[il1] * third));
+          reduce0[ig2] = (reduce0[ig2] + (tx[il2] * third));
+          reduce0[ig3] = (reduce0[ig3] + (tx[il3] * third));
+          reduce0[ig4] = (reduce0[ig4] + (tx[il4] * third));
+          reduce[ig1] = (reduce[ig1] + third);
           reduce[ig2] = (reduce[ig2] + third);
-          reduce8[ig3] = (reduce8[ig3] + third);
-          reduce6[ig4] = (reduce6[ig4] + third);
+          reduce[ig3] = (reduce[ig3] + third);
+          reduce[ig4] = (reduce[ig4] + third);
 #pragma cetus private(col, ig, il, j)
 #pragma loop name transfb_c_2 #0 #0 #0
 /* #pragma cetus reduction(+: mormult[ig], tmort[ig])  */
 #pragma cetus private(col, ig, il, j)
-#pragma cetus reduction(+ : reduce0[ig], reduce7[ig])
+#pragma cetus reduction(+ : reduce0[ig], reduce[ig])
           for (col = 1; col < (5 - 1); col++) {
 #pragma cetus private(ig, il, j)
 #pragma loop name transfb_c_2 #0 #0 #0 #0
 /* #pragma cetus reduction(+: mormult[ig], tmort[ig])  */
 #pragma cetus private(ig, il, j)
-#pragma cetus reduction(+ : reduce0[ig], reduce7[ig])
+#pragma cetus reduction(+ : reduce0[ig], reduce[ig])
             for (j = 1; j < (5 - 1); j++) {
               il = idel[ie][iface][col][j];
               ig = idmo[ie][iface][0][0][col][j];
               reduce0[ig] = (reduce0[ig] + tx[il]);
-              reduce7[ig] = (reduce7[ig] + 1.0);
+              reduce[ig] = (reduce[ig] + 1.0);
             }
           }
           if (idmo[ie][iface][0][0][0][5 - 1] == (-1)) {
@@ -1485,12 +1316,12 @@ void transfb_c_2(double tx[]) {
 #pragma loop name transfb_c_2 #0 #0 #1
 /* #pragma cetus reduction(+: mormult[ig], tmort[ig])  */
 #pragma cetus private(ig, il, j)
-#pragma cetus reduction(+ : reduce0[ig], reduce7[ig])
+#pragma cetus reduction(+ : reduce0[ig], reduce[ig])
             for (j = 1; j < (5 - 1); j++) {
               il = idel[ie][iface][0][j];
               ig = idmo[ie][iface][0][0][0][j];
               reduce0[ig] = (reduce0[ig] + (tx[il] * 0.5));
-              reduce7[ig] = (reduce7[ig] + 0.5);
+              reduce[ig] = (reduce[ig] + 0.5);
             }
           }
           if (idmo[ie][iface][1][0][1][5 - 1] == (-1)) {
@@ -1498,12 +1329,12 @@ void transfb_c_2(double tx[]) {
 #pragma loop name transfb_c_2 #0 #0 #2
 /* #pragma cetus reduction(+: mormult[ig], tmort[ig])  */
 #pragma cetus private(ig, il, j)
-#pragma cetus reduction(+ : reduce0[ig], reduce7[ig])
+#pragma cetus reduction(+ : reduce0[ig], reduce[ig])
             for (j = 1; j < (5 - 1); j++) {
               il = idel[ie][iface][j][5 - 1];
               ig = idmo[ie][iface][0][0][j][5 - 1];
               reduce0[ig] = (reduce0[ig] + (tx[il] * 0.5));
-              reduce7[ig] = (reduce7[ig] + 0.5);
+              reduce[ig] = (reduce[ig] + 0.5);
             }
           }
           if (idmo[ie][iface][0][1][5 - 1][1] == (-1)) {
@@ -1511,12 +1342,12 @@ void transfb_c_2(double tx[]) {
 #pragma loop name transfb_c_2 #0 #0 #3
 /* #pragma cetus reduction(+: mormult[ig], tmort[ig])  */
 #pragma cetus private(ig, il, j)
-#pragma cetus reduction(+ : reduce0[ig], reduce7[ig])
+#pragma cetus reduction(+ : reduce0[ig], reduce[ig])
             for (j = 1; j < (5 - 1); j++) {
               il = idel[ie][iface][5 - 1][j];
               ig = idmo[ie][iface][0][0][5 - 1][j];
               reduce0[ig] = (reduce0[ig] + (tx[il] * 0.5));
-              reduce7[ig] = (reduce7[ig] + 0.5);
+              reduce[ig] = (reduce[ig] + 0.5);
             }
           }
           if (idmo[ie][iface][0][0][5 - 1][0] == (-1)) {
@@ -1524,12 +1355,12 @@ void transfb_c_2(double tx[]) {
 #pragma loop name transfb_c_2 #0 #0 #4
 /* #pragma cetus reduction(+: mormult[ig], tmort[ig])  */
 #pragma cetus private(ig, il, j)
-#pragma cetus reduction(+ : reduce0[ig], reduce7[ig])
+#pragma cetus reduction(+ : reduce0[ig], reduce[ig])
             for (j = 1; j < (5 - 1); j++) {
               il = idel[ie][iface][j][0];
               ig = idmo[ie][iface][0][0][j][0];
               reduce0[ig] = (reduce0[ig] + (tx[il] * 0.5));
-              reduce7[ig] = (reduce7[ig] + 0.5);
+              reduce[ig] = (reduce[ig] + 0.5);
             }
           }
         }
@@ -1545,38 +1376,6 @@ void transfb_c_2(double tx[]) {
 #pragma cetus private(reduce_span_1)
       for (reduce_span_1 = 0; reduce_span_1 < 11600; reduce_span_1++) {
         tmort[reduce_span_1] += reduce0[reduce_span_1];
-      }
-#pragma cetus private(reduce_span_2)
-      for (reduce_span_2 = 0; reduce_span_2 < 11600; reduce_span_2++) {
-        mormult[reduce_span_2] += reduce1[reduce_span_2];
-      }
-#pragma cetus private(reduce_span_3)
-      for (reduce_span_3 = 0; reduce_span_3 < 11600; reduce_span_3++) {
-        tmort[reduce_span_3] += reduce2[reduce_span_3];
-      }
-#pragma cetus private(reduce_span_4)
-      for (reduce_span_4 = 0; reduce_span_4 < 11600; reduce_span_4++) {
-        tmort[reduce_span_4] += reduce3[reduce_span_4];
-      }
-#pragma cetus private(reduce_span_5)
-      for (reduce_span_5 = 0; reduce_span_5 < 11600; reduce_span_5++) {
-        tmort[reduce_span_5] += reduce4[reduce_span_5];
-      }
-#pragma cetus private(reduce_span_6)
-      for (reduce_span_6 = 0; reduce_span_6 < 11600; reduce_span_6++) {
-        tmort[reduce_span_6] += reduce5[reduce_span_6];
-      }
-#pragma cetus private(reduce_span_7)
-      for (reduce_span_7 = 0; reduce_span_7 < 11600; reduce_span_7++) {
-        mormult[reduce_span_7] += reduce6[reduce_span_7];
-      }
-#pragma cetus private(reduce_span_8)
-      for (reduce_span_8 = 0; reduce_span_8 < 11600; reduce_span_8++) {
-        mormult[reduce_span_8] += reduce7[reduce_span_8];
-      }
-#pragma cetus private(reduce_span_9)
-      for (reduce_span_9 = 0; reduce_span_9 < 11600; reduce_span_9++) {
-        mormult[reduce_span_9] += reduce8[reduce_span_9];
       }
     }
   }

@@ -233,7 +233,8 @@ double randlc(double *X, double *A) {
 #pragma loop name randlc #0
 #pragma cetus reduction(* : R23, T23)
 #pragma cetus parallel
-#pragma omp parallel for reduction(* : R23, T23)
+#pragma cetus private(i)
+#pragma omp parallel for private(i) reduction(* : R23, T23)
     for (i = 1; i <= 23; i++) {
       R23 = (0.5 * R23);
       T23 = (2.0 * T23);
@@ -241,7 +242,8 @@ double randlc(double *X, double *A) {
 #pragma loop name randlc #1
 #pragma cetus reduction(* : R46, T46)
 #pragma cetus parallel
-#pragma omp parallel for reduction(* : R46, T46)
+#pragma cetus private(i)
+#pragma omp parallel for private(i) reduction(* : R46, T46)
     for (i = 1; i <= 46; i++) {
       R46 = (0.5 * R46);
       T46 = (2.0 * T46);
@@ -280,8 +282,8 @@ void create_seq(double seed, double a) {
   double x;
   INT_TYPE i, k;
   k = ((1 << 11) / 4);
-#pragma cetus private(x)
 #pragma loop name create_seq #0
+#pragma cetus private(x)
   for (i = 0; i < (1 << 16); i++) {
     x = randlc(&seed, &a);
     x += randlc(&seed, &a);
@@ -350,7 +352,7 @@ void rank(int iteration) {
   }
 /*  Determine the number of keys in each bucket */
 #pragma loop name rank #2
-  /* #pragma cetus reduction(+: bucket_size[(key_array[i]>>shift)])  */
+  /* #pragma cetus reduction(+: )  */
   for (i = 0; i < (1 << 16); i++) {
     bucket_size[key_array[i] >> shift]++;
   }
@@ -382,7 +384,7 @@ void rank(int iteration) {
     individual population
 */
 #pragma loop name rank #6
-  /* #pragma cetus reduction(+: key_buff_ptr[key_buff_ptr2[i]])  */
+  /* #pragma cetus reduction(+: )  */
   for (i = 0; i < (1 << 16); i++) {
     key_buff_ptr[key_buff_ptr2[i]]++;
   }
@@ -399,9 +401,9 @@ void rank(int iteration) {
 /* This is the partial verify test section */
 /* Observe that test_rank_array vals are   */
 /* shifted differently for different cases */
-#pragma cetus private(failed)
 #pragma loop name rank #8
-  /* #pragma cetus reduction(+: passed_verification)  */
+/* #pragma cetus reduction(+: passed_verification)  */
+#pragma cetus private(failed)
   for (i = 0; i < 5; i++) {
     k = partial_verify_vals[i];
     /* test vals were put here */
@@ -540,8 +542,8 @@ int main(int argc, char **argv) {
     timer_start(3);
   }
 /*  Initialize the verification arrays if a valid class */
-#pragma cetus private(i)
 #pragma loop name main #0
+#pragma cetus private(i)
   for (i = 0; i < 5; i++) {
     switch ('S') {
     case 'S':
@@ -595,8 +597,8 @@ int main(int argc, char **argv) {
   /*  Start timer  */
   timer_start(0);
 /*  This is the main iteration */
-#pragma cetus private(iteration)
 #pragma loop name main #1
+#pragma cetus private(iteration)
   for (iteration = 1; iteration <= 10; iteration++) {
     ;
     rank(iteration);

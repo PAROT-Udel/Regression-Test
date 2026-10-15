@@ -64,13 +64,7 @@ git checkout release/3.0
 ./build.sh bin
 ```
 
-Point the kernel tests at that binary in `helper_tests.h`, then rebuild the harness:
-
-```c
-#define CETUS_PATH "/path/to/The-Cetus-Project/bin/cetus"
-```
-
-Point the benchmark tests at Cetus and the benchmark trees. Environment variables override the file.
+Kernel snippets and benchmark cases both read `benchmarks/config/paths.env`. Copy the template once and edit the copy. The harness does not load `paths.example.env`. An environment variable with the same name overrides the file. Changing `CETUS` does not require a rebuild.
 
 ```bash
 cp benchmarks/config/paths.example.env benchmarks/config/paths.env
@@ -78,10 +72,16 @@ cp benchmarks/config/paths.example.env benchmarks/config/paths.env
 
 ```bash
 CETUS=/path/to/The-Cetus-Project/bin/cetus
+CLANG_FORMAT=clang-format
+GCC=gcc
+DIFF=diff
+CPP=cpp
 POLYBENCH_ROOT=/path/to/polybench-c-4.2
 NPB_SER_ROOT=/path/to/NPB3.3-SER-C
 NPB_OMP_ROOT=/path/to/NPB3.3-OMP-C
 ```
+
+`CETUS` and `CLANG_FORMAT` are used for kernel snippets and for benchmarks. Benchmark flags come from `profiles.json`. Kernel-snippet flags stay in `benchmarks/config/kernels/*.json`. The kernel preprocessor is `clang` (`CLANG_PATH` in `helper_tests.h`).
 
 `paths.env` is gitignored.
 
@@ -112,7 +112,7 @@ From the suite root:
 
 `--benchmark-suite`, `--benchmark-kernel`, and `--profile` each filter one axis. Repeat a flag to include several values. Leave a flag off to keep every value on that axis. Kernel names match as substrings. Profile names must match `profiles.json` exactly.
 
-`npb-omp` runs only when you pass `--benchmark-suite npb-omp`.
+`npb-omp` runs only when you pass `--benchmark-suite npb-omp`. It uses the `parallel` profile. Cetus fails on `ua/adapt.c` (`IntegerLiteral` cannot be cast to `RangeExpression`), so that kernel has no ground truth.
 
 Other useful flags:
 
@@ -171,7 +171,7 @@ kernel_config.c              loads benchmarks/config/kernels/*.json
 benchmark_runner.c           sandbox, diff, build, verify
 polybench_adapter.c          PolyBench copy and dump compare
 npb_adapter.c                NPB build and verification string
-benchmarks/config/           paths.env example, profiles.json, suites/*.json, kernels/*.json
+benchmarks/config/           paths.example.env (template), profiles.json, suites/*.json, kernels/*.json
 input_files/                 kernel snippet sources
 ground_truth/                expected Cetus output
 queue_caviness.sh            copy to Caviness and submit the Slurm job

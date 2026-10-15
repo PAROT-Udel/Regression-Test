@@ -110,15 +110,16 @@ void convect(logical ifmortar) {
   subtime[2] = (time + dtime);
 #pragma loop name convect #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(substep)
+#pragma omp parallel for private(substep)
   for (substep = 0; substep < 3; substep++) {
     xx0[substep] = ((3.0 / 7.0) + (3.0 * subtime[substep]));
     yy0[substep] = ((2.0 / 7.0) + (3.0 * subtime[substep]));
     zz0[substep] = ((2.0 / 7.0) + (3.0 * subtime[substep]));
   }
+#pragma loop name convect #1
 #pragma cetus private(dtx1, dtx2, dtx3, i, iel, ip, iside, isize, j, k, r2,    \
                       rk1, rk2, rk3, rk4, src, sum, temp, xloc, yloc, zloc)
-#pragma loop name convect #1
 #pragma cetus private(dtx1, dtx2, dtx3, i, iel, ip, iside, isize, j, k, r2,    \
                       rk1, rk2, rk3, rk4, src, sum, temp, xloc, yloc, zloc)
   for (iel = 0; iel < nelt; iel++) {
@@ -132,34 +133,37 @@ void convect(logical ifmortar) {
 */
 #pragma loop name convect #1 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
     for (i = 0; i < 5; i++) {
       xloc[i] = ((xfrac[i] * (xc[iel][1] - xc[iel][0])) + xc[iel][0]);
     }
 #pragma loop name convect #1 #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(j)
+#pragma omp parallel for private(j)
     for (j = 0; j < 5; j++) {
       yloc[j] = ((xfrac[j] * (yc[iel][3] - yc[iel][0])) + yc[iel][0]);
     }
 #pragma loop name convect #1 #2
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(k)
+#pragma omp parallel for private(k)
     for (k = 0; k < 5; k++) {
       zloc[k] = ((xfrac[k] * (zc[iel][4] - zc[iel][0])) + zc[iel][0]);
     }
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma loop name convect #1 #3
 #pragma cetus parallel
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, k, r2, src, sum)
 #pragma omp parallel for private(dtx1, dtx2, dtx3, i, ip, j, k, r2, src, sum)
     for (k = 0; k < 5; k++) {
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma loop name convect #1 #3 #0
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
 #pragma loop name convect #1 #3 #0 #0
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
         for (i = 0; i < 5; i++) {
           r2 = ((pow(xloc[i] - xx0[0], 2.0) + pow(yloc[j] - yy0[0], 2.0)) +
@@ -170,9 +174,9 @@ void convect(logical ifmortar) {
             src = 0.0;
           }
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #3 #0 #0 #0
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -180,9 +184,9 @@ void convect(logical ifmortar) {
           }
           dtx1 = (((-3.0) * sum) * xrm1_s[isize][k][j][i]);
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #3 #0 #0 #1
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -190,9 +194,9 @@ void convect(logical ifmortar) {
           }
           dtx2 = (((-3.0) * sum) * xrm1_s[isize][k][j][i]);
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #3 #0 #0 #2
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -204,18 +208,18 @@ void convect(logical ifmortar) {
         }
       }
     }
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma loop name convect #1 #4
 #pragma cetus parallel
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, k, r2, src, sum)
 #pragma omp parallel for private(dtx1, dtx2, dtx3, i, ip, j, k, r2, src, sum)
     for (k = 0; k < 5; k++) {
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma loop name convect #1 #4 #0
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
 #pragma loop name convect #1 #4 #0 #0
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
         for (i = 0; i < 5; i++) {
           r2 = ((pow(xloc[i] - xx0[1], 2.0) + pow(yloc[j] - yy0[1], 2.0)) +
@@ -226,9 +230,9 @@ void convect(logical ifmortar) {
             src = 0.0;
           }
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #4 #0 #0 #0
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -236,9 +240,9 @@ void convect(logical ifmortar) {
           }
           dtx1 = (((-3.0) * sum) * xrm1_s[isize][k][j][i]);
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #4 #0 #0 #1
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -246,9 +250,9 @@ void convect(logical ifmortar) {
           }
           dtx2 = (((-3.0) * sum) * xrm1_s[isize][k][j][i]);
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #4 #0 #0 #2
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -260,18 +264,18 @@ void convect(logical ifmortar) {
         }
       }
     }
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma loop name convect #1 #5
 #pragma cetus parallel
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, k, r2, src, sum)
 #pragma omp parallel for private(dtx1, dtx2, dtx3, i, ip, j, k, r2, src, sum)
     for (k = 0; k < 5; k++) {
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma loop name convect #1 #5 #0
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
 #pragma loop name convect #1 #5 #0 #0
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
         for (i = 0; i < 5; i++) {
           r2 = ((pow(xloc[i] - xx0[1], 2.0) + pow(yloc[j] - yy0[1], 2.0)) +
@@ -282,9 +286,9 @@ void convect(logical ifmortar) {
             src = 0.0;
           }
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #5 #0 #0 #0
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -292,9 +296,9 @@ void convect(logical ifmortar) {
           }
           dtx1 = (((-3.0) * sum) * xrm1_s[isize][k][j][i]);
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #5 #0 #0 #1
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -302,9 +306,9 @@ void convect(logical ifmortar) {
           }
           dtx2 = (((-3.0) * sum) * xrm1_s[isize][k][j][i]);
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #5 #0 #0 #2
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -316,18 +320,18 @@ void convect(logical ifmortar) {
         }
       }
     }
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma loop name convect #1 #6
 #pragma cetus parallel
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, k, r2, src, sum)
 #pragma omp parallel for private(dtx1, dtx2, dtx3, i, ip, j, k, r2, src, sum)
     for (k = 0; k < 5; k++) {
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
 #pragma loop name convect #1 #6 #0
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, j, r2, src, sum)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
 #pragma loop name convect #1 #6 #0 #0
+#pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
 #pragma cetus private(dtx1, dtx2, dtx3, i, ip, r2, src, sum)
         for (i = 0; i < 5; i++) {
           r2 = ((pow(xloc[i] - xx0[2], 2.0) + pow(yloc[j] - yy0[2], 2.0)) +
@@ -338,9 +342,9 @@ void convect(logical ifmortar) {
             src = 0.0;
           }
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #6 #0 #0 #0
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -348,9 +352,9 @@ void convect(logical ifmortar) {
           }
           dtx1 = (((-3.0) * sum) * xrm1_s[isize][k][j][i]);
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #6 #0 #0 #1
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -358,9 +362,9 @@ void convect(logical ifmortar) {
           }
           dtx2 = (((-3.0) * sum) * xrm1_s[isize][k][j][i]);
           sum = 0.0;
-#pragma cetus private(ip)
 #pragma loop name convect #1 #6 #0 #0 #2
 /* #pragma cetus reduction(+: sum)  */
+#pragma cetus private(ip)
 #pragma cetus private(ip)
 #pragma cetus reduction(+ : sum)
           for (ip = 0; ip < 5; ip++) {
@@ -376,26 +380,26 @@ void convect(logical ifmortar) {
       }
     }
 /* apply boundary condition */
-#pragma cetus private(iside)
 #pragma loop name convect #1 #7
+#pragma cetus private(iside)
 #pragma cetus private(iside)
     for (iside = 0; iside < 6; iside++) {
       if (cbc[iel][iside] == 0) {
         facev(tempa, iside, 0.0);
       }
     }
-#pragma cetus private(i, j)
 #pragma loop name convect #1 #8
 #pragma cetus parallel
+#pragma cetus private(i, j)
 #pragma cetus private(i, j, k)
 #pragma omp parallel for private(i, j, k)
     for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j)
 #pragma loop name convect #1 #8 #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
       for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name convect #1 #8 #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
         for (i = 0; i < 5; i++) {
           trhs[iel][k][j][i] =
@@ -420,7 +424,8 @@ void convect(logical ifmortar) {
   }
 #pragma loop name convect #2
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < nmor; i++) {
     tmort[i] = (tmort[i] / mormult[i]);
   }

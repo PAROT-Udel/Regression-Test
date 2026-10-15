@@ -52,21 +52,13 @@ cd /path/to/The-Cetus-Project
 
 ## Configure paths
 
-**Kernel tests** — [`helper_tests.h`](helper_tests.h):
-
-```c
-#define CETUS_PATH "/path/to/The-Cetus-Project/bin/cetus"
-#define CLANG_PATH "clang"
-#define CLANG_FORMAT_PATH "clang-format"
-```
-
-**Benchmark tests** — copy and edit env file:
+Kernel and benchmark runs both read `benchmarks/config/paths.env`. Copy and edit it:
 
 ```bash
 cp benchmarks/config/paths.example.env benchmarks/config/paths.env
 ```
 
-Set `CETUS`, `POLYBENCH_ROOT`, `NPB_SER_ROOT`, etc. Env vars override `paths.env`.
+Set `CETUS`, `CLANG_FORMAT`, `GCC`, `DIFF`, `CPP`, `POLYBENCH_ROOT`, `NPB_SER_ROOT`, and `NPB_OMP_ROOT`. The harness reads `paths.env` only. `paths.example.env` is a template and is not loaded. Env vars override `paths.env`. `profiles.json` supplies the benchmark Cetus flags (`parallel`, `paw_tiling_nt`, and the other named profiles). Kernel snippet flags stay in `benchmarks/config/kernels/*.json`. Kernel snippets and benchmarks share `CETUS` and `CLANG_FORMAT`. The preprocessor for kernel snippets is `clang` (`CLANG_PATH` in `helper_tests.h`).
 
 ## Build the harness
 
@@ -161,6 +153,8 @@ Expected for `--all`: `Test Summary: 15/15 tests passed.`
 ./cetus_regression_test --full
 ```
 
+`npb-omp` is opt-in and uses `parallel` only. Cetus fails on `ua/adapt.c` (`IntegerLiteral` cannot be cast to `RangeExpression`), so that kernel has no ground truth.
+
 ### Caviness
 
 `./queue_caviness.sh` copies this project to `/work/parot/mgltorsa/cetus_regression_test_suite`, or updates that copy, and only then submits `cetus_regression.slurm`. If a `cetus-reg` job is already queued or running, it asks before submitting another. The job generates ground truth for `paw_tiling_lrw` and `paw_tiling_fixed32`, then runs `--full`. The script prints the Slurm job id and returns. It does not wait. Log: `logs/slurm-<jobid>.out` on Caviness. `run_profiles.sh` sets the cluster Cetus and vanilla benchmark paths.
@@ -188,7 +182,7 @@ wsl bash -lc "cd /mnt/d/workspace/cetus/cetus_regression_test_suite && make && .
 cetus_regression_test_suite/
 ├── cetus_regression_test.c    # Main entry + kernel runner
 ├── cli.c / cli.h              # Unified CLI
-├── helper_tests.h             # Kernel paths and result enums
+├── helper_tests.h             # Kernel result enums (CETUS is paths.env)
 ├── kernel_config.c/.h         # Kernel suite JSON loader
 ├── benchmark_config.c/.h      # Benchmark JSON + paths.env loader
 ├── benchmark_runner.c/.h      # Benchmark lifecycle
@@ -204,7 +198,7 @@ cetus_regression_test_suite/
 ├── tests/                     # Native unit tests
 ├── third_party/cjson/         # Vendored JSON parser
 ├── benchmarks/config/
-│   ├── paths.example.env
+│   ├── paths.example.env      # template only; not loaded
 │   ├── profiles.json
 │   ├── suites/                # polybench.json, npb-ser.json, …
 │   └── kernels/               # tiling.json, subsub.json

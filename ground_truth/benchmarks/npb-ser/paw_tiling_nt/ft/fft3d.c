@@ -113,27 +113,17 @@ static void Swarztrauber(int is, int m, int vlen, int n, int xd1, void *ox,
   n1 = (n / 2);
   lj = 1;
   li = (1 << m);
-#pragma cetus private(i, i11, i12, i21, i22, j, k, ku, l, lk)
 #pragma loop name Swarztrauber #0
 #pragma cetus private(i, i11, i12, i21, i22, j, k, ku, l, lk)
-#pragma loop name Swarztrauber #0
-#pragma loop name Swarztrauber #0
-#pragma loop name Swarztrauber #0
-#pragma loop name Swarztrauber #0
-#pragma loop name Swarztrauber #0
+#pragma cetus private(i, i11, i12, i21, i22, j, k, ku, l, lk)
   for (l = 1; l <= m; l += 2) {
     lk = lj;
     lj = (2 * lk);
     li = (li / 2);
     ku = li;
-#pragma cetus private(i, i11, i12, i21, i22, j, k)
 #pragma loop name Swarztrauber #0 #0
 #pragma cetus private(i, i11, i12, i21, i22, j, k)
-#pragma loop name Swarztrauber #0 #0
-#pragma loop name Swarztrauber #0 #0
-#pragma loop name Swarztrauber #0 #0
-#pragma loop name Swarztrauber #0 #0
-#pragma loop name Swarztrauber #0 #0
+#pragma cetus private(i, i11, i12, i21, i22, j, k)
     for (i = 0; i <= (li - 1); i++) {
       i11 = (i * lk);
       i12 = (i11 + n1);
@@ -144,23 +134,13 @@ static void Swarztrauber(int is, int m, int vlen, int n, int xd1, void *ox,
       } else {
         u1 = (dcomplex){exponent[ku + i].real, (-1.0) * exponent[ku + i].imag};
       }
-#pragma cetus private(j, k)
 #pragma loop name Swarztrauber #0 #0 #0
 #pragma cetus private(j, k)
-#pragma loop name Swarztrauber #0 #0 #0
-#pragma loop name Swarztrauber #0 #0 #0
-#pragma loop name Swarztrauber #0 #0 #0
-#pragma loop name Swarztrauber #0 #0 #0
-#pragma loop name Swarztrauber #0 #0 #0
+#pragma cetus private(j, k)
       for (k = 0; k <= (lk - 1); k++) {
-#pragma cetus private(j)
 #pragma loop name Swarztrauber #0 #0 #0 #0
 #pragma cetus private(j)
-#pragma loop name Swarztrauber #0 #0 #0 #0
-#pragma loop name Swarztrauber #0 #0 #0 #0
-#pragma loop name Swarztrauber #0 #0 #0 #0
-#pragma loop name Swarztrauber #0 #0 #0 #0
-#pragma loop name Swarztrauber #0 #0 #0 #0
+#pragma cetus private(j)
         for (j = 0; j < vlen; j++) {
           x11 = x[i11 + k][j];
           x21 = x[i12 + k][j];
@@ -179,25 +159,15 @@ static void Swarztrauber(int is, int m, int vlen, int n, int xd1, void *ox,
       }
     }
     if (l == m) {
-#pragma cetus private(j)
 #pragma loop name Swarztrauber #0 #1
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(j, k)
-#pragma loop name Swarztrauber #0 #1
-#pragma loop name Swarztrauber #0 #1
-#pragma loop name Swarztrauber #0 #1
-#pragma loop name Swarztrauber #0 #1
-#pragma loop name Swarztrauber #0 #1
 #pragma omp parallel for private(j, k)
       for (k = 0; k < n; k++) {
-#pragma cetus private(j)
 #pragma loop name Swarztrauber #0 #1 #0
 #pragma cetus private(j)
-#pragma loop name Swarztrauber #0 #1 #0
-#pragma loop name Swarztrauber #0 #1 #0
-#pragma loop name Swarztrauber #0 #1 #0
-#pragma loop name Swarztrauber #0 #1 #0
-#pragma loop name Swarztrauber #0 #1 #0
+#pragma cetus private(j)
         for (j = 0; j < vlen; j++) {
           x[k][j] = scr[k][j];
         }
@@ -207,14 +177,9 @@ static void Swarztrauber(int is, int m, int vlen, int n, int xd1, void *ox,
       lj = (2 * lk);
       li = (li / 2);
       ku = li;
-#pragma cetus private(i, i11, i12, i21, i22, j, k)
 #pragma loop name Swarztrauber #0 #2
 #pragma cetus private(i, i11, i12, i21, i22, j, k)
-#pragma loop name Swarztrauber #0 #2
-#pragma loop name Swarztrauber #0 #2
-#pragma loop name Swarztrauber #0 #2
-#pragma loop name Swarztrauber #0 #2
-#pragma loop name Swarztrauber #0 #2
+#pragma cetus private(i, i11, i12, i21, i22, j, k)
       for (i = 0; i <= (li - 1); i++) {
         i11 = (i * lk);
         i12 = (i11 + n1);
@@ -226,23 +191,13 @@ static void Swarztrauber(int is, int m, int vlen, int n, int xd1, void *ox,
           u1 =
               (dcomplex){exponent[ku + i].real, (-1.0) * exponent[ku + i].imag};
         }
-#pragma cetus private(j, k)
 #pragma loop name Swarztrauber #0 #2 #0
 #pragma cetus private(j, k)
-#pragma loop name Swarztrauber #0 #2 #0
-#pragma loop name Swarztrauber #0 #2 #0
-#pragma loop name Swarztrauber #0 #2 #0
-#pragma loop name Swarztrauber #0 #2 #0
-#pragma loop name Swarztrauber #0 #2 #0
+#pragma cetus private(j, k)
         for (k = 0; k <= (lk - 1); k++) {
-#pragma cetus private(j)
 #pragma loop name Swarztrauber #0 #2 #0 #0
 #pragma cetus private(j)
-#pragma loop name Swarztrauber #0 #2 #0 #0
-#pragma loop name Swarztrauber #0 #2 #0 #0
-#pragma loop name Swarztrauber #0 #2 #0 #0
-#pragma loop name Swarztrauber #0 #2 #0 #0
-#pragma loop name Swarztrauber #0 #2 #0 #0
+#pragma cetus private(j)
           for (j = 0; j < vlen; j++) {
             x11 = scr[i11 + k][j];
             x21 = scr[i12 + k][j];
@@ -275,12 +230,6 @@ void fftXYZ(int sign, int n1, int n2, int n3, dcomplex x[n3][n2][(n1 + 1)],
   int bls, ble;
   int len;
   int blkp;
-  int i_cetus_cross;
-  int j_cetus_cross;
-  int cetus_tile_fftXYZ_1_bls = 2544;
-  int bls_cetus_cross;
-  int cetus_tile_fftXYZ_1_k = (n3 / (4 * ((10175 + n3) / 10176)));
-  int k_cetus_cross;
   if (timers_enabled) {
     timer_start(3);
   }
@@ -293,193 +242,42 @@ void fftXYZ(int sign, int n1, int n2, int n3, dcomplex x[n3][n2][(n1 + 1)],
   if (timers_enabled) {
     timer_start(7);
   }
+#pragma loop name fftXYZ #0
 #pragma cetus private(ble, bls, i, j, k, len)
-#pragma loop name fftXYZ #0
-#pragma cetus private(ble, bls, cetus_tile_fftXYZ_0_0_0_i,                     \
-                      cetus_tile_fftXYZ_0_0_0_j, cetus_tile_fftXYZ_0_0_1_i,    \
-                      cetus_tile_fftXYZ_0_0_1_j, i, i_cetus_cross, j,          \
-                      j_cetus_cross, k, len)
-#pragma loop name fftXYZ #0
-#pragma c_paw_tiling fftXYZ #0 = j #2544
-#pragma loop name fftXYZ #0
-#pragma c_paw_tiling fftXYZ #0 = i #2544
-#pragma c_paw_tiling fftXYZ #0 = j #2544
-#pragma loop name fftXYZ #0
-#pragma loop name fftXYZ #0
-#pragma loop name fftXYZ #0
+#pragma cetus private(ble, bls, i, j, k, len)
   for (k = 0; k < n3; k++) {
+#pragma loop name fftXYZ #0 #0
 #pragma cetus private(ble, bls, i, j, len)
-#pragma loop name fftXYZ #0 #0
-#pragma cetus private(ble, bls, cetus_tile_fftXYZ_0_0_0_i, i, i_cetus_cross,   \
-                      j, j_cetus_cross, len)
-#pragma cetus lastprivate(cetus_tile_fftXYZ_0_0_0_j,                           \
-                          cetus_tile_fftXYZ_0_0_1_i,                           \
-                          cetus_tile_fftXYZ_0_0_1_j)
-#pragma loop name fftXYZ #0 #0
-#pragma loop name fftXYZ #0 #0
-#pragma loop name fftXYZ #0 #0
-#pragma loop name fftXYZ #0 #0
-#pragma loop name fftXYZ #0 #0
+#pragma cetus private(ble, bls, i, j, len)
     for (bls = 0; bls < n2; bls += fftblock) {
-      int cetus_tile_fftXYZ_0_0_0_i;
-      int cetus_tile_fftXYZ_0_0_0_j = 2544;
-      int cetus_tile_fftXYZ_0_0_1_i = 2544;
-      int cetus_tile_fftXYZ_0_0_1_j = 2544;
       ble = ((bls + fftblock) - 1);
       if (ble > n2) {
         ble = (n2 - 1);
       }
       len = ((ble - bls) + 1);
-      if ((((1 * ble) * (-1 + n1)) <= 100000) ||
-          (6553600 >= ((2112 + (n2 * n3)) + ((n1 * n2) * n3)))) {
-#pragma cetus private(i, j)
 #pragma loop name fftXYZ #0 #0 #0
 #pragma cetus private(i, j)
-#pragma loop name fftXYZ #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #0
-        for (j = bls; j <= ble; j++) {
-#pragma cetus private(i)
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma cetus private(i)
-#pragma cetus private(i)
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #1 #0 #0
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #1 #0 #0
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #1 #0 #0
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #1 #0 #0
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #1 #0 #0
-          for (i = 0; i < n1; i++) {
-            plane[(j - bls) + (blkp * i)] = x[k][j][i];
-          }
-        }
-      } else {
-#pragma cetus private(i, j, j_cetus_cross)
-#pragma loop name fftXYZ #0 #0 #1
-#pragma loop name fftXYZ #0 #0 #1
-#pragma loop name fftXYZ #0 #0 #1
-#pragma loop name fftXYZ #0 #0 #1
-#pragma loop name fftXYZ #0 #0 #1
-        for (j_cetus_cross = bls; j_cetus_cross <= ble;
-             j_cetus_cross += cetus_tile_fftXYZ_0_0_0_j) {
 #pragma cetus private(i, j)
-#pragma loop name fftXYZ #0 #0 #1 #0
-#pragma loop name fftXYZ #0 #0 #1 #0
-#pragma loop name fftXYZ #0 #0 #1 #0
-#pragma loop name fftXYZ #0 #0 #1 #0
-#pragma loop name fftXYZ #0 #0 #1 #0
-          for (j = j_cetus_cross;
-               j <=
-               MIN(ble, ((-1 + cetus_tile_fftXYZ_0_0_0_j) + j_cetus_cross));
-               j++) {
-#pragma cetus private(i)
+      for (j = bls; j <= ble; j++) {
 #pragma loop name fftXYZ #0 #0 #0 #0
 #pragma cetus private(i)
 #pragma cetus private(i)
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #1 #0 #0
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #1 #0 #0
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #1 #0 #0
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #1 #0 #0
-#pragma loop name fftXYZ #0 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #1 #0 #0
-            for (i = 0; i < n1; i++) {
-              plane[(j - bls) + (blkp * i)] = x[k][j][i];
-            }
-          }
+        for (i = 0; i < n1; i++) {
+          plane[(j - bls) + (blkp * i)] = x[k][j][i];
         }
       }
       Swarztrauber(sign, log, len, n1, blkp, plane, exp1);
-      if ((((1 * ble) * (-1 + n1)) <= 100000) ||
-          (6553600 >= ((2112 + (n2 * n3)) + ((n1 * n2) * n3)))) {
-#pragma cetus private(i)
 #pragma loop name fftXYZ #0 #0 #1
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
-#pragma loop name fftXYZ #0 #0 #2
-#pragma loop name fftXYZ #0 #0 #2
-#pragma loop name fftXYZ #0 #0 #2
-#pragma loop name fftXYZ #0 #0 #2
-#pragma loop name fftXYZ #0 #0 #2
 #pragma omp parallel for private(i, j)
-        for (j = bls; j <= ble; j++) {
-#pragma cetus private(i)
+      for (j = bls; j <= ble; j++) {
 #pragma loop name fftXYZ #0 #0 #1 #0
 #pragma cetus private(i)
 #pragma cetus private(i)
-#pragma loop name fftXYZ #0 #0 #2 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #2 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #2 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #2 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #2 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0 #0
-          for (i = 0; i < n1; i++) {
-            x[k][j][i] = plane[(j - bls) + (blkp * i)];
-          }
-        }
-      } else {
-#pragma cetus parallel
-#pragma cetus private(i, i_cetus_cross, j)
-#pragma loop name fftXYZ #0 #0 #3
-#pragma loop name fftXYZ #0 #0 #3
-#pragma loop name fftXYZ #0 #0 #3
-#pragma loop name fftXYZ #0 #0 #3
-#pragma loop name fftXYZ #0 #0 #3
-#pragma omp parallel for private(i, i_cetus_cross, j)
-        for (j_cetus_cross = bls; j_cetus_cross <= ble;
-             j_cetus_cross += cetus_tile_fftXYZ_0_0_1_j) {
-#pragma cetus private(i, i_cetus_cross, j)
-#pragma loop name fftXYZ #0 #0 #3 #0
-#pragma loop name fftXYZ #0 #0 #3 #0
-#pragma loop name fftXYZ #0 #0 #3 #0
-#pragma loop name fftXYZ #0 #0 #3 #0
-#pragma loop name fftXYZ #0 #0 #3 #0
-          for (i_cetus_cross = 0; i_cetus_cross < n1;
-               i_cetus_cross += cetus_tile_fftXYZ_0_0_1_i) {
-#pragma cetus private(i, j)
-#pragma loop name fftXYZ #0 #0 #3 #0 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0
-            for (j = j_cetus_cross;
-                 j <=
-                 MIN(ble, ((-1 + cetus_tile_fftXYZ_0_0_1_j) + j_cetus_cross));
-                 j++) {
-#pragma cetus private(i)
-#pragma loop name fftXYZ #0 #0 #1 #0
-#pragma cetus private(i)
-#pragma cetus private(i)
-#pragma loop name fftXYZ #0 #0 #2 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #2 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #2 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #2 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0 #0
-#pragma loop name fftXYZ #0 #0 #2 #0
-#pragma loop name fftXYZ #0 #0 #3 #0 #0 #0
-              for (i = i_cetus_cross;
-                   i < MIN(n1, (cetus_tile_fftXYZ_0_0_1_i + i_cetus_cross));
-                   i++) {
-                x[k][j][i] = plane[(j - bls) + (blkp * i)];
-              }
-            }
-          }
+        for (i = 0; i < n1; i++) {
+          x[k][j][i] = plane[(j - bls) + (blkp * i)];
         }
       }
     }
@@ -496,95 +294,20 @@ void fftXYZ(int sign, int n1, int n2, int n3, dcomplex x[n3][n2][(n1 + 1)],
   if (timers_enabled) {
     timer_start(8);
   }
-  if ((((1 * (-1 + n3)) * ((-1 * fftblock) + n1)) <= 100000) ||
-      (6553600 >= ((n2 * n3) + ((n1 * n2) * n3)))) {
-#pragma cetus private(ble, bls, k, len)
 #pragma loop name fftXYZ #1
 #pragma cetus private(ble, bls, k, len)
-#pragma loop name fftXYZ #1
-#pragma loop name fftXYZ #1
-#pragma loop name fftXYZ #1
-#pragma loop name fftXYZ #1
-#pragma loop name fftXYZ #1
-    for (k = 0; k < n3; k++) {
-#pragma cetus private(ble, bls, len)
+#pragma cetus private(ble, bls, k, len)
+  for (k = 0; k < n3; k++) {
 #pragma loop name fftXYZ #1 #0
 #pragma cetus private(ble, bls, len)
 #pragma cetus private(ble, bls, len)
-#pragma loop name fftXYZ #1 #0
-#pragma loop name fftXYZ #2 #0 #0 #0
-#pragma loop name fftXYZ #1 #0
-#pragma loop name fftXYZ #2 #0 #0 #0
-#pragma loop name fftXYZ #1 #0
-#pragma loop name fftXYZ #2 #0 #0 #0
-#pragma loop name fftXYZ #1 #0
-#pragma loop name fftXYZ #2 #0 #0 #0
-#pragma loop name fftXYZ #1 #0
-#pragma loop name fftXYZ #2 #0 #0 #0
-      for (bls = 0; bls < n1; bls += fftblock) {
-        ble = ((bls + fftblock) - 1);
-        if (ble > n1) {
-          ble = (n1 - 1);
-        }
-        len = ((ble - bls) + 1);
-        Swarztrauber(sign, log, len, n2, n1 + 1, &x[k][0][bls], exp2);
+    for (bls = 0; bls < n1; bls += fftblock) {
+      ble = ((bls + fftblock) - 1);
+      if (ble > n1) {
+        ble = (n1 - 1);
       }
-    }
-  } else {
-#pragma cetus parallel
-#pragma cetus private(ble, bls, bls_cetus_cross, k, len)
-#pragma loop name fftXYZ #2
-#pragma loop name fftXYZ #2
-#pragma loop name fftXYZ #2
-#pragma c_paw_tiling fftXYZ #2 = bls #2544
-#pragma c_paw_tiling fftXYZ #2 = k #symbolic
-#pragma loop name fftXYZ #2
-#pragma loop name fftXYZ #2
-#pragma omp parallel for private(ble, bls, bls_cetus_cross, k, len)
-    for (k_cetus_cross = 0; k_cetus_cross < n3;
-         k_cetus_cross += cetus_tile_fftXYZ_1_k) {
-#pragma cetus private(ble, bls, bls_cetus_cross, k, len)
-#pragma loop name fftXYZ #2 #0
-#pragma loop name fftXYZ #2 #0
-#pragma loop name fftXYZ #2 #0
-#pragma loop name fftXYZ #2 #0
-#pragma loop name fftXYZ #2 #0
-      for (bls_cetus_cross = 0; bls_cetus_cross < n1;
-           bls_cetus_cross += cetus_tile_fftXYZ_1_bls) {
-#pragma cetus private(ble, bls, k, len)
-#pragma loop name fftXYZ #2 #0 #0
-#pragma loop name fftXYZ #2 #0 #0
-#pragma loop name fftXYZ #2 #0 #0
-#pragma loop name fftXYZ #2 #0 #0
-#pragma loop name fftXYZ #2 #0 #0
-        for (k = k_cetus_cross;
-             k < MIN(n3, (cetus_tile_fftXYZ_1_k + k_cetus_cross)); k++) {
-#pragma cetus private(ble, bls, len)
-#pragma loop name fftXYZ #1 #0
-#pragma cetus private(ble, bls, len)
-#pragma cetus private(ble, bls, len)
-#pragma loop name fftXYZ #1 #0
-#pragma loop name fftXYZ #2 #0 #0 #0
-#pragma loop name fftXYZ #1 #0
-#pragma loop name fftXYZ #2 #0 #0 #0
-#pragma loop name fftXYZ #1 #0
-#pragma loop name fftXYZ #2 #0 #0 #0
-#pragma loop name fftXYZ #1 #0
-#pragma loop name fftXYZ #2 #0 #0 #0
-#pragma loop name fftXYZ #1 #0
-#pragma loop name fftXYZ #2 #0 #0 #0
-          for (bls = bls_cetus_cross;
-               bls < MIN(n1, (bls_cetus_cross + cetus_tile_fftXYZ_1_bls));
-               bls += fftblock) {
-            ble = ((bls + fftblock) - 1);
-            if (ble > n1) {
-              ble = (n1 - 1);
-            }
-            len = ((ble - bls) + 1);
-            Swarztrauber(sign, log, len, n2, n1 + 1, &x[k][0][bls], exp2);
-          }
-        }
-      }
+      len = ((ble - bls) + 1);
+      Swarztrauber(sign, log, len, n2, n1 + 1, &x[k][0][bls], exp2);
     }
   }
   if (timers_enabled) {
@@ -599,174 +322,42 @@ void fftXYZ(int sign, int n1, int n2, int n3, dcomplex x[n3][n2][(n1 + 1)],
   if (timers_enabled) {
     timer_start(9);
   }
-#pragma cetus private(ble, bls, i, j, k, len)
 #pragma loop name fftXYZ #2
-#pragma cetus private(ble, bls, cetus_tile_fftXYZ_2_0_0_i,                     \
-                      cetus_tile_fftXYZ_2_0_0_j, cetus_tile_fftXYZ_2_0_1_i,    \
-                      cetus_tile_fftXYZ_2_0_1_j, i, i_cetus_cross, j, k, len)
-#pragma loop name fftXYZ #3
-#pragma loop name fftXYZ #3
-#pragma loop name fftXYZ #3
-#pragma loop name fftXYZ #3
-#pragma c_paw_tiling fftXYZ #2 = i #2544
-#pragma loop name fftXYZ #3
-#pragma c_paw_tiling fftXYZ #2 = i #2544
+#pragma cetus private(ble, bls, i, j, k, len)
+#pragma cetus private(ble, bls, i, j, k, len)
   for (k = 0; k < n2; k++) {
-#pragma cetus private(ble, bls, i, j, len)
 #pragma loop name fftXYZ #2 #0
-#pragma cetus private(ble, bls, cetus_tile_fftXYZ_2_0_0_j,                     \
-                      cetus_tile_fftXYZ_2_0_1_j, i, i_cetus_cross, j, len)
-#pragma cetus lastprivate(cetus_tile_fftXYZ_2_0_0_i, cetus_tile_fftXYZ_2_0_1_i)
-#pragma loop name fftXYZ #3 #0
-#pragma loop name fftXYZ #3 #0
-#pragma loop name fftXYZ #3 #0
-#pragma loop name fftXYZ #3 #0
-#pragma loop name fftXYZ #3 #0
+#pragma cetus private(ble, bls, i, j, len)
+#pragma cetus private(ble, bls, i, j, len)
     for (bls = 0; bls < n1; bls += fftblock) {
-      int cetus_tile_fftXYZ_2_0_0_j;
-      int cetus_tile_fftXYZ_2_0_0_i = 2544;
-      int cetus_tile_fftXYZ_2_0_1_j;
-      int cetus_tile_fftXYZ_2_0_1_i = 2544;
       ble = ((bls + fftblock) - 1);
       if (ble > n1) {
         ble = (n1 - 1);
       }
       len = ((ble - bls) + 1);
-      if ((((1 * (-1 + n3)) * ble) <= 100000) ||
-          (6553600 >= ((2112 + (n2 * n3)) + ((n1 * n2) * n3)))) {
-#pragma cetus private(i, j)
 #pragma loop name fftXYZ #2 #0 #0
 #pragma cetus private(i, j)
-#pragma loop name fftXYZ #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #0
-        for (i = 0; i < n3; i++) {
-#pragma loop name fftXYZ #2 #0 #0 #0
-#pragma cetus
-#pragma cetus parallel
-#pragma loop name fftXYZ #3 #0 #0 #0
-#pragma loop name fftXYZ #3 #0 #1 #0 #0
-#pragma loop name fftXYZ #3 #0 #0 #0
-#pragma loop name fftXYZ #3 #0 #1 #0 #0
-#pragma loop name fftXYZ #3 #0 #0 #0
-#pragma loop name fftXYZ #3 #0 #1 #0 #0
-#pragma loop name fftXYZ #3 #0 #0 #0
-#pragma loop name fftXYZ #3 #0 #1 #0 #0
-#pragma loop name fftXYZ #3 #0 #0 #0
-#pragma loop name fftXYZ #3 #0 #1 #0 #0
-#pragma omp parallel for
-          for (j = bls; j <= ble; j++) {
-            plane[(j - bls) + (blkp * i)] = x[i][k][j];
-          }
-        }
-      } else {
-#pragma cetus private(i, i_cetus_cross, j)
-#pragma loop name fftXYZ #3 #0 #1
-#pragma loop name fftXYZ #3 #0 #1
-#pragma loop name fftXYZ #3 #0 #1
-#pragma loop name fftXYZ #3 #0 #1
-#pragma loop name fftXYZ #3 #0 #1
-        for (i_cetus_cross = 0; i_cetus_cross < n3;
-             i_cetus_cross += cetus_tile_fftXYZ_2_0_0_i) {
 #pragma cetus private(i, j)
-#pragma loop name fftXYZ #3 #0 #1 #0
-#pragma loop name fftXYZ #3 #0 #1 #0
-#pragma loop name fftXYZ #3 #0 #1 #0
-#pragma loop name fftXYZ #3 #0 #1 #0
-#pragma loop name fftXYZ #3 #0 #1 #0
-          for (i = i_cetus_cross;
-               i < MIN(n3, (cetus_tile_fftXYZ_2_0_0_i + i_cetus_cross)); i++) {
+      for (i = 0; i < n3; i++) {
 #pragma loop name fftXYZ #2 #0 #0 #0
-#pragma cetus
 #pragma cetus parallel
-#pragma loop name fftXYZ #3 #0 #0 #0
-#pragma loop name fftXYZ #3 #0 #1 #0 #0
-#pragma loop name fftXYZ #3 #0 #0 #0
-#pragma loop name fftXYZ #3 #0 #1 #0 #0
-#pragma loop name fftXYZ #3 #0 #0 #0
-#pragma loop name fftXYZ #3 #0 #1 #0 #0
-#pragma loop name fftXYZ #3 #0 #0 #0
-#pragma loop name fftXYZ #3 #0 #1 #0 #0
-#pragma loop name fftXYZ #3 #0 #0 #0
-#pragma loop name fftXYZ #3 #0 #1 #0 #0
-#pragma omp parallel for
-            for (j = bls; j <= ble; j++) {
-              plane[(j - bls) + (blkp * i)] = x[i][k][j];
-            }
-          }
+#pragma cetus private(j)
+#pragma omp parallel for private(j)
+        for (j = bls; j <= ble; j++) {
+          plane[(j - bls) + (blkp * i)] = x[i][k][j];
         }
       }
       Swarztrauber(sign, log, len, n3, blkp, plane, exp3);
-      if ((((1 * (-1 + n3)) * ble) <= 100000) ||
-          (6553600 >= ((2112 + (n2 * n3)) + ((n1 * n2) * n3)))) {
-#pragma cetus private(i, j)
 #pragma loop name fftXYZ #2 #0 #1
 #pragma cetus private(i, j)
-#pragma loop name fftXYZ #3 #0 #2
-#pragma loop name fftXYZ #3 #0 #2
-#pragma loop name fftXYZ #3 #0 #2
-#pragma loop name fftXYZ #3 #0 #2
-#pragma loop name fftXYZ #3 #0 #2
-        for (i = 0; i <= (n3 - 1); i++) {
-#pragma loop name fftXYZ #2 #0 #1 #0
-#pragma cetus
-#pragma cetus parallel
-#pragma loop name fftXYZ #3 #0 #2 #0
-#pragma loop name fftXYZ #3 #0 #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #2 #0
-#pragma loop name fftXYZ #3 #0 #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #2 #0
-#pragma loop name fftXYZ #3 #0 #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #2 #0
-#pragma loop name fftXYZ #3 #0 #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #2 #0
-#pragma loop name fftXYZ #3 #0 #3 #0 #0
-#pragma omp parallel for
-          for (j = bls; j <= ble; j++) {
-            xout[j + ((n1 + 1) * (k + (n2 * i)))] =
-                plane[(j - bls) + (blkp * i)];
-          }
-        }
-      } else {
-#pragma cetus private(i, i_cetus_cross, j)
-#pragma loop name fftXYZ #3 #0 #3
-#pragma loop name fftXYZ #3 #0 #3
-#pragma loop name fftXYZ #3 #0 #3
-#pragma loop name fftXYZ #3 #0 #3
-#pragma loop name fftXYZ #3 #0 #3
-        for (i_cetus_cross = 0; i_cetus_cross <= (n3 - 1);
-             i_cetus_cross += cetus_tile_fftXYZ_2_0_1_i) {
 #pragma cetus private(i, j)
-#pragma loop name fftXYZ #3 #0 #3 #0
-#pragma loop name fftXYZ #3 #0 #3 #0
-#pragma loop name fftXYZ #3 #0 #3 #0
-#pragma loop name fftXYZ #3 #0 #3 #0
-#pragma loop name fftXYZ #3 #0 #3 #0
-          for (i = i_cetus_cross;
-               i <= MIN((n3 - 1),
-                        ((-1 + cetus_tile_fftXYZ_2_0_1_i) + i_cetus_cross));
-               i++) {
+      for (i = 0; i <= (n3 - 1); i++) {
 #pragma loop name fftXYZ #2 #0 #1 #0
-#pragma cetus
 #pragma cetus parallel
-#pragma loop name fftXYZ #3 #0 #2 #0
-#pragma loop name fftXYZ #3 #0 #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #2 #0
-#pragma loop name fftXYZ #3 #0 #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #2 #0
-#pragma loop name fftXYZ #3 #0 #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #2 #0
-#pragma loop name fftXYZ #3 #0 #3 #0 #0
-#pragma loop name fftXYZ #3 #0 #2 #0
-#pragma loop name fftXYZ #3 #0 #3 #0 #0
-#pragma omp parallel for
-            for (j = bls; j <= ble; j++) {
-              xout[j + ((n1 + 1) * (k + (n2 * i)))] =
-                  plane[(j - bls) + (blkp * i)];
-            }
-          }
+#pragma cetus private(j)
+#pragma omp parallel for private(j)
+        for (j = bls; j <= ble; j++) {
+          xout[j + ((n1 + 1) * (k + (n2 * i)))] = plane[(j - bls) + (blkp * i)];
         }
       }
     }

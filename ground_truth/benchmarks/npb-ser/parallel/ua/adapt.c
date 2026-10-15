@@ -597,9 +597,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
         }
 /* update neighbor information of the four child elements on each  */
 /* face of the parent element */
+#pragma cetus private(k)
 #pragma loop name do_refine #3 #13 #0 #1
-#pragma cetus parallel
-#pragma omp parallel for
         for (k = 0; k < 4; k++) {
           cbc[le[k]][i] = 2;
           sje[le[k]][i][0][0] = ne[k];
@@ -648,10 +647,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
             /* if the neighbor ntemp is also marked to be refined */
           } else {
             n1 = ref_front_id[ntemp];
-#pragma cetus private(n2)
+#pragma cetus private(k, n2)
 #pragma loop name do_refine #3 #13 #0 #3
-#pragma cetus parallel
-#pragma omp parallel for private(n2)
             for (k = 0; k < 4; k++) {
               cbc[ne[k]][i] = 2;
               n2 = (n1 + le_arr[ndir][facedir][k]);
@@ -963,6 +960,7 @@ static void remap(double y[5][5][5], double y1[7][5][5][5], double x[5][5][5]) {
   for (i = 0; i < 5; i++) {
 #pragma cetus private(ii, jj, kk)
 #pragma loop name remap #0 #0
+    /* #pragma cetus reduction(+: yone[0][i][jj][ii], yone[1][i][jj][ii])  */
     for (kk = 0; kk < 5; kk++) {
 #pragma cetus private(ii, jj)
 #pragma loop name remap #0 #0 #0
@@ -979,6 +977,8 @@ static void remap(double y[5][5][5], double y1[7][5][5][5], double x[5][5][5]) {
     }
 #pragma cetus private(ii, jj, kk)
 #pragma loop name remap #0 #1
+    /* #pragma cetus reduction(+: ytwo[0][jj][i][ii], ytwo[1][jj][i][ii],
+     * ytwo[2][jj][i][ii], ytwo[3][jj][i][ii])  */
     for (kk = 0; kk < 5; kk++) {
 #pragma cetus private(ii, jj)
 #pragma loop name remap #0 #1 #0
@@ -1005,6 +1005,9 @@ static void remap(double y[5][5][5], double y1[7][5][5][5], double x[5][5][5]) {
   for (iz = 0; iz < 5; iz++) {
 #pragma cetus private(ii, jj, kk)
 #pragma loop name remap #1 #0
+    /* #pragma cetus reduction(+: y1[0][jj][iz][ii], y1[1][jj][iz][ii],
+     * y1[2][jj][iz][ii], y1[3][jj][iz][ii], y1[4][jj][iz][ii],
+     * y1[5][jj][iz][ii], y1[6][jj][iz][ii], y[jj][iz][ii])  */
     for (kk = 0; kk < 5; kk++) {
 #pragma cetus private(ii, jj)
 #pragma loop name remap #1 #0 #0
@@ -1199,6 +1202,7 @@ static void remapz(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
       y[1][iy][ix] = 0.0;
 #pragma cetus private(ip)
 #pragma loop name remapz #0 #0 #0
+      /* #pragma cetus reduction(+: y[1][iy][ix])  */
       for (ip = 0; ip < 5; ip++) {
         y[1][iy][ix] = (y[1][iy][ix] + (map2[ip] * x1[ip][iy][ix]));
       }
@@ -1206,6 +1210,7 @@ static void remapz(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
       y[3][iy][ix] = 0.0;
 #pragma cetus private(ip)
 #pragma loop name remapz #0 #0 #1
+      /* #pragma cetus reduction(+: y[3][iy][ix])  */
       for (ip = 0; ip < 5; ip++) {
         y[3][iy][ix] = (y[3][iy][ix] + (map4[ip] * x2[ip][iy][ix]));
       }
@@ -1234,6 +1239,7 @@ static void remapy(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
       y[iz][1][ix] = 0.0;
 #pragma cetus private(ip)
 #pragma loop name remapy #0 #0 #0
+      /* #pragma cetus reduction(+: y[iz][1][ix])  */
       for (ip = 0; ip < 5; ip++) {
         y[iz][1][ix] = (y[iz][1][ix] + (map2[ip] * x1[iz][ip][ix]));
       }
@@ -1241,6 +1247,7 @@ static void remapy(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
       y[iz][3][ix] = 0.0;
 #pragma cetus private(ip)
 #pragma loop name remapy #0 #0 #1
+      /* #pragma cetus reduction(+: y[iz][3][ix])  */
       for (ip = 0; ip < 5; ip++) {
         y[iz][3][ix] = (y[iz][3][ix] + (map4[ip] * x2[iz][ip][ix]));
       }
@@ -1269,6 +1276,7 @@ static void remapx(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
       y[iz][iy][1] = 0.0;
 #pragma cetus private(ip)
 #pragma loop name remapx #0 #0 #0
+      /* #pragma cetus reduction(+: y[iz][iy][1])  */
       for (ip = 0; ip < 5; ip++) {
         y[iz][iy][1] = (y[iz][iy][1] + (map2[ip] * x1[iz][iy][ip]));
       }
@@ -1276,6 +1284,7 @@ static void remapx(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
       y[iz][iy][3] = 0.0;
 #pragma cetus private(ip)
 #pragma loop name remapx #0 #0 #1
+      /* #pragma cetus reduction(+: y[iz][iy][3])  */
       for (ip = 0; ip < 5; ip++) {
         y[iz][iy][3] = (y[iz][iy][3] + (map4[ip] * x2[iz][iy][ip]));
       }

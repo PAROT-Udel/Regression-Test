@@ -92,8 +92,8 @@ void z_solve() {
   if (timeron) {
     timer_start(8);
   }
-#pragma cetus private(fac1, fac2, i, j, k, k1, k2, m, ru1)
 #pragma loop name z_solve #0
+#pragma cetus private(fac1, fac2, i, j, k, k1, k2, m, ru1)
 #pragma cetus private(fac1, fac2, i, j, k, k1, k2, m, ru1)
   for (j = 1; j <= ny2; j++) {
     lhsinitj(nz2 + 1, nx2);
@@ -104,18 +104,20 @@ void z_solve() {
 /* first fill the lhs for the u-eigenvalue                           */
 /* --------------------------------------------------------------------- */
 #pragma cetus firstprivate(cv, rhos)
-#pragma cetus private(k, ru1)
 #pragma cetus lastprivate(cv, rhos)
 #pragma loop name z_solve #0 #0
 #pragma cetus parallel
+#pragma cetus firstprivate(cv, rhos)
+#pragma cetus private(k, ru1)
+#pragma cetus lastprivate(cv, rhos)
 #pragma cetus firstprivate(cv, rhos)
 #pragma cetus private(i, k, ru1)
 #pragma cetus lastprivate(cv, rhos)
 #pragma omp parallel for private(i, k, ru1) firstprivate(cv, rhos)             \
     lastprivate(cv, rhos)
     for (i = 1; i <= nx2; i++) {
-#pragma cetus private(k, ru1)
 #pragma loop name z_solve #0 #0 #0
+#pragma cetus private(k, ru1)
 #pragma cetus private(k, ru1)
       for (k = 0; k <= (nz2 + 1); k++) {
         ru1 = (c3c4 * rho_i[k][j][i]);
@@ -129,8 +131,8 @@ void z_solve() {
                               : (dz5 + (c1c5 * ru1)))
                        : (((dzmax + ru1) > dz1) ? (dzmax + ru1) : dz1));
       }
-#pragma cetus private(k)
 #pragma loop name z_solve #0 #0 #1
+#pragma cetus private(k)
 #pragma cetus private(k)
       for (k = 1; k <= nz2; k++) {
         lhs[k][i][0] = 0.0;
@@ -143,9 +145,9 @@ void z_solve() {
 /* --------------------------------------------------------------------- */
 /* add fourth order dissipation                                   */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(k)
 #pragma loop name z_solve #0 #1
 #pragma cetus parallel
+#pragma cetus private(k)
 #pragma cetus private(i, k)
 #pragma omp parallel for private(i, k)
     for (i = 1; i <= nx2; i++) {
@@ -159,14 +161,14 @@ void z_solve() {
       lhs[k][i][3] = (lhs[k][i][3] - comz4);
       lhs[k][i][4] = (lhs[k][i][4] + comz1);
     }
-#pragma cetus private(i)
 #pragma loop name z_solve #0 #2
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, k)
 #pragma omp parallel for private(i, k)
     for (k = 3; k <= (nz2 - 2); k++) {
-#pragma cetus private(i)
 #pragma loop name z_solve #0 #2 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 1; i <= nx2; i++) {
         lhs[k][i][0] = (lhs[k][i][0] + comz1);
@@ -176,9 +178,9 @@ void z_solve() {
         lhs[k][i][4] = (lhs[k][i][4] + comz1);
       }
     }
-#pragma cetus private(k)
 #pragma loop name z_solve #0 #3
 #pragma cetus parallel
+#pragma cetus private(k)
 #pragma cetus private(i, k)
 #pragma omp parallel for private(i, k)
     for (i = 1; i <= nx2; i++) {
@@ -195,14 +197,14 @@ void z_solve() {
 /* --------------------------------------------------------------------- */
 /* subsequently, fill the other factors (u+c), (u-c)  */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i)
 #pragma loop name z_solve #0 #4
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, k)
 #pragma omp parallel for private(i, k)
     for (k = 1; k <= nz2; k++) {
-#pragma cetus private(i)
 #pragma loop name z_solve #0 #4 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 1; i <= nx2; i++) {
         lhsp[k][i][0] = lhs[k][i][0];
@@ -220,31 +222,31 @@ void z_solve() {
 /* --------------------------------------------------------------------- */
 /* FORWARD ELIMINATION   */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(fac1, i, k, k1, k2, m)
 #pragma loop name z_solve #0 #5
+#pragma cetus private(fac1, i, k, k1, k2, m)
 #pragma cetus private(fac1, i, k, k1, k2, m)
     for (k = 0; k <= (grid_points[2] - 3); k++) {
       k1 = (k + 1);
       k2 = (k + 2);
-#pragma cetus private(fac1, m)
 #pragma loop name z_solve #0 #5 #0
 #pragma cetus parallel
+#pragma cetus private(fac1, m)
 #pragma cetus private(fac1, i, m)
 #pragma omp parallel for private(fac1, i, m)
       for (i = 1; i <= nx2; i++) {
         fac1 = (1.0 / lhs[k][i][2]);
         lhs[k][i][3] = (fac1 * lhs[k][i][3]);
         lhs[k][i][4] = (fac1 * lhs[k][i][4]);
-#pragma cetus private(m)
 #pragma loop name z_solve #0 #5 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 3; m++) {
           rhs[k][j][i][m] = (fac1 * rhs[k][j][i][m]);
         }
         lhs[k1][i][2] = (lhs[k1][i][2] - (lhs[k1][i][1] * lhs[k][i][3]));
         lhs[k1][i][3] = (lhs[k1][i][3] - (lhs[k1][i][1] * lhs[k][i][4]));
-#pragma cetus private(m)
 #pragma loop name z_solve #0 #5 #0 #1
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 3; m++) {
           rhs[k1][j][i][m] =
@@ -252,8 +254,8 @@ void z_solve() {
         }
         lhs[k2][i][1] = (lhs[k2][i][1] - (lhs[k2][i][0] * lhs[k][i][3]));
         lhs[k2][i][2] = (lhs[k2][i][2] - (lhs[k2][i][0] * lhs[k][i][4]));
-#pragma cetus private(m)
 #pragma loop name z_solve #0 #5 #0 #2
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 3; m++) {
           rhs[k2][j][i][m] =
@@ -268,25 +270,25 @@ void z_solve() {
     /* --------------------------------------------------------------------- */
     k = (grid_points[2] - 2);
     k1 = (grid_points[2] - 1);
-#pragma cetus private(fac1, fac2, m)
 #pragma loop name z_solve #0 #6
 #pragma cetus parallel
+#pragma cetus private(fac1, fac2, m)
 #pragma cetus private(fac1, fac2, i, m)
 #pragma omp parallel for private(fac1, fac2, i, m)
     for (i = 1; i <= nx2; i++) {
       fac1 = (1.0 / lhs[k][i][2]);
       lhs[k][i][3] = (fac1 * lhs[k][i][3]);
       lhs[k][i][4] = (fac1 * lhs[k][i][4]);
-#pragma cetus private(m)
 #pragma loop name z_solve #0 #6 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 3; m++) {
         rhs[k][j][i][m] = (fac1 * rhs[k][j][i][m]);
       }
       lhs[k1][i][2] = (lhs[k1][i][2] - (lhs[k1][i][1] * lhs[k][i][3]));
       lhs[k1][i][3] = (lhs[k1][i][3] - (lhs[k1][i][1] * lhs[k][i][4]));
-#pragma cetus private(m)
 #pragma loop name z_solve #0 #6 #1
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 3; m++) {
         rhs[k1][j][i][m] =
@@ -298,8 +300,8 @@ void z_solve() {
       /* ---------------------------------------------------------------------
        */
       fac2 = (1.0 / lhs[k1][i][2]);
-#pragma cetus private(m)
 #pragma loop name z_solve #0 #6 #2
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 3; m++) {
         rhs[k1][j][i][m] = (fac2 * rhs[k1][j][i][m]);
@@ -308,15 +310,15 @@ void z_solve() {
 /* --------------------------------------------------------------------- */
 /* for (the u+c and the u-c factors                */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(fac1, i, k, k1, k2, m)
 #pragma loop name z_solve #0 #7
+#pragma cetus private(fac1, i, k, k1, k2, m)
 #pragma cetus private(fac1, i, k, k1, k2, m)
     for (k = 0; k <= (grid_points[2] - 3); k++) {
       k1 = (k + 1);
       k2 = (k + 2);
-#pragma cetus private(fac1, m)
 #pragma loop name z_solve #0 #7 #0
 #pragma cetus parallel
+#pragma cetus private(fac1, m)
 #pragma cetus private(fac1, i, m)
 #pragma omp parallel for private(fac1, i, m)
       for (i = 1; i <= nx2; i++) {
@@ -353,9 +355,9 @@ void z_solve() {
     /* --------------------------------------------------------------------- */
     k = (grid_points[2] - 2);
     k1 = (grid_points[2] - 1);
-#pragma cetus private(fac1, m)
 #pragma loop name z_solve #0 #8
 #pragma cetus parallel
+#pragma cetus private(fac1, m)
 #pragma cetus private(fac1, i, m)
 #pragma omp parallel for private(fac1, i, m)
     for (i = 1; i <= nx2; i++) {
@@ -391,14 +393,14 @@ void z_solve() {
     /* --------------------------------------------------------------------- */
     k = (grid_points[2] - 2);
     k1 = (grid_points[2] - 1);
-#pragma cetus private(m)
 #pragma loop name z_solve #0 #9
 #pragma cetus parallel
+#pragma cetus private(m)
 #pragma cetus private(i, m)
 #pragma omp parallel for private(i, m)
     for (i = 1; i <= nx2; i++) {
-#pragma cetus private(m)
 #pragma loop name z_solve #0 #9 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 3; m++) {
         rhs[k][j][i][m] = (rhs[k][j][i][m] - (lhs[k][i][3] * rhs[k1][j][i][m]));
@@ -413,8 +415,8 @@ void z_solve() {
 /* --------------------------------------------------------------------- */
 /* The first three factors */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, k, k1, k2, m)
 #pragma loop name z_solve #0 #10
+#pragma cetus private(i, k, k1, k2, m)
 #pragma cetus private(i, k, k1, k2, m)
     for (k = (grid_points[2] - 3); k >= 0; k--) {
       k1 = (k + 1);
@@ -423,10 +425,11 @@ void z_solve() {
 #pragma loop name z_solve #0 #10 #0
 #pragma cetus parallel
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
 #pragma omp parallel for private(i, m)
       for (i = 1; i <= nx2; i++) {
-#pragma cetus private(m)
 #pragma loop name z_solve #0 #10 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 3; m++) {
           rhs[k][j][i][m] =

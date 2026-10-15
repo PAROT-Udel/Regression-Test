@@ -316,8 +316,8 @@ int main(int argc, char *argv[]) {
   printf(" CG iterations:        %8d\n", nmxh);
   printf(" Heat source radius:   %8.4f\n\n", alpha);
   top_constants();
-#pragma cetus private(i)
 #pragma loop name main #0
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 1; i <= 10; i++) {
     timer_clear(i);
@@ -346,8 +346,8 @@ int main(int argc, char *argv[]) {
   }
   timer_clear(1);
   time = 0.0;
-#pragma cetus private(i, ie, iside, j, k, step)
 #pragma loop name main #1
+#pragma cetus private(i, ie, iside, j, k, step)
 #pragma cetus private(i, ie, iside, j, k, step)
   for (step = 0; step <= niter; step++) {
     if (step == 1) {
@@ -355,8 +355,8 @@ int main(int argc, char *argv[]) {
       r_init((double *)ta1, ntot, 0.0);
       time = 0.0;
       nelt_tot = 0.0;
-#pragma cetus private(i)
 #pragma loop name main #1 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 1; i <= 10; i++) {
         if (i != 2) {
@@ -374,29 +374,29 @@ int main(int argc, char *argv[]) {
     transf(tmort, (double *)ta1);
 /* compute residual for diffusion term based on intital guess */
 /* compute the left hand side of equation, lapacian t */
-#pragma cetus private(ie)
 #pragma loop name main #1 #1
+#pragma cetus private(ie)
 #pragma cetus private(ie)
     for (ie = 0; ie < nelt; ie++) {
       laplacian(ta2[ie], ta1[ie], size_e[ie]);
     }
 /* compute the residual  */
-#pragma cetus private(i, j, k)
 #pragma loop name main #1 #2
 #pragma cetus parallel
+#pragma cetus private(i, j, k)
 #pragma cetus private(i, ie, j, k)
 #pragma omp parallel for private(i, ie, j, k)
     for (ie = 0; ie < nelt; ie++) {
-#pragma cetus private(i, j, k)
 #pragma loop name main #1 #2 #0
 #pragma cetus private(i, j, k)
+#pragma cetus private(i, j, k)
       for (k = 0; k < 5; k++) {
-#pragma cetus private(i, j)
 #pragma loop name main #1 #2 #0 #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
         for (j = 0; j < 5; j++) {
-#pragma cetus private(i)
 #pragma loop name main #1 #2 #0 #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
           for (i = 0; i < 5; i++) {
             trhs[ie][k][j][i] = (trhs[ie][k][j][i] - ta2[ie][k][j][i]);
@@ -411,12 +411,12 @@ int main(int argc, char *argv[]) {
     }
 /* apply boundary condition: zero out the residual on domain boundaries */
 /* apply boundary conidtion to trhs */
-#pragma cetus private(ie, iside)
 #pragma loop name main #1 #3
 #pragma cetus private(ie, iside)
+#pragma cetus private(ie, iside)
     for (ie = 0; ie < nelt; ie++) {
-#pragma cetus private(iside)
 #pragma loop name main #1 #3 #0
+#pragma cetus private(iside)
 #pragma cetus private(iside)
       for (iside = 0; iside < 6; iside++) {
         if (cbc[ie][iside] == 0) {
@@ -463,8 +463,8 @@ int main(int argc, char *argv[]) {
   /* More timers */
   /* --------------------------------------------------------------------- */
   if (timeron) {
-#pragma cetus private(i)
 #pragma loop name main #2
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 1; i <= 10; i++) {
       trecs[i] = timer_read(i);
@@ -473,8 +473,8 @@ int main(int argc, char *argv[]) {
       tmax = 1.0;
     }
     printf("  SECTION     Time (secs)\n");
-#pragma cetus private(i, t2)
 #pragma loop name main #3
+#pragma cetus private(i, t2)
 #pragma cetus private(i, t2)
     for (i = 1; i <= 10; i++) {
       printf("  %-10s:%9.3f  (%6.2f%%)\n", t_names[i], trecs[i],

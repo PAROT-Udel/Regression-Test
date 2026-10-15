@@ -146,6 +146,7 @@ static void kernel_syr2k(int n, int m, double alpha, double beta,
     }
 #pragma cetus private(j, k)
 #pragma loop name kernel_syr2k #0 #1
+    /* #pragma cetus reduction(+: C[i][j])  */
     for (k = 0; k < m; k++) {
 #pragma cetus private(j)
 #pragma loop name kernel_syr2k #0 #1 #0

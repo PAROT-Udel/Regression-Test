@@ -1,4 +1,3 @@
-#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -671,7 +670,7 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
   }
 #pragma cetus private(j, nza)
 #pragma loop name sparse #1
-  /* #pragma cetus reduction(+: rowstr[j])  */
+  /* #pragma cetus reduction(+: )  */
   for (i = 0; i < n; i++) {
 #pragma cetus private(j, nza)
 #pragma loop name sparse #1 #0

@@ -5,7 +5,6 @@
 #define FLOOR(x) ((int)((x) - 0.5))
 #define ROUND(x) ((int)((x) + 0.5))
 
-#include <stdlib.h>
 /*
 Copyright (C) 1991-2024 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -145,7 +144,6 @@ int main(int argc, char *argv[]) {
   double zeta_verify_value, epsilon, err;
   char *t_names[3];
   FILE *fp;
-#pragma cetus private(i)
 #pragma loop name main #0
   for (i = 0; i < 3; i++) {
     timer_clear(i);
@@ -206,7 +204,6 @@ int main(int argc, char *argv[]) {
 #pragma cetus for
 #pragma omp for
     for (j = 0; j < ((lastrow - firstrow) + 1); j++) {
-#pragma cetus private(k)
 #pragma loop name main #1 #0
       for (k = rowstr[j]; k < rowstr[j + 1]; k++) {
         reduce[k] = (reduce[k] - firstcol);
@@ -678,7 +675,7 @@ static void sparse(double a[], int colidx[], int rowstr[], int n, int nz,
   }
 #pragma cetus private(j, nza)
 #pragma loop name sparse #1
-  /* #pragma cetus reduction(+: rowstr[j])  */
+  /* #pragma cetus reduction(+: )  */
   for (i = 0; i < n; i++) {
 #pragma cetus private(j, nza)
 #pragma loop name sparse #1 #0

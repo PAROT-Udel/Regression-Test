@@ -73,14 +73,14 @@ static void init_array(int m, int n, double *float_n,
                        double data[(32 + 0)][(28 + 0)]) {
   int i, j;
   (*float_n) = ((double)32);
-#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < 32; i++) {
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < 28; j++) {
       data[i][j] = ((((double)(i * j)) / 28) + i);
@@ -96,12 +96,12 @@ static void print_array(int m, double corr[(28 + 0)][(28 + 0)]) {
   int i, j;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "corr");
-#pragma cetus private(i, j)
 #pragma loop name print_array #0
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
   for (i = 0; i < m; i++) {
-#pragma cetus private(j)
 #pragma loop name print_array #0 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < m; j++) {
       if ((((i * m) + j) % 20) == 0) {
@@ -126,16 +126,16 @@ static void kernel_correlation(int m, int n, double float_n,
   double eps = 0.1;
 #pragma scop
 #pragma experimental section start
-#pragma cetus private(i)
 #pragma loop name kernel_correlation #0
-#pragma cetus parallel
+#pragma cetus private(i)
+#pragma cetus firstprivate(mean)
 #pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma cetus lastprivate(mean)
   for (j = 0; j < m; j++) {
     mean[j] = 0.0;
-#pragma cetus private(i)
 #pragma loop name kernel_correlation #0 #0
 /* #pragma cetus reduction(+: mean[j])  */
+#pragma cetus private(i)
 #pragma cetus private(i)
 #pragma cetus reduction(+ : mean[j])
     for (i = 0; i < n; i++) {
@@ -143,16 +143,16 @@ static void kernel_correlation(int m, int n, double float_n,
     }
     mean[j] /= float_n;
   }
-#pragma cetus private(i)
 #pragma loop name kernel_correlation #1
-#pragma cetus parallel
+#pragma cetus private(i)
+#pragma cetus firstprivate(stddev)
 #pragma cetus private(i, j)
-#pragma omp parallel for private(i, j)
+#pragma cetus lastprivate(stddev)
   for (j = 0; j < m; j++) {
     stddev[j] = 0.0;
-#pragma cetus private(i)
 #pragma loop name kernel_correlation #1 #0
 /* #pragma cetus reduction(+: stddev[j])  */
+#pragma cetus private(i)
 #pragma cetus private(i)
 #pragma cetus reduction(+ : stddev[j])
     for (i = 0; i < n; i++) {
@@ -168,14 +168,14 @@ static void kernel_correlation(int m, int n, double float_n,
     stddev[j] = ((stddev[j] <= eps) ? 1.0 : stddev[j]);
   }
 /* Center and reduce the column vectors. */
-#pragma cetus private(j)
 #pragma loop name kernel_correlation #2
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
-#pragma cetus private(j)
 #pragma loop name kernel_correlation #2 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < m; j++) {
       data[i][j] -= mean[j];
@@ -184,24 +184,28 @@ static void kernel_correlation(int m, int n, double float_n,
   }
 /* Calculate the m m correlation matrix. */
 #pragma cetus firstprivate(corr)
-#pragma cetus private(i, j, k)
 #pragma cetus lastprivate(corr)
 #pragma loop name kernel_correlation #3
 #pragma cetus firstprivate(corr)
 #pragma cetus private(i, j, k)
 #pragma cetus lastprivate(corr)
+#pragma cetus firstprivate(corr)
+#pragma cetus private(i, j, k)
+#pragma cetus lastprivate(corr)
   for (i = 0; i < (m - 1); i++) {
     corr[i][i] = 1.0;
-#pragma cetus private(k)
 #pragma loop name kernel_correlation #3 #0
-#pragma cetus parallel
+#pragma cetus private(k)
+#pragma cetus firstprivate(corr)
 #pragma cetus private(j, k)
-#pragma omp parallel for private(j, k)
+#pragma cetus lastprivate(corr)
     for (j = (i + 1); j < m; j++) {
       corr[i][j] = 0.0;
-#pragma cetus private(k)
 #pragma loop name kernel_correlation #3 #0 #0
+/* #pragma cetus reduction(+: corr[i][j])  */
 #pragma cetus private(k)
+#pragma cetus private(k)
+#pragma cetus reduction(+ : corr[i][j])
       for (k = 0; k < n; k++) {
         corr[i][j] += (data[k][i] * data[k][j]);
       }

@@ -167,6 +167,7 @@ static void kernel_2mm(int ni, int nj, int nk, int nl, double alpha,
       tmp[i][j] = 0.0;
 #pragma cetus private(k)
 #pragma loop name kernel_2mm #0 #0 #0
+      /* #pragma cetus reduction(+: tmp[i][j])  */
       for (k = 0; k < nk; ++k) {
         tmp[i][j] += ((alpha * A[i][k]) * B[k][j]);
       }
@@ -183,6 +184,7 @@ static void kernel_2mm(int ni, int nj, int nk, int nl, double alpha,
       D[i][j] *= beta;
 #pragma cetus private(k)
 #pragma loop name kernel_2mm #1 #0 #0
+      /* #pragma cetus reduction(+: D[i][j])  */
       for (k = 0; k < nj; ++k) {
         D[i][j] += (tmp[i][k] * C[k][j]);
       }

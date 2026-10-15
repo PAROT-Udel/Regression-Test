@@ -100,22 +100,22 @@ void erhs() {
   double u21im1, u31im1, u41im1, u51im1;
   double u21jm1, u31jm1, u41jm1, u51jm1;
   double u21km1, u31km1, u41km1, u51km1;
-#pragma cetus private(i, j, m)
 #pragma loop name erhs #0
 #pragma cetus parallel
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, k, m)
 #pragma omp parallel for private(i, j, k, m)
   for (k = 0; k < nz; k++) {
-#pragma cetus private(i, j, m)
 #pragma loop name erhs #0 #0
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
     for (j = 0; j < ny; j++) {
-#pragma cetus private(i, m)
 #pragma loop name erhs #0 #0 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
       for (i = 0; i < nx; i++) {
-#pragma cetus private(m)
 #pragma loop name erhs #0 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           frct[k][j][i][m] = 0.0;
@@ -123,25 +123,25 @@ void erhs() {
       }
     }
   }
-#pragma cetus private(eta, i, j, m, xi, zeta)
 #pragma loop name erhs #1
 #pragma cetus parallel
+#pragma cetus private(eta, i, j, m, xi, zeta)
 #pragma cetus private(eta, i, j, k, m, xi, zeta)
 #pragma omp parallel for private(eta, i, j, k, m, xi, zeta)
   for (k = 0; k < nz; k++) {
     zeta = (((double)k) / (nz - 1));
-#pragma cetus private(eta, i, j, m, xi)
 #pragma loop name erhs #1 #0
+#pragma cetus private(eta, i, j, m, xi)
 #pragma cetus private(eta, i, j, m, xi)
     for (j = 0; j < ny; j++) {
       eta = (((double)j) / (ny0 - 1));
-#pragma cetus private(i, m, xi)
 #pragma loop name erhs #1 #0 #0
+#pragma cetus private(i, m, xi)
 #pragma cetus private(i, m, xi)
       for (i = 0; i < nx; i++) {
         xi = (((double)i) / (nx0 - 1));
-#pragma cetus private(m)
 #pragma loop name erhs #1 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           rsd[k][j][i][m] =
@@ -163,21 +163,21 @@ void erhs() {
 /* --------------------------------------------------------------------- */
 /* xi-direction flux differences */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, k, m, q, tmp, u21, u21i, u21im1, u31i, u31im1,     \
-                      u41i, u41im1, u51i, u51im1)
 #pragma loop name erhs #2
 #pragma cetus private(i, j, k, m, q, tmp, u21, u21i, u21im1, u31i, u31im1,     \
                       u41i, u41im1, u51i, u51im1)
+#pragma cetus private(i, j, k, m, q, tmp, u21, u21i, u21im1, u31i, u31im1,     \
+                      u41i, u41im1, u51i, u51im1)
   for (k = 1; k < (nz - 1); k++) {
-#pragma cetus private(i, j, m, q, tmp, u21, u21i, u21im1, u31i, u31im1, u41i,  \
-                      u41im1, u51i, u51im1)
 #pragma loop name erhs #2 #0
 #pragma cetus private(i, j, m, q, tmp, u21, u21i, u21im1, u31i, u31im1, u41i,  \
                       u41im1, u51i, u51im1)
+#pragma cetus private(i, j, m, q, tmp, u21, u21i, u21im1, u31i, u31im1, u41i,  \
+                      u41im1, u51i, u51im1)
     for (j = jst; j < jend; j++) {
-#pragma cetus private(q, u21)
 #pragma loop name erhs #2 #0 #0
 #pragma cetus parallel
+#pragma cetus private(q, u21)
 #pragma cetus private(i, q, u21)
 #pragma omp parallel for private(i, q, u21)
       for (i = 0; i < nx; i++) {
@@ -192,24 +192,24 @@ void erhs() {
         flux[i][3] = (rsd[k][j][i][3] * u21);
         flux[i][4] = (((1.4 * rsd[k][j][i][4]) - (0.4 * q)) * u21);
       }
-#pragma cetus private(m)
 #pragma loop name erhs #2 #0 #1
 #pragma cetus parallel
+#pragma cetus private(m)
 #pragma cetus private(i, m)
 #pragma omp parallel for private(i, m)
       for (i = ist; i < iend; i++) {
-#pragma cetus private(m)
 #pragma loop name erhs #2 #0 #1 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           frct[k][j][i][m] =
               (frct[k][j][i][m] - (tx2 * (flux[i + 1][m] - flux[i - 1][m])));
         }
       }
-#pragma cetus private(tmp, u21i, u21im1, u31i, u31im1, u41i, u41im1, u51i,     \
-                      u51im1)
 #pragma loop name erhs #2 #0 #2
 #pragma cetus parallel
+#pragma cetus private(tmp, u21i, u21im1, u31i, u31im1, u41i, u41im1, u51i,     \
+                      u51im1)
 #pragma cetus private(i, tmp, u21i, u21im1, u31i, u31im1, u41i, u41im1, u51i,  \
                       u51im1)
 #pragma omp parallel for private(i, tmp, u21i, u21im1, u31i, u31im1, u41i,     \
@@ -238,7 +238,8 @@ void erhs() {
       }
 #pragma loop name erhs #2 #0 #3
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
       for (i = ist; i < iend; i++) {
         frct[k][j][i][0] =
             (frct[k][j][i][0] +
@@ -270,7 +271,8 @@ void erhs() {
 /* --------------------------------------------------------------------- */
 #pragma loop name erhs #2 #0 #4
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         frct[k][j][1][m] =
             (frct[k][j][1][m] -
@@ -282,14 +284,14 @@ void erhs() {
                        (4.0 * rsd[k][j][3][m])) +
                       rsd[k][j][4][m])));
       }
-#pragma cetus private(m)
 #pragma loop name erhs #2 #0 #5
 #pragma cetus parallel
+#pragma cetus private(m)
 #pragma cetus private(i, m)
 #pragma omp parallel for private(i, m)
       for (i = 3; i < (nx - 3); i++) {
-#pragma cetus private(m)
 #pragma loop name erhs #2 #0 #5 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           frct[k][j][i][m] =
@@ -302,7 +304,8 @@ void erhs() {
       }
 #pragma loop name erhs #2 #0 #6
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         frct[k][j][nx - 3][m] =
             (frct[k][j][nx - 3][m] -
@@ -319,21 +322,21 @@ void erhs() {
 /* --------------------------------------------------------------------- */
 /* eta-direction flux differences */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, k, m, q, tmp, u21j, u21jm1, u31, u31j, u31jm1,     \
-                      u41j, u41jm1, u51j, u51jm1)
 #pragma loop name erhs #3
 #pragma cetus private(i, j, k, m, q, tmp, u21j, u21jm1, u31, u31j, u31jm1,     \
                       u41j, u41jm1, u51j, u51jm1)
+#pragma cetus private(i, j, k, m, q, tmp, u21j, u21jm1, u31, u31j, u31jm1,     \
+                      u41j, u41jm1, u51j, u51jm1)
   for (k = 1; k < (nz - 1); k++) {
-#pragma cetus private(i, j, m, q, tmp, u21j, u21jm1, u31, u31j, u31jm1, u41j,  \
-                      u41jm1, u51j, u51jm1)
 #pragma loop name erhs #3 #0
 #pragma cetus private(i, j, m, q, tmp, u21j, u21jm1, u31, u31j, u31jm1, u41j,  \
                       u41jm1, u51j, u51jm1)
+#pragma cetus private(i, j, m, q, tmp, u21j, u21jm1, u31, u31j, u31jm1, u41j,  \
+                      u41jm1, u51j, u51jm1)
     for (i = ist; i < iend; i++) {
-#pragma cetus private(q, u31)
 #pragma loop name erhs #3 #0 #0
 #pragma cetus parallel
+#pragma cetus private(q, u31)
 #pragma cetus private(j, q, u31)
 #pragma omp parallel for private(j, q, u31)
       for (j = 0; j < ny; j++) {
@@ -348,24 +351,24 @@ void erhs() {
         flux[j][3] = (rsd[k][j][i][3] * u31);
         flux[j][4] = (((1.4 * rsd[k][j][i][4]) - (0.4 * q)) * u31);
       }
-#pragma cetus private(m)
 #pragma loop name erhs #3 #0 #1
 #pragma cetus parallel
+#pragma cetus private(m)
 #pragma cetus private(j, m)
 #pragma omp parallel for private(j, m)
       for (j = jst; j < jend; j++) {
-#pragma cetus private(m)
 #pragma loop name erhs #3 #0 #1 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           frct[k][j][i][m] =
               (frct[k][j][i][m] - (ty2 * (flux[j + 1][m] - flux[j - 1][m])));
         }
       }
-#pragma cetus private(tmp, u21j, u21jm1, u31j, u31jm1, u41j, u41jm1, u51j,     \
-                      u51jm1)
 #pragma loop name erhs #3 #0 #2
 #pragma cetus parallel
+#pragma cetus private(tmp, u21j, u21jm1, u31j, u31jm1, u41j, u41jm1, u51j,     \
+                      u51jm1)
 #pragma cetus private(j, tmp, u21j, u21jm1, u31j, u31jm1, u41j, u41jm1, u51j,  \
                       u51jm1)
 #pragma omp parallel for private(j, tmp, u21j, u21jm1, u31j, u31jm1, u41j,     \
@@ -394,7 +397,8 @@ void erhs() {
       }
 #pragma loop name erhs #3 #0 #3
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(j)
+#pragma omp parallel for private(j)
       for (j = jst; j < jend; j++) {
         frct[k][j][i][0] =
             (frct[k][j][i][0] +
@@ -426,7 +430,8 @@ void erhs() {
 /* --------------------------------------------------------------------- */
 #pragma loop name erhs #3 #0 #4
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         frct[k][1][i][m] =
             (frct[k][1][i][m] -
@@ -438,14 +443,14 @@ void erhs() {
                        (4.0 * rsd[k][3][i][m])) +
                       rsd[k][4][i][m])));
       }
-#pragma cetus private(m)
 #pragma loop name erhs #3 #0 #5
 #pragma cetus parallel
+#pragma cetus private(m)
 #pragma cetus private(j, m)
 #pragma omp parallel for private(j, m)
       for (j = 3; j < (ny - 3); j++) {
-#pragma cetus private(m)
 #pragma loop name erhs #3 #0 #5 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           frct[k][j][i][m] =
@@ -458,7 +463,8 @@ void erhs() {
       }
 #pragma loop name erhs #3 #0 #6
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(m)
+#pragma omp parallel for private(m)
       for (m = 0; m < 5; m++) {
         frct[k][ny - 3][i][m] =
             (frct[k][ny - 3][i][m] -
@@ -476,11 +482,13 @@ void erhs() {
 /* zeta-direction flux differences */
 /* --------------------------------------------------------------------- */
 #pragma cetus firstprivate(flux)
-#pragma cetus private(i, k, m, q, tmp, u21k, u21km1, u31k, u31km1, u41, u41k,  \
-                      u41km1, u51k, u51km1)
 #pragma cetus lastprivate(flux)
 #pragma loop name erhs #4
 #pragma cetus parallel
+#pragma cetus firstprivate(flux)
+#pragma cetus private(i, k, m, q, tmp, u21k, u21km1, u31k, u31km1, u41, u41k,  \
+                      u41km1, u51k, u51km1)
+#pragma cetus lastprivate(flux)
 #pragma cetus firstprivate(flux)
 #pragma cetus private(i, j, k, m, q, tmp, u21k, u21km1, u31k, u31km1, u41,     \
                       u41k, u41km1, u51k, u51km1)
@@ -490,17 +498,19 @@ void erhs() {
     firstprivate(flux) lastprivate(flux)
   for (j = jst; j < jend; j++) {
 #pragma cetus firstprivate(flux)
-#pragma cetus private(i, k, m, q, tmp, u21k, u21km1, u31k, u31km1, u41, u41k,  \
-                      u41km1, u51k, u51km1)
 #pragma cetus lastprivate(flux)
 #pragma loop name erhs #4 #0
 #pragma cetus firstprivate(flux)
 #pragma cetus private(i, k, m, q, tmp, u21k, u21km1, u31k, u31km1, u41, u41k,  \
                       u41km1, u51k, u51km1)
 #pragma cetus lastprivate(flux)
+#pragma cetus firstprivate(flux)
+#pragma cetus private(i, k, m, q, tmp, u21k, u21km1, u31k, u31km1, u41, u41k,  \
+                      u41km1, u51k, u51km1)
+#pragma cetus lastprivate(flux)
     for (i = ist; i < iend; i++) {
-#pragma cetus private(k, q, u41)
 #pragma loop name erhs #4 #0 #0
+#pragma cetus private(k, q, u41)
 #pragma cetus private(k, q, u41)
       for (k = 0; k < nz; k++) {
         flux[k][0] = rsd[k][j][i][3];
@@ -514,21 +524,21 @@ void erhs() {
         flux[k][3] = ((rsd[k][j][i][3] * u41) + (0.4 * (rsd[k][j][i][4] - q)));
         flux[k][4] = (((1.4 * rsd[k][j][i][4]) - (0.4 * q)) * u41);
       }
-#pragma cetus private(k, m)
 #pragma loop name erhs #4 #0 #1
 #pragma cetus private(k, m)
+#pragma cetus private(k, m)
       for (k = 1; k < (nz - 1); k++) {
-#pragma cetus private(m)
 #pragma loop name erhs #4 #0 #1 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           frct[k][j][i][m] =
               (frct[k][j][i][m] - (tz2 * (flux[k + 1][m] - flux[k - 1][m])));
         }
       }
+#pragma loop name erhs #4 #0 #2
 #pragma cetus private(k, tmp, u21k, u21km1, u31k, u31km1, u41k, u41km1, u51k,  \
                       u51km1)
-#pragma loop name erhs #4 #0 #2
 #pragma cetus private(k, tmp, u21k, u21km1, u31k, u31km1, u41k, u41km1, u51k,  \
                       u51km1)
       for (k = 1; k < nz; k++) {
@@ -553,8 +563,8 @@ void erhs() {
               (((1.0 / 6.0) * tz3) * ((u41k * u41k) - (u41km1 * u41km1)))) +
              (((1.4 * 1.4) * tz3) * (u51k - u51km1)));
       }
-#pragma cetus private(k)
 #pragma loop name erhs #4 #0 #3
+#pragma cetus private(k)
 #pragma cetus private(k)
       for (k = 1; k < (nz - 1); k++) {
         frct[k][j][i][0] =
@@ -585,8 +595,8 @@ void erhs() {
 /* --------------------------------------------------------------------- */
 /* fourth-order dissipation */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(m)
 #pragma loop name erhs #4 #0 #4
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         frct[1][j][i][m] =
@@ -599,12 +609,12 @@ void erhs() {
                        (4.0 * rsd[3][j][i][m])) +
                       rsd[4][j][i][m])));
       }
-#pragma cetus private(k, m)
 #pragma loop name erhs #4 #0 #5
 #pragma cetus private(k, m)
+#pragma cetus private(k, m)
       for (k = 3; k < (nz - 3); k++) {
-#pragma cetus private(m)
 #pragma loop name erhs #4 #0 #5 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           frct[k][j][i][m] =
@@ -615,8 +625,8 @@ void erhs() {
                         rsd[k + 2][j][i][m])));
         }
       }
-#pragma cetus private(m)
 #pragma loop name erhs #4 #0 #6
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         frct[nz - 3][j][i][m] =

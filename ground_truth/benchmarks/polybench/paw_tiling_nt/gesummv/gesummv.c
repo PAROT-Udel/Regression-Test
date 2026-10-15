@@ -75,14 +75,14 @@ static void init_array(int n, double *alpha, double *beta,
   int i, j;
   (*alpha) = 1.5;
   (*beta) = 1.2;
-#pragma cetus private(j)
 #pragma loop name init_array #0
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
     x[i] = (((double)(i % n)) / n);
-#pragma cetus private(j)
 #pragma loop name init_array #0 #0
+#pragma cetus private(j)
     for (j = 0; j < n; j++) {
       A[i][j] = (((double)(((i * j) + 1) % n)) / n);
       B[i][j] = (((double)(((i * j) + 2) % n)) / n);
@@ -98,8 +98,8 @@ static void print_array(int n, double y[(30 + 0)]) {
   int i;
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "y");
-#pragma cetus private(i)
 #pragma loop name print_array #0
+#pragma cetus private(i)
   for (i = 0; i < n; i++) {
     if ((i % 20) == 0) {
       fprintf(stderr, "\n");
@@ -120,16 +120,16 @@ static void kernel_gesummv(int n, double alpha, double beta,
                            double x[(30 + 0)], double y[(30 + 0)]) {
   int i, j;
 #pragma scop
-#pragma cetus private(j)
 #pragma loop name kernel_gesummv #0
 #pragma cetus parallel
-#pragma omp parallel for private(j)
+#pragma cetus private(i, j)
+#pragma omp parallel for private(i, j)
   for (i = 0; i < n; i++) {
     tmp[i] = 0.0;
     y[i] = 0.0;
-#pragma cetus private(j)
 #pragma loop name kernel_gesummv #0 #0
-    /* #pragma cetus reduction(+: tmp[i], y[i])  */
+/* #pragma cetus reduction(+: tmp[i], y[i])  */
+#pragma cetus private(j)
     for (j = 0; j < n; j++) {
       tmp[i] = ((A[i][j] * x[j]) + tmp[i]);
       y[i] = ((B[i][j] * x[j]) + y[i]);

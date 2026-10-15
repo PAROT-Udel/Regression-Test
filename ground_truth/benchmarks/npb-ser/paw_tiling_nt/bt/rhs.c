@@ -93,18 +93,18 @@ void compute_rhs() {
 /* compute the reciprocal of density, and the kinetic energy,  */
 /* and the speed of sound. */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, rho_inv)
 #pragma loop name compute_rhs #0
 #pragma cetus parallel
+#pragma cetus private(i, j, rho_inv)
 #pragma cetus private(i, j, k, rho_inv)
 #pragma omp parallel for private(i, j, k, rho_inv)
   for (k = 0; k <= (grid_points[2] - 1); k++) {
-#pragma cetus private(i, j, rho_inv)
 #pragma loop name compute_rhs #0 #0
 #pragma cetus private(i, j, rho_inv)
+#pragma cetus private(i, j, rho_inv)
     for (j = 0; j <= (grid_points[1] - 1); j++) {
-#pragma cetus private(i, rho_inv)
 #pragma loop name compute_rhs #0 #0 #0
+#pragma cetus private(i, rho_inv)
 #pragma cetus private(i, rho_inv)
       for (i = 0; i <= (grid_points[0] - 1); i++) {
         rho_inv = (1.0 / u[k][j][i][0]);
@@ -125,22 +125,22 @@ void compute_rhs() {
 /* this forcing term is known, we can store it on the whole grid */
 /* including the boundary                    */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, m)
 #pragma loop name compute_rhs #1
 #pragma cetus parallel
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, k, m)
 #pragma omp parallel for private(i, j, k, m)
   for (k = 0; k <= (grid_points[2] - 1); k++) {
-#pragma cetus private(i, j, m)
 #pragma loop name compute_rhs #1 #0
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
     for (j = 0; j <= (grid_points[1] - 1); j++) {
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #1 #0 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
       for (i = 0; i <= (grid_points[0] - 1); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #1 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           rhs[k][j][i][m] = forcing[k][j][i][m];
@@ -154,18 +154,18 @@ void compute_rhs() {
 /* --------------------------------------------------------------------- */
 /* compute xi-direction fluxes  */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, m, uijk, um1, up1)
 #pragma loop name compute_rhs #2
 #pragma cetus parallel
+#pragma cetus private(i, j, m, uijk, um1, up1)
 #pragma cetus private(i, j, k, m, uijk, um1, up1)
 #pragma omp parallel for private(i, j, k, m, uijk, um1, up1)
   for (k = 1; k <= (grid_points[2] - 2); k++) {
-#pragma cetus private(i, j, uijk, um1, up1)
 #pragma loop name compute_rhs #2 #0
 #pragma cetus private(i, j, uijk, um1, up1)
+#pragma cetus private(i, j, uijk, um1, up1)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, uijk, um1, up1)
 #pragma loop name compute_rhs #2 #0 #0
+#pragma cetus private(i, uijk, um1, up1)
 #pragma cetus private(i, uijk, um1, up1)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
         uijk = us[k][j][i];
@@ -220,13 +220,13 @@ void compute_rhs() {
 /* --------------------------------------------------------------------- */
 /* add fourth order xi-direction dissipation                */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, m)
 #pragma loop name compute_rhs #2 #1
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, m)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
       i = 1;
-#pragma cetus private(m)
 #pragma loop name compute_rhs #2 #1 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -235,8 +235,8 @@ void compute_rhs() {
                       u[k][j][i + 2][m])));
       }
       i = 2;
-#pragma cetus private(m)
 #pragma loop name compute_rhs #2 #1 #1
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -246,16 +246,16 @@ void compute_rhs() {
                       u[k][j][i + 2][m])));
       }
     }
-#pragma cetus private(i, j, m)
 #pragma loop name compute_rhs #2 #2
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #2 #2 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
       for (i = 3; i <= (grid_points[0] - 4); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #2 #2 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           rhs[k][j][i][m] =
@@ -267,13 +267,13 @@ void compute_rhs() {
         }
       }
     }
-#pragma cetus private(i, j, m)
 #pragma loop name compute_rhs #2 #3
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, m)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
       i = (grid_points[0] - 3);
-#pragma cetus private(m)
 #pragma loop name compute_rhs #2 #3 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -283,8 +283,8 @@ void compute_rhs() {
                       (4.0 * u[k][j][i + 1][m]))));
       }
       i = (grid_points[0] - 2);
-#pragma cetus private(m)
 #pragma loop name compute_rhs #2 #3 #1
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -303,18 +303,18 @@ void compute_rhs() {
 /* --------------------------------------------------------------------- */
 /* compute eta-direction fluxes  */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, m, vijk, vm1, vp1)
 #pragma loop name compute_rhs #3
 #pragma cetus parallel
+#pragma cetus private(i, j, m, vijk, vm1, vp1)
 #pragma cetus private(i, j, k, m, vijk, vm1, vp1)
 #pragma omp parallel for private(i, j, k, m, vijk, vm1, vp1)
   for (k = 1; k <= (grid_points[2] - 2); k++) {
-#pragma cetus private(i, j, vijk, vm1, vp1)
 #pragma loop name compute_rhs #3 #0
 #pragma cetus private(i, j, vijk, vm1, vp1)
+#pragma cetus private(i, j, vijk, vm1, vp1)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, vijk, vm1, vp1)
 #pragma loop name compute_rhs #3 #0 #0
+#pragma cetus private(i, vijk, vm1, vp1)
 #pragma cetus private(i, vijk, vm1, vp1)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
         vijk = vs[k][j][i];
@@ -370,12 +370,12 @@ void compute_rhs() {
     /* add fourth order eta-direction dissipation          */
     /* --------------------------------------------------------------------- */
     j = 1;
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #3 #1
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #3 #1 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -385,12 +385,12 @@ void compute_rhs() {
       }
     }
     j = 2;
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #3 #2
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #3 #2 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -400,16 +400,16 @@ void compute_rhs() {
                       u[k][j + 2][i][m])));
       }
     }
-#pragma cetus private(i, j, m)
 #pragma loop name compute_rhs #3 #3
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
     for (j = 3; j <= (grid_points[1] - 4); j++) {
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #3 #3 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #3 #3 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           rhs[k][j][i][m] =
@@ -422,12 +422,12 @@ void compute_rhs() {
       }
     }
     j = (grid_points[1] - 3);
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #3 #4
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #3 #4 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -438,12 +438,12 @@ void compute_rhs() {
       }
     }
     j = (grid_points[1] - 2);
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #3 #5
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #3 #5 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -462,18 +462,18 @@ void compute_rhs() {
 /* --------------------------------------------------------------------- */
 /* compute zeta-direction fluxes  */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i, j, wijk, wm1, wp1)
 #pragma loop name compute_rhs #4
 #pragma cetus parallel
+#pragma cetus private(i, j, wijk, wm1, wp1)
 #pragma cetus private(i, j, k, wijk, wm1, wp1)
 #pragma omp parallel for private(i, j, k, wijk, wm1, wp1)
   for (k = 1; k <= (grid_points[2] - 2); k++) {
-#pragma cetus private(i, j, wijk, wm1, wp1)
 #pragma loop name compute_rhs #4 #0
 #pragma cetus private(i, j, wijk, wm1, wp1)
+#pragma cetus private(i, j, wijk, wm1, wp1)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, wijk, wm1, wp1)
 #pragma loop name compute_rhs #4 #0 #0
+#pragma cetus private(i, wijk, wm1, wp1)
 #pragma cetus private(i, wijk, wm1, wp1)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
         wijk = ws[k][j][i];
@@ -530,18 +530,18 @@ void compute_rhs() {
   /* add fourth order zeta-direction dissipation                 */
   /* --------------------------------------------------------------------- */
   k = 1;
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #5
 #pragma cetus parallel
+#pragma cetus private(i, m)
 #pragma cetus private(i, j, m)
 #pragma omp parallel for private(i, j, m)
   for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #5 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #5 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -552,18 +552,18 @@ void compute_rhs() {
     }
   }
   k = 2;
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #6
 #pragma cetus parallel
+#pragma cetus private(i, m)
 #pragma cetus private(i, j, m)
 #pragma omp parallel for private(i, j, m)
   for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #6 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #6 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -574,22 +574,22 @@ void compute_rhs() {
       }
     }
   }
-#pragma cetus private(i, j, m)
 #pragma loop name compute_rhs #7
 #pragma cetus parallel
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, k, m)
 #pragma omp parallel for private(i, j, k, m)
   for (k = 3; k <= (grid_points[2] - 4); k++) {
-#pragma cetus private(i, j, m)
 #pragma loop name compute_rhs #7 #0
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #7 #0 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #7 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           rhs[k][j][i][m] =
@@ -603,18 +603,18 @@ void compute_rhs() {
     }
   }
   k = (grid_points[2] - 3);
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #8
 #pragma cetus parallel
+#pragma cetus private(i, m)
 #pragma cetus private(i, j, m)
 #pragma omp parallel for private(i, j, m)
   for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #8 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #8 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -626,18 +626,18 @@ void compute_rhs() {
     }
   }
   k = (grid_points[2] - 2);
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #9
 #pragma cetus parallel
+#pragma cetus private(i, m)
 #pragma cetus private(i, j, m)
 #pragma omp parallel for private(i, j, m)
   for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #9 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
     for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #9 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
       for (m = 0; m < 5; m++) {
         rhs[k][j][i][m] =
@@ -650,22 +650,22 @@ void compute_rhs() {
   if (timeron) {
     timer_stop(4);
   }
-#pragma cetus private(i, j, m)
 #pragma loop name compute_rhs #10
 #pragma cetus parallel
+#pragma cetus private(i, j, m)
 #pragma cetus private(i, j, k, m)
 #pragma omp parallel for private(i, j, k, m)
   for (k = 1; k <= (grid_points[2] - 2); k++) {
-#pragma cetus private(i, j, m)
 #pragma loop name compute_rhs #10 #0
 #pragma cetus private(i, j, m)
+#pragma cetus private(i, j, m)
     for (j = 1; j <= (grid_points[1] - 2); j++) {
-#pragma cetus private(i, m)
 #pragma loop name compute_rhs #10 #0 #0
 #pragma cetus private(i, m)
+#pragma cetus private(i, m)
       for (i = 1; i <= (grid_points[0] - 2); i++) {
-#pragma cetus private(m)
 #pragma loop name compute_rhs #10 #0 #0 #0
+#pragma cetus private(m)
 #pragma cetus private(m)
         for (m = 0; m < 5; m++) {
           rhs[k][j][i][m] = (rhs[k][j][i][m] * dt);

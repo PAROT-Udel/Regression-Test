@@ -103,28 +103,28 @@ void pintgr() {
 /* --------------------------------------------------------------------- */
 /* initialize */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i)
 #pragma loop name pintgr #0
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, k)
 #pragma omp parallel for private(i, k)
   for (k = 0; k <= (12 + 1); k++) {
-#pragma cetus private(i)
 #pragma loop name pintgr #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i <= (12 + 1); i++) {
       phi1[k][i] = 0.0;
       phi2[k][i] = 0.0;
     }
   }
-#pragma cetus private(i, k)
 #pragma loop name pintgr #1
 #pragma cetus parallel
+#pragma cetus private(i, k)
 #pragma cetus private(i, j, k)
 #pragma omp parallel for private(i, j, k)
   for (j = jbeg; j < jfin; j++) {
-#pragma cetus private(i, k)
 #pragma loop name pintgr #1 #0
+#pragma cetus private(i, k)
 #pragma cetus private(i, k)
     for (i = ibeg; i < ifin; i++) {
       k = ki1;
@@ -142,17 +142,17 @@ void pintgr() {
     }
   }
   frc1 = 0.0;
-#pragma cetus private(i)
 #pragma loop name pintgr #2
 #pragma cetus reduction(+ : frc1)
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma cetus reduction(+ : frc1)
 #pragma omp parallel for private(i, j) reduction(+ : frc1)
   for (j = jbeg; j < jfin1; j++) {
-#pragma cetus private(i)
 #pragma loop name pintgr #2 #0
 /* #pragma cetus reduction(+: frc1)  */
+#pragma cetus private(i)
 #pragma cetus private(i)
 #pragma cetus reduction(+ : frc1)
     for (i = ibeg; i < ifin1; i++) {
@@ -168,28 +168,28 @@ void pintgr() {
 /* --------------------------------------------------------------------- */
 /* initialize */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i)
 #pragma loop name pintgr #3
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, k)
 #pragma omp parallel for private(i, k)
   for (k = 0; k <= (12 + 1); k++) {
-#pragma cetus private(i)
 #pragma loop name pintgr #3 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i <= (12 + 1); i++) {
       phi1[k][i] = 0.0;
       phi2[k][i] = 0.0;
     }
   }
-#pragma cetus private(i)
 #pragma loop name pintgr #4
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, k)
 #pragma omp parallel for private(i, k)
   for (k = ki1; k < ki2; k++) {
-#pragma cetus private(i)
 #pragma loop name pintgr #4 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = ibeg; i < ifin; i++) {
       phi1[k][i] = (0.4 * (u[k][jbeg][i][4] -
@@ -199,14 +199,14 @@ void pintgr() {
                             u[k][jbeg][i][0])));
     }
   }
-#pragma cetus private(i)
 #pragma loop name pintgr #5
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, k)
 #pragma omp parallel for private(i, k)
   for (k = ki1; k < ki2; k++) {
-#pragma cetus private(i)
 #pragma loop name pintgr #5 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = ibeg; i < ifin; i++) {
       phi2[k][i] =
@@ -218,17 +218,17 @@ void pintgr() {
     }
   }
   frc2 = 0.0;
-#pragma cetus private(i)
 #pragma loop name pintgr #6
 #pragma cetus reduction(+ : frc2)
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, k)
 #pragma cetus reduction(+ : frc2)
 #pragma omp parallel for private(i, k) reduction(+ : frc2)
   for (k = ki1; k < (ki2 - 1); k++) {
-#pragma cetus private(i)
 #pragma loop name pintgr #6 #0
 /* #pragma cetus reduction(+: frc2)  */
+#pragma cetus private(i)
 #pragma cetus private(i)
 #pragma cetus reduction(+ : frc2)
     for (i = ibeg; i < ifin1; i++) {
@@ -244,28 +244,28 @@ void pintgr() {
 /* --------------------------------------------------------------------- */
 /* initialize */
 /* --------------------------------------------------------------------- */
-#pragma cetus private(i)
 #pragma loop name pintgr #7
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, k)
 #pragma omp parallel for private(i, k)
   for (k = 0; k <= (12 + 1); k++) {
-#pragma cetus private(i)
 #pragma loop name pintgr #7 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i <= (12 + 1); i++) {
       phi1[k][i] = 0.0;
       phi2[k][i] = 0.0;
     }
   }
-#pragma cetus private(j)
 #pragma loop name pintgr #8
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(j, k)
 #pragma omp parallel for private(j, k)
   for (k = ki1; k < ki2; k++) {
-#pragma cetus private(j)
 #pragma loop name pintgr #8 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = jbeg; j < jfin; j++) {
       phi1[k][j] = (0.4 * (u[k][j][ibeg][4] -
@@ -275,14 +275,14 @@ void pintgr() {
                             u[k][j][ibeg][0])));
     }
   }
-#pragma cetus private(j)
 #pragma loop name pintgr #9
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(j, k)
 #pragma omp parallel for private(j, k)
   for (k = ki1; k < ki2; k++) {
-#pragma cetus private(j)
 #pragma loop name pintgr #9 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = jbeg; j < jfin; j++) {
       phi2[k][j] =
@@ -294,17 +294,17 @@ void pintgr() {
     }
   }
   frc3 = 0.0;
-#pragma cetus private(j)
 #pragma loop name pintgr #10
 #pragma cetus reduction(+ : frc3)
 #pragma cetus parallel
+#pragma cetus private(j)
 #pragma cetus private(j, k)
 #pragma cetus reduction(+ : frc3)
 #pragma omp parallel for private(j, k) reduction(+ : frc3)
   for (k = ki1; k < (ki2 - 1); k++) {
-#pragma cetus private(j)
 #pragma loop name pintgr #10 #0
 /* #pragma cetus reduction(+: frc3)  */
+#pragma cetus private(j)
 #pragma cetus private(j)
 #pragma cetus reduction(+ : frc3)
     for (j = jbeg; j < jfin1; j++) {

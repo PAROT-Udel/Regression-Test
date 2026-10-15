@@ -169,8 +169,8 @@ void adaptation(logical *ifmortar, int step) {
 /*                element index */
 /* id_to_mt(iel)  takes as argument the actual element index and returns the */
 /*                morton index */
-#pragma cetus private(iel, miel)
 #pragma loop name adaptation #0
+#pragma cetus private(iel, miel)
 #pragma cetus private(iel, miel)
   for (miel = 0; miel < nelt; miel++) {
     iel = mt_to_id[miel];
@@ -210,8 +210,8 @@ static void do_coarsen(logical *if_coarsen, int *icoarsen, int neltold) {
   l_init(ifcoa_id, neltold, false);
 /* Check whether the potential coarsening will make neighbor,  */
 /* and neighbor's neighbor....break grid restriction */
-#pragma cetus private(i, ic, iel, miel, parent)
 #pragma loop name do_coarsen #0
+#pragma cetus private(i, ic, iel, miel, parent)
 #pragma cetus private(i, ic, iel, miel, parent)
   for (miel = 0; miel < nelt; miel++) {
     ifcoa[miel] = false;
@@ -236,8 +236,8 @@ static void do_coarsen(logical *if_coarsen, int *icoarsen, int neltold) {
         parent = (tree[iel] >> 3);
         test = false;
         test1 = true;
-#pragma cetus private(i)
 #pragma loop name do_coarsen #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
         for (i = 0; i < 8; i++) {
           if ((tree[ntp[i]] >> 3) != parent) {
@@ -247,8 +247,8 @@ static void do_coarsen(logical *if_coarsen, int *icoarsen, int neltold) {
         /* check whether all child elements are marked to be coarsened */
         if (test1) {
           test2 = true;
-#pragma cetus private(i)
 #pragma loop name do_coarsen #0 #1
+#pragma cetus private(i)
 #pragma cetus private(i)
           for (i = 0; i < 8; i++) {
             if (ich[ntp[i]] != 2) {
@@ -258,8 +258,8 @@ static void do_coarsen(logical *if_coarsen, int *icoarsen, int neltold) {
           /* check whether all child elements can be coarsened or not. */
           if (test2) {
             test3 = true;
-#pragma cetus private(i)
 #pragma loop name do_coarsen #0 #2
+#pragma cetus private(i)
 #pragma cetus private(i)
             for (i = 0; i < 8; i++) {
               if (!icheck(ntp[i], i)) {
@@ -281,15 +281,15 @@ static void do_coarsen(logical *if_coarsen, int *icoarsen, int neltold) {
          */
         if (test) {
           ifcoa[miel] = true;
-#pragma cetus private(i)
 #pragma loop name do_coarsen #0 #3
+#pragma cetus private(i)
 #pragma cetus private(i)
           for (i = 0; i < 8; i++) {
             ifcoa_id[ntp[i]] = true;
           }
           front[miel] = 1;
-#pragma cetus private(i)
 #pragma loop name do_coarsen #0 #4
+#pragma cetus private(i)
 #pragma cetus private(i)
           for (i = 0; i < 7; i++) {
             skip[ntp[i + 1]] = true;
@@ -307,8 +307,8 @@ static void do_coarsen(logical *if_coarsen, int *icoarsen, int neltold) {
 /* action[i] records the morton index of the i'th element (if it is an */
 /* element's front-left-bottom-child) to be coarsened. */
 /* create array mt_to_id to convert actual element index to morton index */
-#pragma cetus private(iel, miel, mielnew)
 #pragma loop name do_coarsen #1
+#pragma cetus private(iel, miel, mielnew)
 #pragma cetus private(iel, miel, mielnew)
   for (miel = 0; miel < nelt; miel++) {
     iel = mt_to_id_old[miel];
@@ -323,8 +323,8 @@ static void do_coarsen(logical *if_coarsen, int *icoarsen, int neltold) {
     }
   }
 /* perform the coarsening procedure (potentially in parallel) */
-#pragma cetus private(iel, index, miel)
 #pragma loop name do_coarsen #2
+#pragma cetus private(iel, index, miel)
 #pragma cetus private(iel, index, miel)
   for (index = 0; index < num_coarsen; index++) {
     miel = action[index];
@@ -363,7 +363,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
   nr_init(action, nelt, -1);
 #pragma loop name do_refine #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(miel)
+#pragma omp parallel for private(miel)
   for (miel = 0; miel < nelt; miel++) {
     if (ich[mt_to_id_old[miel]] != 4) {
       front[miel] = 0;
@@ -377,8 +378,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
   /* num_refine is the total number of elements that will be refined */
   num_refine = front[nelt - 1];
 /* action[i] records the morton index of the  i'th element to be refined */
-#pragma cetus private(iel, miel)
 #pragma loop name do_refine #1
+#pragma cetus private(iel, miel)
 #pragma cetus private(iel, miel)
   for (miel = 0; miel < nelt; miel++) {
     iel = mt_to_id_old[miel];
@@ -389,8 +390,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
 /* Compute array mt_to_id to convert the element index to morton index. */
 /* ref_front_id[iel] records how many elements with index less than */
 /* iel (actual element index, not morton index), will be refined. */
-#pragma cetus private(iel, miel, mielnew, ntemp)
 #pragma loop name do_refine #2
+#pragma cetus private(iel, miel, mielnew, ntemp)
 #pragma cetus private(iel, miel, mielnew, ntemp)
   for (miel = 0; miel < nelt; miel++) {
     iel = mt_to_id_old[miel];
@@ -412,11 +413,11 @@ static void do_refine(logical *ifmortar, int *irefine) {
   if (num_refine > 0) {
     (*ifmortar) = true;
   }
+#pragma loop name do_refine #3
 #pragma cetus private(cb, facedir, i, iel, index, j, jface, k, le, miel,       \
                       mielnew, n1, n2, ndir, ne, ntemp, treetemp, xhalf,       \
                       xleft, xright, yhalf, yleft, yright, zhalf, zleft,       \
                       zright)
-#pragma loop name do_refine #3
 #pragma cetus private(cb, facedir, i, iel, index, j, jface, k, le, miel,       \
                       mielnew, n1, n2, ndir, ne, ntemp, treetemp, xhalf,       \
                       xleft, xright, yhalf, yleft, yright, zhalf, zleft,       \
@@ -444,8 +445,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
     nr_init(ijel[iel][0], 12, -1);
     r_init(ta1[iel][0][0], (5 * 5) * 5, 0.0);
 /* initialize new child elements:iel and nelt+1~nelt+7 */
-#pragma cetus private(j)
 #pragma loop name do_refine #3 #0
+#pragma cetus private(j)
 #pragma cetus private(j)
     for (j = 0; j < 7; j++) {
       mt_to_id[(mielnew + j) + 1] = (nelt + j);
@@ -460,7 +461,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
     tree[iel] = ntemp;
 #pragma loop name do_refine #3 #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
     for (i = 0; i < 7; i++) {
       tree[nelt + i] = (ntemp + ((i + 1) % 8));
     }
@@ -474,43 +476,43 @@ static void do_refine(logical *ifmortar, int *irefine) {
     zhalf = (zctemp[0] + ((zctemp[4] - zctemp[0]) / 2.0));
     zleft = zctemp[0];
     zright = zctemp[4];
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #2
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
     for (j = 0; j < 7; j += 2) {
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #2 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < 7; i += 2) {
         xc[nelt + j][i] = xhalf;
         xc[nelt + j][i + 1] = xright;
       }
     }
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #3
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
     for (j = 1; j < 6; j += 2) {
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #3 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < 7; i += 2) {
         xc[nelt + j][i] = xleft;
         xc[nelt + j][i + 1] = xhalf;
       }
     }
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #4
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 7; i += 2) {
       xc[iel][i] = xleft;
       xc[iel][i + 1] = xhalf;
     }
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #5
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 2; i++) {
       yc[nelt + 0][i] = yleft;
@@ -520,8 +522,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
       yc[nelt + 3][i + 4] = yleft;
       yc[nelt + 4][i + 4] = yleft;
     }
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #6
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 2; i < 4; i++) {
       yc[nelt + 0][i] = yhalf;
@@ -531,12 +533,12 @@ static void do_refine(logical *ifmortar, int *irefine) {
       yc[nelt + 3][i + 4] = yhalf;
       yc[nelt + 4][i + 4] = yhalf;
     }
-#pragma cetus private(i, j)
 #pragma loop name do_refine #3 #7
 #pragma cetus private(i, j)
+#pragma cetus private(i, j)
     for (j = 1; j < 3; j++) {
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #7 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < 2; i++) {
         yc[nelt + j][i] = yhalf;
@@ -544,8 +546,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
         yc[nelt + j][i + 4] = yhalf;
         yc[(nelt + j) + 4][i + 4] = yhalf;
       }
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #7 #1
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 2; i < 4; i++) {
         yc[nelt + j][i] = yright;
@@ -554,50 +556,50 @@ static void do_refine(logical *ifmortar, int *irefine) {
         yc[(nelt + j) + 4][i + 4] = yright;
       }
     }
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #8
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 2; i++) {
       yc[iel][i] = yleft;
       yc[iel][i + 4] = yleft;
     }
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #9
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 2; i < 4; i++) {
       yc[iel][i] = yhalf;
       yc[iel][i + 4] = yhalf;
     }
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #10
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
     for (j = 0; j < 3; j++) {
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #10 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < 4; i++) {
         zc[nelt + j][i] = zleft;
         zc[nelt + j][i + 4] = zhalf;
       }
     }
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #11
 #pragma cetus parallel
+#pragma cetus private(i)
 #pragma cetus private(i, j)
 #pragma omp parallel for private(i, j)
     for (j = 3; j < 7; j++) {
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #11 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
       for (i = 0; i < 4; i++) {
         zc[nelt + j][i] = zhalf;
         zc[nelt + j][i + 4] = zright;
       }
     }
-#pragma cetus private(i)
 #pragma loop name do_refine #3 #12
+#pragma cetus private(i)
 #pragma cetus private(i)
     for (i = 0; i < 4; i++) {
       zc[iel][i] = zleft;
@@ -609,17 +611,21 @@ static void do_refine(logical *ifmortar, int *irefine) {
 /* e.g. ndir=0, facedir=0 refers to face 1, */
 /* and ndir =0, facedir=1 refers to face 2. */
 #pragma cetus firstprivate(sje)
-#pragma cetus private(cb, facedir, i, jface, k, n1, n2, ndir)
 #pragma cetus lastprivate(le, ne, sje)
 #pragma loop name do_refine #3 #13
 #pragma cetus firstprivate(sje)
 #pragma cetus private(cb, facedir, i, jface, k, n1, n2, ndir)
 #pragma cetus lastprivate(le, ne, sje)
+#pragma cetus firstprivate(sje)
+#pragma cetus private(cb, facedir, i, jface, k, n1, n2, ndir)
+#pragma cetus lastprivate(le, ne, sje)
     for (ndir = 0; ndir < 3; ndir++) {
+#pragma cetus firstprivate(sje)
+#pragma cetus lastprivate(le, ne, sje)
+#pragma loop name do_refine #3 #13 #0
 #pragma cetus firstprivate(sje)
 #pragma cetus private(cb, facedir, i, jface, k, n1, n2)
 #pragma cetus lastprivate(le, ne, sje)
-#pragma loop name do_refine #3 #13 #0
 #pragma cetus firstprivate(sje)
 #pragma cetus private(cb, facedir, i, jface, k, n1, n2)
 #pragma cetus lastprivate(le, ne, sje)
@@ -631,7 +637,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
 /* face of the parent element */
 #pragma loop name do_refine #3 #13 #0 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(k)
+#pragma omp parallel for private(k)
         for (k = 0; k < 4; k++) {
           le[k] = (le_arr[ndir][facedir][k] + nelt);
           ne[k] = (le_arr[ndir][1 - facedir][k] + nelt);
@@ -644,8 +651,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
 /* update neighbor information of the four child elements on each  */
 /* face of the parent element */
 #pragma loop name do_refine #3 #13 #0 #1
-#pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(k)
+#pragma cetus private(k)
         for (k = 0; k < 4; k++) {
           cbc[le[k]][i] = 2;
           sje[le[k]][i][0][0] = ne[k];
@@ -661,9 +668,11 @@ static void do_refine(logical *ifmortar, int *irefine) {
             ijel[ntemp][jface][0] = 0;
             ijel[ntemp][jface][1] = 0;
 #pragma cetus firstprivate(sje)
-#pragma cetus private(k)
 #pragma cetus lastprivate(sje)
 #pragma loop name do_refine #3 #13 #0 #2
+#pragma cetus firstprivate(sje)
+#pragma cetus private(k)
+#pragma cetus lastprivate(sje)
 #pragma cetus firstprivate(sje)
 #pragma cetus private(k)
 #pragma cetus lastprivate(sje)
@@ -697,11 +706,9 @@ static void do_refine(logical *ifmortar, int *irefine) {
             /* if the neighbor ntemp is also marked to be refined */
           } else {
             n1 = ref_front_id[ntemp];
-#pragma cetus private(n2)
 #pragma loop name do_refine #3 #13 #0 #3
-#pragma cetus parallel
 #pragma cetus private(k, n2)
-#pragma omp parallel for private(k, n2)
+#pragma cetus private(k, n2)
             for (k = 0; k < 4; k++) {
               cbc[ne[k]][i] = 2;
               n2 = (n1 + le_arr[ndir][facedir][k]);
@@ -715,8 +722,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
           /* if the face type of the parent element is type 3 */
         } else {
           if (cb == 3) {
-#pragma cetus private(k)
 #pragma loop name do_refine #3 #13 #0 #4
+#pragma cetus private(k)
 #pragma cetus private(k)
             for (k = 0; k < 4; k++) {
               cbc[ne[k]][i] = 2;
@@ -748,7 +755,8 @@ static void do_refine(logical *ifmortar, int *irefine) {
             if (cb == 0) {
 #pragma loop name do_refine #3 #13 #0 #5
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(k)
+#pragma omp parallel for private(k)
               for (k = 0; k < 4; k++) {
                 cbc[ne[k]][i] = cb;
               }
@@ -837,16 +845,16 @@ static void find_coarsen(logical *if_coarsen, int neltold) {
   logical iftemp;
   int iel, i;
   (*if_coarsen) = false;
-#pragma cetus private(i, iel)
 #pragma loop name find_coarsen #0
+#pragma cetus private(i, iel)
 #pragma cetus private(i, iel)
   for (iel = 0; iel < neltold; iel++) {
     if (!skip[iel]) {
       ich[iel] = 0;
       if (!iftouch(iel)) {
         iftemp = false;
-#pragma cetus private(i)
 #pragma loop name find_coarsen #0 #0
+#pragma cetus private(i)
 #pragma cetus private(i)
         for (i = 0; i < 6; i++) {
           /* if iel has a larger size than its face neighbors, it */
@@ -871,8 +879,8 @@ static void find_coarsen(logical *if_coarsen, int neltold) {
 static void find_refine(logical *if_refine) {
   int iel;
   (*if_refine) = false;
-#pragma cetus private(iel)
 #pragma loop name find_refine #0
+#pragma cetus private(iel)
 #pragma cetus private(iel)
   for (iel = 0; iel < nelt; iel++) {
     ich[iel] = 0;
@@ -894,15 +902,15 @@ static void find_refine(logical *if_refine) {
 static void check_refine(logical *ifrepeat) {
   int iel, iface, ntemp, nntemp, i, jface;
   (*ifrepeat) = false;
-#pragma cetus private(i, iel, iface, jface, nntemp, ntemp)
 #pragma loop name check_refine #0
+#pragma cetus private(i, iel, iface, jface, nntemp, ntemp)
 #pragma cetus private(i, iel, iface, jface, nntemp, ntemp)
   for (iel = 0; iel < nelt; iel++) {
     /* if iel is marked to be refined */
     if (ich[iel] == 4) {
 /* check its six faces */
-#pragma cetus private(i, iface, jface, nntemp, ntemp)
 #pragma loop name check_refine #0 #0
+#pragma cetus private(i, iface, jface, nntemp, ntemp)
 #pragma cetus private(i, iface, jface, nntemp, ntemp)
       for (i = 0; i < 6; i++) {
         jface = jjface[i];
@@ -918,8 +926,8 @@ static void check_refine(logical *ifrepeat) {
           }
 /* check iel's neighbor, neighbored by an edge on face i, which */
 /* must be a face neighbor of ntemp */
-#pragma cetus private(iface, nntemp)
 #pragma loop name check_refine #0 #0 #0
+#pragma cetus private(iface, nntemp)
 #pragma cetus private(iface, nntemp)
           for (iface = 0; iface < 6; iface++) {
             if ((iface != i) && (iface != jface)) {
@@ -939,9 +947,11 @@ static void check_refine(logical *ifrepeat) {
         } else {
           if (cbc[iel][i] == 2) {
 #pragma cetus firstprivate(ich)
-#pragma cetus private(iface, nntemp)
 #pragma cetus lastprivate(ich)
 #pragma loop name check_refine #0 #0 #1
+#pragma cetus firstprivate(ich)
+#pragma cetus private(iface, nntemp)
+#pragma cetus lastprivate(ich)
 #pragma cetus firstprivate(ich)
 #pragma cetus private(iface, nntemp)
 #pragma cetus lastprivate(ich)
@@ -1016,22 +1026,24 @@ static void remap(double y[5][5][5], double y1[7][5][5][5], double x[5][5][5]) {
   r_init((double *)y1, ((5 * 5) * 5) * 7, 0.0);
   r_init((double *)yone, ((5 * 5) * 5) * 2, 0.0);
   r_init((double *)ytwo, ((5 * 5) * 5) * 4, 0.0);
-#pragma cetus private(ii, jj, kk)
 #pragma loop name remap #0
 #pragma cetus parallel
+#pragma cetus private(ii, jj, kk)
 #pragma cetus private(i, ii, jj, kk)
 #pragma omp parallel for private(i, ii, jj, kk)
   for (i = 0; i < 5; i++) {
-#pragma cetus private(ii, jj, kk)
 #pragma loop name remap #0 #0
+/* #pragma cetus reduction(+: yone[0][i][jj][ii], yone[1][i][jj][ii])  */
 #pragma cetus private(ii, jj, kk)
+#pragma cetus private(ii, jj, kk)
+#pragma cetus reduction(+ : yone[0][i][jj][ii], yone[1][i][jj][ii])
     for (kk = 0; kk < 5; kk++) {
-#pragma cetus private(ii, jj)
 #pragma loop name remap #0 #0 #0
 #pragma cetus private(ii, jj)
+#pragma cetus private(ii, jj)
       for (jj = 0; jj < 5; jj++) {
-#pragma cetus private(ii)
 #pragma loop name remap #0 #0 #0 #0
+#pragma cetus private(ii)
 #pragma cetus private(ii)
         for (ii = 0; ii < 5; ii++) {
           yone[0][i][jj][ii] =
@@ -1041,16 +1053,20 @@ static void remap(double y[5][5][5], double y1[7][5][5][5], double x[5][5][5]) {
         }
       }
     }
-#pragma cetus private(ii, jj, kk)
 #pragma loop name remap #0 #1
+/* #pragma cetus reduction(+: ytwo[0][jj][i][ii], ytwo[1][jj][i][ii],
+ * ytwo[2][jj][i][ii], ytwo[3][jj][i][ii])  */
 #pragma cetus private(ii, jj, kk)
+#pragma cetus private(ii, jj, kk)
+#pragma cetus reduction(+ : ytwo[0][jj][i][ii], ytwo[1][jj][i][ii],            \
+                        ytwo[2][jj][i][ii], ytwo[3][jj][i][ii])
     for (kk = 0; kk < 5; kk++) {
-#pragma cetus private(ii, jj)
 #pragma loop name remap #0 #1 #0
 #pragma cetus private(ii, jj)
+#pragma cetus private(ii, jj)
       for (jj = 0; jj < 5; jj++) {
-#pragma cetus private(ii)
 #pragma loop name remap #0 #1 #0 #0
+#pragma cetus private(ii)
 #pragma cetus private(ii)
         for (ii = 0; ii < 5; ii++) {
           ytwo[0][jj][i][ii] =
@@ -1065,20 +1081,27 @@ static void remap(double y[5][5][5], double y1[7][5][5][5], double x[5][5][5]) {
       }
     }
   }
-#pragma cetus private(ii, jj)
 #pragma loop name remap #1
+#pragma cetus private(ii, iz, jj)
 #pragma cetus private(ii, iz, jj, kk)
+#pragma cetus reduction(+ : y1[0][jj][iz][ii], y1[1][jj][iz][ii],              \
+                        y1[2][jj][iz][ii], y1[3][jj][iz][ii],                  \
+                        y1[4][jj][iz][ii], y1[5][jj][iz][ii],                  \
+                        y1[6][jj][iz][ii], y[jj][iz][ii])
   for (kk = 0; kk < 5; kk++) {
-#pragma cetus private(ii, jj, kk)
 #pragma loop name remap #1 #0
+/* #pragma cetus reduction(+: y1[0][jj][iz][ii], y1[1][jj][iz][ii],
+ * y1[2][jj][iz][ii], y1[3][jj][iz][ii], y1[4][jj][iz][ii], y1[5][jj][iz][ii],
+ * y1[6][jj][iz][ii], y[jj][iz][ii])  */
+#pragma cetus private(ii, iz, jj)
 #pragma cetus private(ii, iz, jj)
     for (jj = 0; jj < 5; jj++) {
-#pragma cetus private(ii, jj)
 #pragma loop name remap #1 #0 #0
 #pragma cetus private(ii, iz)
+#pragma cetus private(ii, iz)
       for (iz = 0; iz < 5; iz++) {
-#pragma cetus private(ii)
 #pragma loop name remap #1 #0 #0 #0
+#pragma cetus private(ii)
 #pragma cetus private(ii)
         for (ii = 0; ii < 5; ii++) {
           y[jj][iz][ii] =
@@ -1122,25 +1145,27 @@ static void merging(int iela[8]) {
   z2 = zc[iela[4]][4];
 #pragma loop name merging #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < 7; i += 2) {
     xc[ielnew][i] = x1;
   }
 #pragma loop name merging #1
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 1; i < 8; i += 2) {
     xc[ielnew][i] = x2;
   }
-#pragma cetus private(i)
 #pragma loop name merging #2
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 0; i < 2; i++) {
     yc[ielnew][i] = y1;
     yc[ielnew][i + 4] = y1;
   }
-#pragma cetus private(i)
 #pragma loop name merging #3
+#pragma cetus private(i)
 #pragma cetus private(i)
   for (i = 2; i < 4; i++) {
     yc[ielnew][i] = y2;
@@ -1148,21 +1173,25 @@ static void merging(int iela[8]) {
   }
 #pragma loop name merging #4
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 0; i < 4; i++) {
     zc[ielnew][i] = z1;
   }
 #pragma loop name merging #5
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(i)
+#pragma omp parallel for private(i)
   for (i = 4; i < 8; i++) {
     zc[ielnew][i] = z2;
   }
 /* update neighboring information */
 #pragma cetus firstprivate(ijel)
-#pragma cetus private(cb, i, ielold, ii, jface, ntema, ntemp, ntempa)
 #pragma cetus lastprivate(ijel)
 #pragma loop name merging #6
+#pragma cetus firstprivate(ijel)
+#pragma cetus private(cb, i, ielold, ii, jface, ntema, ntemp, ntempa)
+#pragma cetus lastprivate(ijel)
 #pragma cetus firstprivate(ijel)
 #pragma cetus private(cb, i, ielold, ii, jface, ntema, ntemp, ntempa)
 #pragma cetus lastprivate(ijel)
@@ -1171,7 +1200,8 @@ static void merging(int iela[8]) {
     ielold = iela[children[i][0]];
 #pragma loop name merging #6 #0
 #pragma cetus parallel
-#pragma omp parallel for
+#pragma cetus private(ii)
+#pragma omp parallel for private(ii)
     for (ii = 0; ii < 4; ii++) {
       ntempa[ii] = iela[children[i][ii]];
     }
@@ -1191,9 +1221,11 @@ static void merging(int iela[8]) {
         /* if the neighbor elements will not be coarsened */
       } else {
 #pragma cetus firstprivate(ijel)
-#pragma cetus private(ii)
 #pragma cetus lastprivate(ijel)
 #pragma loop name merging #6 #1
+#pragma cetus firstprivate(ijel)
+#pragma cetus private(ii)
+#pragma cetus lastprivate(ijel)
 #pragma cetus firstprivate(ijel)
 #pragma cetus private(ii)
 #pragma cetus lastprivate(ijel)
@@ -1262,33 +1294,39 @@ static void remap2(int iela[8], int ielnew) {
 /* ----------------------------------------------------------------- */
 static void remapz(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
   int ix, iy, ip;
-#pragma cetus private(ip, ix)
 #pragma loop name remapz #0
-#pragma cetus parallel
+#pragma cetus private(ip, ix)
+#pragma cetus firstprivate(y)
 #pragma cetus private(ip, ix, iy)
-#pragma omp parallel for private(ip, ix, iy)
+#pragma cetus lastprivate(y)
   for (iy = 0; iy < 5; iy++) {
+#pragma cetus firstprivate(y)
+#pragma cetus lastprivate(y)
+#pragma loop name remapz #0 #0
 #pragma cetus firstprivate(y)
 #pragma cetus private(ip, ix)
 #pragma cetus lastprivate(y)
-#pragma loop name remapz #0 #0
 #pragma cetus firstprivate(y)
 #pragma cetus private(ip, ix)
 #pragma cetus lastprivate(y)
     for (ix = 0; ix < 5; ix++) {
       y[0][iy][ix] = x1[0][iy][ix];
       y[1][iy][ix] = 0.0;
-#pragma cetus private(ip)
 #pragma loop name remapz #0 #0 #0
+/* #pragma cetus reduction(+: y[1][iy][ix])  */
 #pragma cetus private(ip)
+#pragma cetus private(ip)
+#pragma cetus reduction(+ : y[1][iy][ix])
       for (ip = 0; ip < 5; ip++) {
         y[1][iy][ix] = (y[1][iy][ix] + (map2[ip] * x1[ip][iy][ix]));
       }
       y[2][iy][ix] = x1[5 - 1][iy][ix];
       y[3][iy][ix] = 0.0;
-#pragma cetus private(ip)
 #pragma loop name remapz #0 #0 #1
+/* #pragma cetus reduction(+: y[3][iy][ix])  */
 #pragma cetus private(ip)
+#pragma cetus private(ip)
+#pragma cetus reduction(+ : y[3][iy][ix])
       for (ip = 0; ip < 5; ip++) {
         y[3][iy][ix] = (y[3][iy][ix] + (map4[ip] * x2[ip][iy][ix]));
       }
@@ -1303,33 +1341,39 @@ static void remapz(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
 /* ----------------------------------------------------------------- */
 static void remapy(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
   int ix, iz, ip;
-#pragma cetus private(ip, ix)
 #pragma loop name remapy #0
-#pragma cetus parallel
+#pragma cetus private(ip, ix)
+#pragma cetus firstprivate(y)
 #pragma cetus private(ip, ix, iz)
-#pragma omp parallel for private(ip, ix, iz)
+#pragma cetus lastprivate(y)
   for (iz = 0; iz < 5; iz++) {
+#pragma cetus firstprivate(y)
+#pragma cetus lastprivate(y)
+#pragma loop name remapy #0 #0
 #pragma cetus firstprivate(y)
 #pragma cetus private(ip, ix)
 #pragma cetus lastprivate(y)
-#pragma loop name remapy #0 #0
 #pragma cetus firstprivate(y)
 #pragma cetus private(ip, ix)
 #pragma cetus lastprivate(y)
     for (ix = 0; ix < 5; ix++) {
       y[iz][0][ix] = x1[iz][0][ix];
       y[iz][1][ix] = 0.0;
-#pragma cetus private(ip)
 #pragma loop name remapy #0 #0 #0
+/* #pragma cetus reduction(+: y[iz][1][ix])  */
 #pragma cetus private(ip)
+#pragma cetus private(ip)
+#pragma cetus reduction(+ : y[iz][1][ix])
       for (ip = 0; ip < 5; ip++) {
         y[iz][1][ix] = (y[iz][1][ix] + (map2[ip] * x1[iz][ip][ix]));
       }
       y[iz][2][ix] = x1[iz][5 - 1][ix];
       y[iz][3][ix] = 0.0;
-#pragma cetus private(ip)
 #pragma loop name remapy #0 #0 #1
+/* #pragma cetus reduction(+: y[iz][3][ix])  */
 #pragma cetus private(ip)
+#pragma cetus private(ip)
+#pragma cetus reduction(+ : y[iz][3][ix])
       for (ip = 0; ip < 5; ip++) {
         y[iz][3][ix] = (y[iz][3][ix] + (map4[ip] * x2[iz][ip][ix]));
       }
@@ -1344,33 +1388,39 @@ static void remapy(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
 /* ----------------------------------------------------------------- */
 static void remapx(double x1[5][5][5], double x2[5][5][5], double y[5][5][5]) {
   int iy, iz, ip;
-#pragma cetus private(ip, iy)
 #pragma loop name remapx #0
-#pragma cetus parallel
+#pragma cetus private(ip, iy)
+#pragma cetus firstprivate(y)
 #pragma cetus private(ip, iy, iz)
-#pragma omp parallel for private(ip, iy, iz)
+#pragma cetus lastprivate(y)
   for (iz = 0; iz < 5; iz++) {
+#pragma cetus firstprivate(y)
+#pragma cetus lastprivate(y)
+#pragma loop name remapx #0 #0
 #pragma cetus firstprivate(y)
 #pragma cetus private(ip, iy)
 #pragma cetus lastprivate(y)
-#pragma loop name remapx #0 #0
 #pragma cetus firstprivate(y)
 #pragma cetus private(ip, iy)
 #pragma cetus lastprivate(y)
     for (iy = 0; iy < 5; iy++) {
       y[iz][iy][0] = x1[iz][iy][0];
       y[iz][iy][1] = 0.0;
-#pragma cetus private(ip)
 #pragma loop name remapx #0 #0 #0
+/* #pragma cetus reduction(+: y[iz][iy][1])  */
 #pragma cetus private(ip)
+#pragma cetus private(ip)
+#pragma cetus reduction(+ : y[iz][iy][1])
       for (ip = 0; ip < 5; ip++) {
         y[iz][iy][1] = (y[iz][iy][1] + (map2[ip] * x1[iz][iy][ip]));
       }
       y[iz][iy][2] = x1[iz][iy][5 - 1];
       y[iz][iy][3] = 0.0;
-#pragma cetus private(ip)
 #pragma loop name remapx #0 #0 #1
+/* #pragma cetus reduction(+: y[iz][iy][3])  */
 #pragma cetus private(ip)
+#pragma cetus private(ip)
+#pragma cetus reduction(+ : y[iz][iy][3])
       for (ip = 0; ip < 5; ip++) {
         y[iz][iy][3] = (y[iz][iy][3] + (map4[ip] * x2[iz][iy][ip]));
       }
