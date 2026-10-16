@@ -6,6 +6,8 @@
  */
 #include <stdio.h>
 
+int cetus_kernel;
+
 #define N 512
 
 double w[N + 1][N + 1];

@@ -316,6 +316,7 @@ extern int mbtowc(wchar_t *__pwc, const char *__s, size_t __n);
 extern int wctomb(char *__s, wchar_t __wchar);
 extern size_t mbstowcs(wchar_t *__pwcs, const char *__s, size_t __n);
 extern size_t wcstombs(char *__s, const wchar_t *__pwcs, size_t __n);
+int cetus_kernel;
 double x[1024][1024];
 double y[1024][1024];
 double z[1024][1024];

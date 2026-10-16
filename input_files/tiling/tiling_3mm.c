@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int cetus_kernel;
+
 #define NI 10000
 #define NJ 10000
 #define NK 10000

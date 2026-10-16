@@ -617,6 +617,7 @@ enum subsub_test_amgmk_subexpr_i_12196 {
   FP_SUBNORMAL = 3,
   FP_NORMAL = 4
 };
+int cetus_kernel;
 int main() {
   int i, j, jj, irownnz, m, adiag, vecstride_y, idxstride_y, vecstride_x,
       idxstride_x;

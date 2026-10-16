@@ -316,6 +316,7 @@ extern int mbtowc(wchar_t *__pwc, const char *__s, size_t __n);
 extern int wctomb(char *__s, wchar_t __wchar);
 extern size_t mbstowcs(wchar_t *__pwcs, const char *__s, size_t __n);
 extern size_t wcstombs(char *__s, const wchar_t *__pwcs, size_t __n);
+int cetus_kernel;
 void init_array(int ni, int nj, int nk, double A[ni][nk], double B[nk][nj],
                 double C[ni][nj]) {
   int i;

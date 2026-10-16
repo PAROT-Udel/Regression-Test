@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int cetus_kernel;
+
 #define N 64
 
 double C[N][N];

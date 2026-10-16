@@ -617,6 +617,7 @@ enum subsub_test_sddmm_i_12196 {
   FP_SUBNORMAL = 3,
   FP_NORMAL = 4
 };
+int cetus_kernel;
 int main() {
   int idx = 0, row_val[30000], nonzeros, col_ind[30000], row[30000],
       row_ptr[30000], n_rows;

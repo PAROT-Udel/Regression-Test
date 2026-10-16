@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <math.h>
 
+int cetus_kernel;
+
 #define N 30000
 
 int main(){

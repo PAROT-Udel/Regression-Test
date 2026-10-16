@@ -252,6 +252,7 @@ extern int ferror(FILE *__stream);
 extern void perror(const char *__s);
 extern int __uflow(FILE *);
 extern int __overflow(FILE *, int);
+int cetus_kernel;
 double w[(512 + 1)][(512 + 1)];
 int main(int argc, char *argv[]) {
   int i, j;

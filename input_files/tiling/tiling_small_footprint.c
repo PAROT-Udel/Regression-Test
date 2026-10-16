@@ -5,6 +5,8 @@
  */
 #include <stdio.h>
 
+int cetus_kernel;
+
 #define N 16
 
 double s[N][N];

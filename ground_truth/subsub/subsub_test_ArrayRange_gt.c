@@ -41,6 +41,7 @@ wchar_t uses Unicode 10.0.0.  Version 10.0 of the Unicode Standard is
    - 285 hentaigana
    - 3 additional Zanabazar Square characters
 */
+int cetus_kernel;
 int initialize(int a[], int m);
 int main() {
   int a[30000], n;

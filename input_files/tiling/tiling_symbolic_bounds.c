@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int cetus_kernel;
+
 #define MAXN 1024
 
 double x[MAXN][MAXN];

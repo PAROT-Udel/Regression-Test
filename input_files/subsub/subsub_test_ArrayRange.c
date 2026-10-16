@@ -2,6 +2,8 @@
  Very Simple Parallelizable Loop Example
 */
 
+int cetus_kernel;
+
 int initialize(int a[], int m);
 
 int main(){

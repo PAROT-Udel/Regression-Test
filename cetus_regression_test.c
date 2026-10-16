@@ -424,6 +424,49 @@ void log_test_outcome(TestOutcome outcome, const char *category,
     }
 }
 
+/* Copy src to dst starting at the cetus_kernel declaration. Host libc
+   text from clang -E sits above that line and differs by glibc version.
+   A missing marker copies the whole file so the diff still fails. */
+static int copy_from_kernel_marker(const char *src, const char *dst)
+{
+    FILE *in;
+    FILE *out;
+    char line[8192];
+    int seen = 0;
+    int rc = 0;
+
+    in = fopen(src, "r");
+    out = fopen(dst, "w");
+    if (in == NULL || out == NULL) {
+        if (in != NULL)
+            fclose(in);
+        if (out != NULL)
+            fclose(out);
+        return -1;
+    }
+    while (fgets(line, (int)sizeof(line), in) != NULL) {
+        if (!seen && strstr(line, "cetus_kernel") == NULL)
+            continue;
+        seen = 1;
+        if (fputs(line, out) == EOF) {
+            rc = -1;
+            break;
+        }
+    }
+    if (rc == 0 && !seen) {
+        if (fseek(in, 0, SEEK_SET) != 0)
+            rc = -1;
+        while (rc == 0 && fgets(line, (int)sizeof(line), in) != NULL) {
+            if (fputs(line, out) == EOF)
+                rc = -1;
+        }
+    }
+    if (fclose(out) != 0)
+        rc = -1;
+    fclose(in);
+    return rc;
+}
+
 /* --------------------------------------------------------------------- */
 /*  run_test_case (kernel)                                               */
 /* --------------------------------------------------------------------- */
@@ -858,9 +901,11 @@ int run_test_case(const char *category, const char *input_file_base_name,
         return 0;
     }
 
-    verbose_printf(
-        "[%s] DEBUG: Formatting Cetus output file: %s with clang-format...\n",
-        get_current_time(), cetus_actual_output_file);
+    /* Format copies. clang-format -i on the checked-in ground truth
+       rewrites it, and the host libc preamble above cetus_kernel
+       differs by glibc version. */
+    char formatted_output[MAX_PATH_LENGTH];
+    char formatted_ground_truth[MAX_PATH_LENGTH];
     if (clang_format_path == NULL || clang_format_path[0] == '\0') {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
                          "CLANG_FORMAT is not set in "
@@ -868,39 +913,41 @@ int run_test_case(const char *category, const char *input_file_base_name,
                          NULL);
         return 0;
     }
-    if (snprintf(format_cmd, sizeof(format_cmd),
-                 "\"%s\" -i -style=Google \"%s\"", clang_format_path,
-                 cetus_actual_output_file) >= (int)sizeof(format_cmd)) {
+    if (snprintf(formatted_output, sizeof(formatted_output),
+                 "%s/compare_%s", transformed_dir,
+                 input_file_base_name_i) >= (int)sizeof(formatted_output) ||
+        snprintf(formatted_ground_truth, sizeof(formatted_ground_truth),
+                 "%s/compare_%s%s", transformed_dir,
+                 input_file_base_name_no_ext, GROUND_TRUTH_SUFFIX) >=
+            (int)sizeof(formatted_ground_truth)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
-                         "clang-format command buffer overflow for output.",
+                         "Path buffer overflow for formatted comparison.",
                          NULL);
         return 0;
     }
-    cmd_result = execute_command(format_cmd);
-    if (cmd_result != 0) {
-        snprintf(reason_buf, sizeof(reason_buf),
-                 "Failed to format Cetus output with clang-format "
-                 "(exit code %d).",
-                 cmd_result);
+    if (copy_from_kernel_marker(cetus_actual_output_file,
+                                formatted_output) != 0 ||
+        copy_from_kernel_marker(ground_truth_file_path,
+                                formatted_ground_truth) != 0) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
-                         reason_buf, format_cmd);
+                         "Failed to copy files for clang-format.", NULL);
         return 0;
     }
-
     verbose_printf(
-        "[%s] DEBUG: Formatting Ground Truth file: %s with clang-format...\n",
-        get_current_time(), ground_truth_file_path);
+        "[%s] DEBUG: Formatting comparison copies with clang-format...\n",
+        get_current_time());
     if (snprintf(format_cmd, sizeof(format_cmd),
-                 "\"%s\" -i -style=Google \"%s\"", clang_format_path,
-                 ground_truth_file_path) >= (int)sizeof(format_cmd)) {
+                 "\"%s\" -i -style=Google \"%s\" \"%s\"", clang_format_path,
+                 formatted_output, formatted_ground_truth) >=
+        (int)sizeof(format_cmd)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
-                         "clang-format command buffer overflow for GT.", NULL);
+                         "clang-format command buffer overflow.", NULL);
         return 0;
     }
     cmd_result = execute_command(format_cmd);
     if (cmd_result != 0) {
         snprintf(reason_buf, sizeof(reason_buf),
-                 "Failed to format Ground Truth with clang-format "
+                 "Failed to format comparison copies with clang-format "
                  "(exit code %d).",
                  cmd_result);
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
@@ -909,8 +956,8 @@ int run_test_case(const char *category, const char *input_file_base_name,
     }
 
     long input_file_initial_size = file_size(input_file_full_path);
-    long cetus_output_file_size = file_size(cetus_actual_output_file);
-    long ground_truth_file_size = file_size(ground_truth_file_path);
+    long cetus_output_file_size = file_size(formatted_output);
+    long ground_truth_file_size = file_size(formatted_ground_truth);
 
     if (input_file_initial_size == -1 || cetus_output_file_size == -1 ||
         ground_truth_file_size == -1) {
@@ -923,8 +970,8 @@ int run_test_case(const char *category, const char *input_file_base_name,
     }
 
     if (snprintf(diff_command, sizeof(diff_command),
-                 "diff -wB \"%s\" \"%s\"", cetus_actual_output_file,
-                 ground_truth_file_path) >= (int)sizeof(diff_command)) {
+                 "diff -wB \"%s\" \"%s\"", formatted_output,
+                 formatted_ground_truth) >= (int)sizeof(diff_command)) {
         log_test_outcome(TEST_FAILED_UNKNOWN, category, input_file_base_name,
                          "Diff command buffer overflow.", NULL);
         return 0;

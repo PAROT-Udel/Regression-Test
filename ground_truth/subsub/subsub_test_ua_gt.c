@@ -775,6 +775,7 @@ extern int face_l1[3];
 extern int face_l2[3];
 extern int face_ld[3];
 static int r_init(double a[], int n, double _const);
+int cetus_kernel;
 int main() {
   double tmp[2][5][5];
   double tmor[8800], tx[8800];

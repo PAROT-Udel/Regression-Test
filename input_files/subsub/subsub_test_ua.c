@@ -9,6 +9,8 @@
   #include <stdlib.h>
   #include "./include/header.h"
 
+int cetus_kernel;
+
 int main(){
 
   double tmp[2][LX1][LX1];
