@@ -26,3 +26,12 @@ cetus
 cetus.jar
 cetus_regression_test.sh
 .vscode/
+
+# Local scratch and LaTeX build products
+tmp_*
+docs/*.aux
+docs/*.log
+docs/*.nav
+docs/*.out
+docs/*.snm
+docs/*.toc
