@@ -14,6 +14,7 @@ cetus_intermediate_i_files/
 cetus_transformed_output/
 logs/
 input_files/cetus_output/
+cppinput_*
 
 # Benchmark harness (local overrides + sandboxes)
 config/paths.env
