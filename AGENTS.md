@@ -58,13 +58,13 @@ Kernel and benchmark runs both read `config/paths.env`. Copy and edit it:
 cp config/paths.example.env config/paths.env
 ```
 
-Set `CETUS`, `CLANG_FORMAT`, `GCC`, `DIFF`, `CPP`, `POLYBENCH_ROOT`, and `NPB_SER_ROOT`. The vendored trees are `benchmarks/polybench-c-4.2.1-beta` and `benchmarks/NPB3.3-SER-C`. `NPB_OMP_ROOT` is only needed for the opt-in `npb-omp` suite; that OpenMP C tree is not vendored. The harness reads `paths.env` only. `paths.example.env` is a template and is not loaded. Env vars override `paths.env`. `profiles.json` supplies the benchmark Cetus flags (`parallel`, `paw_tiling_nt`, and the other named profiles). Kernel snippet flags stay in `config/kernels/*.json`. Kernel snippets and benchmarks share `CETUS` and `CLANG_FORMAT`. The preprocessor for kernel snippets is `clang` (`CLANG_PATH` in `helper_tests.h`).
+Set `CETUS`, `CLANG_FORMAT`, `GCC`, `DIFF`, `CPP`, `POLYBENCH_ROOT`, and `NPB_SER_ROOT`. The vendored trees are `benchmarks/polybench-c-4.2.1-beta` and `benchmarks/NPB3.3-SER-C`. `NPB_OMP_ROOT` is only needed for the opt-in `npb-omp` suite; that OpenMP C tree is not vendored. The harness reads `paths.env` only. `paths.example.env` is a template and is not loaded. Env vars override `paths.env`. `profiles.json` supplies the benchmark Cetus flags (`parallel`, `paw_tiling_nt`, and the other named profiles). Kernel snippet flags stay in `config/kernels/*.json`. Kernel snippets and benchmarks share `CETUS` and `CLANG_FORMAT`. The preprocessor for kernel snippets is `clang` (`CLANG_PATH` in `helper_tests.h`). That `clang -E` step, and the `cpp` Cetus runs afterwards, paste the host libc into the translation unit. The kernel diff does not compare that text.
 
 ## Build the harness
 
 ```bash
 cd /path/to/cetus_regression_test_suite
-chmod +x check_syntax.sh run_all.sh
+chmod +x check_syntax.sh run_all.sh queue_darwin.sh
 make
 make test    # optional: unit tests
 ```
@@ -156,6 +156,30 @@ Expected for `--all`: `Test Summary: 15/15 tests passed.`
 
 `npb-omp` is opt-in and uses `parallel` only. Cetus fails on `ua/adapt.c` (`IntegerLiteral` cannot be cast to `RangeExpression`), so that kernel has no ground truth.
 
+The three NPB serial `ua` tiling profiles (`paw_tiling_nt`, `paw_tiling_lrw`, `paw_tiling_fixed32`) still fail verification, so their ground truth was not replaced. `parallel` and `reuse_analysis` for `ua` pass. Do not invent ground truth for the three tiling profiles.
+
+### Kernel comparison
+
+Each kernel input has `int cetus_kernel;` after its `#include` lines. The runner copies the Cetus output and the ground truth, keeps both from that declaration onward, runs `clang-format -i -style=Google` on the copies, and diffs those with `diff -wB`. The checked-in ground truth is not formatted in place. Host libc text above `cetus_kernel` differs by glibc version and is not part of the diff. A new kernel input needs the same declaration, or the diff includes the libc preamble and fails on another machine.
+
+### Darwin
+
+On a Darwin login node, from this tree:
+
+```bash
+./queue_darwin.sh
+```
+
+That builds the harness once, then submits three Slurm jobs and returns. It does not wait.
+
+| Argument | Job | What it runs |
+|----------|-----|----------------|
+| `kernels` | `cetus-reg-kernels` | `./cetus_regression_test --all` |
+| `npb` | `cetus-reg-npb` | `--benchmarks --benchmark-suite npb-ser` |
+| `poly` | `cetus-reg-poly` | `--benchmarks --benchmark-suite polybench` |
+
+No argument submits all three. Logs are `logs/slurm-<jobid>.out` and `.err`. The jobs use `workgroup -g parot`, account `parot`, partition `standard`, and 4 CPUs. They load `llvm/17` through valet (clang and clang-format). Benchmark compiles stay on `/usr/bin/gcc` and `/usr/bin/cpp`. Default Cetus is `/lustre/parot/cetus/cetus_release_3_0/bin/cetus`. The vendored trees are `benchmarks/polybench-c-4.2.1-beta` and `benchmarks/NPB3.3-SER-C`. Set `CETUS` or the other path variables before the script to override them. The job scripts must not use `set -u`: valet reads an unset `LD_LIBRARY_PATH`. The checked-in tree on Darwin is `/lustre/parot/cetus/cetus_regression_test`.
+
 ### Caviness
 
 `./queue_caviness.sh` copies this project to `/work/parot/mgltorsa/cetus_regression_test_suite`, or updates that copy, and only then submits `cetus_regression.slurm`. If a `cetus-reg` job is already queued or running, it asks before submitting another. The job generates ground truth for `paw_tiling_lrw` and `paw_tiling_fixed32`, then runs `--full`. The script prints the Slurm job id and returns. It does not wait. Log: `logs/slurm-<jobid>.out` on Caviness. `run_profiles.sh` sets the cluster Cetus and vanilla benchmark paths.
@@ -196,6 +220,7 @@ cetus_regression_test_suite/
 ├── Makefile
 ├── check_syntax.sh
 ├── run_all.sh
+├── queue_darwin.sh            # Darwin: kernels, NPB, and PolyBench jobs
 ├── tests/                     # Native unit tests
 ├── third_party/cjson/         # Vendored JSON parser
 ├── config/
@@ -223,7 +248,7 @@ cetus_regression_test_suite/
 | Layer | Files | Role |
 |-------|-------|------|
 | CLI | `cli.c`, `cetus_regression_test.c` | Parse args, dispatch kernel vs benchmark vs `--full` |
-| Kernel runner | `cetus_regression_test.c`, `kernel_config.c` | Load JSON, preprocess → Cetus → format → diff |
+| Kernel runner | `cetus_regression_test.c`, `kernel_config.c` | Load JSON, preprocess → Cetus → format copies from `cetus_kernel` → diff |
 | Config | `benchmark_config.c`, `kernel_config.c` | Load `paths.env`, `profiles.json`, `suites/*.json`, `kernels/*.json` |
 | Lifecycle | `benchmark_runner.c` | Sandbox reset, GT check, transform, diff/generate, inject, build, verify |
 | Adapters | `*_adapter.c` | Suite-specific prepare/cetus/inject/build/verify vtable hooks |
@@ -290,7 +315,7 @@ The checked-in PolyBench and NPB suites do not use `xfail`. NPB verify sets `OMP
 
 ## Adding a new kernel test
 
-1. Place input under `input_files/tiling/` or `input_files/subsub/`.
+1. Place input under `input_files/tiling/` or `input_files/subsub/`. Put `int cetus_kernel;` on its own line after the `#include`s.
 2. Add the kernel to `config/kernels/<suite>.json` (name, input path, and any extra flags). No recompile.
 3. `./cetus_regression_test --run-test <name> --generate`
 4. Commit input, the JSON, and `ground_truth/<suite>/*_gt.c`.
@@ -317,7 +342,11 @@ Manual kernel pipeline:
 clang -E -P -x c -std=c11 input_files/tiling/tiling_gemm.c -o /tmp/gemm.i
 ./check_syntax.sh /tmp/gemm.i
 /mnt/d/workspace/cetus/The-Cetus-Project/bin/cetus -outdir=cetus_transformed_output/tiling <flags> /tmp/gemm.i
-diff -wB cetus_transformed_output/tiling/tiling_gemm.i ground_truth/tiling/tiling_gemm_gt.c
+# Diff from the cetus_kernel line. Do not clang-format -i the ground truth.
+awk 'f||/cetus_kernel/{f=1} f' cetus_transformed_output/tiling/tiling_gemm.i > /tmp/gemm.out
+awk 'f||/cetus_kernel/{f=1} f' ground_truth/tiling/tiling_gemm_gt.c > /tmp/gemm.gt
+clang-format -i -style=Google /tmp/gemm.out /tmp/gemm.gt
+diff -wB /tmp/gemm.out /tmp/gemm.gt
 ```
 
 ## Unit tests (agents modifying C code)

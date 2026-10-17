@@ -80,7 +80,7 @@ POLYBENCH_ROOT=benchmarks/polybench-c-4.2.1-beta
 NPB_SER_ROOT=benchmarks/NPB3.3-SER-C
 ```
 
-`CETUS` and `CLANG_FORMAT` are used for kernel snippets and for benchmarks. The PolyBench and NPB serial C trees ship in `benchmarks/`; the paths above are relative to the suite directory. NPB OpenMP C is not included. Set `NPB_OMP_ROOT` only to run `--benchmark-suite npb-omp`. Benchmark flags come from `profiles.json`. Kernel-snippet flags stay in `config/kernels/*.json`. The kernel preprocessor is `clang` (`CLANG_PATH` in `helper_tests.h`).
+`CETUS` and `CLANG_FORMAT` are used for kernel snippets and for benchmarks. The PolyBench and NPB serial C trees ship in `benchmarks/`; the paths above are relative to the suite directory. NPB OpenMP C is not included. Set `NPB_OMP_ROOT` only to run `--benchmark-suite npb-omp`. Benchmark flags come from `profiles.json`. Kernel-snippet flags stay in `config/kernels/*.json`. The kernel preprocessor is `clang` (`CLANG_PATH` in `helper_tests.h`). Kernel diffs start at `int cetus_kernel;`, which each snippet declares after its includes, so host libc text is not compared. `clang-format` is applied to copies of the two files, not to the checked-in ground truth.
 
 `paths.env` is gitignored.
 
@@ -139,6 +139,24 @@ From PowerShell:
 wsl bash -lc "cd /mnt/d/workspace/cetus/cetus_regression_test_suite && make && ./cetus_regression_test --all"
 ```
 
+## Darwin
+
+On a Darwin login node, from this directory:
+
+```bash
+./queue_darwin.sh
+```
+
+The script builds the harness, submits three Slurm jobs, prints the job ids, and returns. It does not wait. `./queue_darwin.sh kernels`, `npb`, or `poly` submits one of them. Logs are `logs/slurm-<jobid>.out` and `.err` in this tree.
+
+| Job | Command |
+|-----|---------|
+| kernels | `./cetus_regression_test --all` |
+| npb | `--benchmarks --benchmark-suite npb-ser` |
+| poly | `--benchmarks --benchmark-suite polybench` |
+
+Jobs use the `parot` account and 4 CPUs. Clang and clang-format come from `llvm/17`. Compiles of the benchmarks use `/usr/bin/gcc`. The default Cetus binary is `/lustre/parot/cetus/cetus_release_3_0/bin/cetus`. Set `CETUS` before the script to point at another build. The suite on Darwin is `/lustre/parot/cetus/cetus_regression_test`.
+
 ## Caviness
 
 `./queue_caviness.sh` copies this tree to `/work/parot/mgltorsa/cetus_regression_test_suite` (or updates the copy), then submits `cetus_regression.slurm`. The script prints the job id and returns. It does not wait. If a `cetus-reg` job is already queued or running, it asks before submitting another. `--no-sync` submits without copying.
@@ -177,6 +195,7 @@ config/                      paths.example.env (template), profiles.json, suites
 benchmarks/                  PolyBench/C 4.2.1-beta and NPB3.3-SER-C (see benchmarks/README.md)
 input_files/                 kernel snippet sources
 ground_truth/                expected Cetus output
+queue_darwin.sh             on Darwin, submit kernels, NPB, and PolyBench jobs
 queue_caviness.sh            copy to Caviness and submit the Slurm job
 run_profiles.sh              cluster paths, then the harness
 cetus_regression.slurm       generate LRW and fixed-32, then --full

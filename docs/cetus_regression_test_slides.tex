@@ -81,6 +81,8 @@
   The JSON files in the diagram describe benchmark cases.
   Kernel snippets are JSON too, under \texttt{kernels/}.
   They stop after the source diff and are not compiled or run.
+  That diff starts at \texttt{int cetus\_kernel}, so host libc text is left out.
+  clang-format edits copies, not the checked-in ground truth.
   \end{minipage}
   \note{Benchmark JSON is config/suites and profiles.json. Kernel snippets are config/kernels. Both load at runtime. The original NPB and PolyBench trees are never edited. Ground truth lives under ground\_truth/benchmarks/suite/profile/kernel. NPB verify looks for the verification-successful line. PolyBench diffs POLYBENCH\_DUMP\_ARRAYS output of the original and the transformed binary.}
 \end{frame}
@@ -144,6 +146,30 @@
   \end{tabular}\par
   \normalsize
   \note{Tiling snippets use the PAW flags in kernels/tiling.json, not these benchmark profiles. Subscript tests turn OpenMP generation off. The three PAW profiles differ only in tile-size selection. reuse\_analysis is NPB serial only because that is how the suite JSON is written. cacheSize is in kibibytes. The parallel profile is not stock Cetus: alias is 3 rather than 1, and profitable-omp is off. npb-omp is opt-in and uses parallel only. Cetus fails on ua/adapt.c, a ClassCastException from IntegerLiteral to RangeExpression, so that kernel has no ground truth.}
+\end{frame}
+
+\begin{frame}{Running the suite on Darwin}
+  On a Darwin login node, from the suite directory:
+  \vspace{0.6em}
+  \begin{center}
+  \texttt{./queue\_darwin.sh}
+  \end{center}
+  \vspace{0.5em}
+  The script builds the harness, submits three jobs, and returns.
+  \vspace{0.4em}
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    Job & What it runs \\
+    \midrule
+    kernels & 15 kernel snippets \\
+    npb & NPB 3.3 serial, every profile \\
+    poly & PolyBench/C 4.2, every profile \\
+    \bottomrule
+  \end{tabular}\par
+  \vspace{0.45em}
+  Logs are \texttt{logs/slurm-<jobid>.out}.
+  One suite: \texttt{./queue\_darwin.sh kernels}.
+  \note{Darwin jobs use the parot account, 4 CPUs, llvm/17 for clang and clang-format, and /usr/bin/gcc for the benchmark compiles. Default Cetus is /lustre/parot/cetus/cetus\_release\_3\_0/bin/cetus. The tree is /lustre/parot/cetus/cetus\_regression\_test. Do not put set -u in the job: valet reads an unset LD\_LIBRARY\_PATH. Caviness still uses queue\_caviness.sh.}
 \end{frame}
 
 \end{document}
